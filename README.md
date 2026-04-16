@@ -31,10 +31,10 @@ Web フォーム経由で入力された URL / テキスト / 画像をジョブ
 2. **Enqueue**: `CloudTasksAdapter` がジョブを非同期投入。
 3. **Worker**: Worker Handler がタスクを受信し `MusicPipeline` を起動。
 4. **Pipeline**:
-   - **Phase 1: Collect**: `go-web-reader` で入力コンテキスト収集。
-   - **Phase 2: Compose**: LLM で `MusicRecipe` 生成。
-   - **Phase 3: Generate**: `Lyria 3` で MP3 生成。
-   - **Phase 4: Publish/Notify**: GCS/Local 保存、Signed URL 発行、Slack 通知。
+    - **Phase 1: Collect**: `go-web-reader` で入力コンテキスト収集。
+    - **Phase 2: Compose**: LLM で `MusicRecipe` 生成。
+    - **Phase 3: Generate**: `Lyria 3` で MP3 生成。
+    - **Phase 4: Publish/Notify**: GCS/Local 保存、Signed URL 発行、Slack 通知。
 
 ---
 
@@ -105,7 +105,7 @@ sequenceDiagram
     Pipeline->>Composer: MusicRecipe を生成
     Composer-->>Pipeline: Recipe(JSON)
 
-    rect rgb(240, 240, 240)
+    rect rgba(240, 240, 240, 0.1)
         Note over Pipeline, Lyria: 生成フェーズ
         Pipeline->>Lyria: 音楽生成リクエスト
         Lyria-->>Pipeline: MP3 Binary
@@ -143,17 +143,17 @@ sequenceDiagram
 
 ### 2. 主要な環境変数
 
-| 環境変数 | 説明 |
-| --- | --- |
-| `SERVICE_URL` | アプリの公開 URL |
-| `GCP_PROJECT_ID` | GCP プロジェクト ID |
-| `GCP_LOCATION_ID` | 使用リージョン |
-| `CLOUD_TASKS_QUEUE_ID` | Cloud Tasks キュー名 |
-| `SERVICE_ACCOUNT_EMAIL` | タスク実行に使うサービスアカウント |
-| `TASK_AUDIENCE_URL` | OIDC Audience |
-| `GCS_MUSIC_BUCKET` | 生成 MP3 の保存先バケット |
-| `LYRIA_MODEL` | 使用する Lyria モデル名 |
-| `SLACK_WEBHOOK_URL` | 完了通知先 Webhook URL |
+| 環境変数 | 必須 | 説明 |
+| --- | :---: | --- |
+| `SERVICE_URL` | 必須 | アプリの公開 URL |
+| `GCP_PROJECT_ID` | 必須 | GCP プロジェクト ID |
+| `GCP_LOCATION_ID` | 必須 | 使用リージョン |
+| `CLOUD_TASKS_QUEUE_ID` | 必須 | Cloud Tasks キュー名 |
+| `SERVICE_ACCOUNT_EMAIL` | 必須 | タスク実行に使うサービスアカウント |
+| `TASK_AUDIENCE_URL` | 任意 | OIDC Audience (認証が必要な場合) |
+| `GCS_MUSIC_BUCKET` | 必須 | 生成 MP3 の保存先バケット |
+| `LYRIA_MODEL` | 任意 | 使用する Lyria モデル名 (デフォルト値がある場合) |
+| `SLACK_WEBHOOK_URL` | 任意 | 完了通知先 Webhook URL |
 
 ---
 
