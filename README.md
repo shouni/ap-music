@@ -89,9 +89,7 @@ ap-music/
 │   │   └── recipe_builder.go  # コンテキストから MusicRecipe を構築するロジック
 │   └── server/                # HTTP サーバーのルーティング設定
 │       └── router.go          # chi 等を用いたルーティング定義
-├── templates/                 # Web UI 用の HTML テンプレート
-│   └── compose_form.html
-├── assets/                    # 静的ファイル、固定プロンプト素材
+├── assets/                    # 静的ファイル、固定プロンプト素材、Web UI 用の HTML テンプレート
 ├── docs/                      # アーキテクチャ図、API仕様
 └── main.go            # 【起点】アプリのブートストラップ（初期化・起動）
 ```
