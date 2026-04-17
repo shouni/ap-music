@@ -7,11 +7,19 @@ import (
 )
 
 // buildPipeline は、提供された設定と各コンポーネントを使用して新しいパイプラインを初期化して返します。
-func buildPipeline(cfg *config.Config, workflows domain.Workflows, slack domain.Notifier) (domain.Pipeline, error) {
-	p, err := pipeline.NewMangaPipeline(cfg, workflows, slack)
-	if err != nil {
-		return nil, err
-	}
-
-	return p, nil
+func buildPipeline(
+	_ *config.Config,
+	collector domain.Collector,
+	composer domain.Composer,
+	generator domain.Generator,
+	publisher domain.Publisher,
+	notifier domain.Notifier,
+) (domain.Pipeline, error) {
+	return pipeline.MusicPipeline{
+		Collector: collector,
+		Composer:  composer,
+		Generator: generator,
+		Publisher: publisher,
+		Notifier:  notifier,
+	}, nil
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // buildTaskEnqueuer は、Cloud Tasks エンキューアを初期化します。
-func buildTaskEnqueuer(ctx context.Context, cfg *config.Config) (*tasks.Enqueuer[domain.GenerateTaskPayload], error) {
+func buildTaskEnqueuer(ctx context.Context, cfg *config.Config) (*tasks.Enqueuer[domain.Task], error) {
 	workerURL, err := url.JoinPath(cfg.ServiceURL, "/tasks/generate")
 	if err != nil {
 		return nil, fmt.Errorf("failed to build worker URL: %w", err)
@@ -26,5 +26,5 @@ func buildTaskEnqueuer(ctx context.Context, cfg *config.Config) (*tasks.Enqueuer
 		ServiceAccountEmail: cfg.ServiceAccountEmail,
 		Audience:            cfg.TaskAudienceURL,
 	}
-	return tasks.NewEnqueuer[domain.GenerateTaskPayload](ctx, taskCfg)
+	return tasks.NewEnqueuer[domain.Task](ctx, taskCfg)
 }

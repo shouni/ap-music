@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/shouni/gcp-kit/tasks"
 
@@ -23,6 +25,50 @@ type Handler struct {
 	templateCache map[string]*template.Template
 	taskEnqueuer  *tasks.Enqueuer[domain.Task]
 	remoteIO      *app.RemoteIO
+}
+
+// Home はトップ画面を表示します。
+func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	h.render(w, http.StatusOK, "compose_form.html", "Compose", nil)
+}
+
+// Compose はフォーム入力を Cloud Tasks にキュー投入します。
+func (h *Handler) Compose(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+
+	task := domain.Task{
+		JobID:      r.FormValue("job_id"),
+		RequestURL: r.FormValue("url"),
+		InputText:  r.FormValue("text"),
+		ImageURL:   r.FormValue("image"),
+		Model:      r.FormValue("model"),
+		CreatedAt:  time.Now().UTC(),
+	}
+	if task.JobID == "" {
+		task.JobID = time.Now().UTC().Format("20060102150405")
+	}
+
+	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
+		http.Error(w, fmt.Sprintf("failed to enqueue task: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"status": "queued",
+		"job_id": task.JobID,
+	})
 }
 
 // NewHandler は指定された構成に基づいて新しいハンドラーを初期化します。

@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"ap-music/internal/pipeline"
 	"context"
 	"fmt"
 	"io"
@@ -46,21 +45,22 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, err
 	}
 
-	musicAI := adapters.LyriaAdapter(ctx, cfg)
-
-	workflow := pipeline.Workflow()
+	lyria := adapters.NewLyriaAdapter(ctx, cfg)
+	reader := adapters.ReaderAdapter{}
+	publisher := adapters.PublisherAdapter{Bucket: cfg.GCSBucket}
 
 	// 3. Pipeline (Core Logic)
-	mangaPipeline, err := buildPipeline(cfg, workflow, slack)
+	musicPipeline, err := buildPipeline(cfg, reader, lyria, lyria, publisher, slack)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize manga pipeline: %w", err)
+		return nil, fmt.Errorf("failed to initialize music pipeline: %w", err)
 	}
 
 	appCtx := &app.Container{
 		Config:       cfg,
 		RemoteIO:     rio,
 		TaskEnqueuer: enqueuer,
-		Pipeline:     mangaPipeline,
+		Pipeline:     musicPipeline,
+		AI:           lyria,
 		HTTPClient:   httpClient,
 		Notifier:     slack,
 	}

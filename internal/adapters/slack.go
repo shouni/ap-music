@@ -46,8 +46,13 @@ func NewSlackAdapter(httpClient httpkit.Requester, webhookURL string) (*SlackAda
 	}, nil
 }
 
-// Notify 公開URLとストレージ情報を含む、プロセス完了時のSlack通知送信。
-func (s *SlackAdapter) Notify(ctx context.Context, publicURL, storageURI string, req domain.NotificationRequest) error {
+// Notify は処理完了時のSlack通知を送信します。
+func (s *SlackAdapter) Notify(ctx context.Context, result domain.PublishResult) error {
+	return s.NotifyWithRequest(ctx, result.SignedURL, result.StorageURI, domain.NotificationRequest{})
+}
+
+// NotifyWithRequest は詳細情報付きでSlack通知を送信します。
+func (s *SlackAdapter) NotifyWithRequest(ctx context.Context, publicURL, storageURI string, req domain.NotificationRequest) error {
 	if s.webhookURL == "" || s.slackClient == nil {
 		slog.InfoContext(ctx, "Slack通知が無効化されているか、クライアントが未初期化のためスキップします。", "storage_uri", storageURI)
 		return nil

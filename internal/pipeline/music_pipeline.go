@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 
 	"ap-music/internal/domain"
 )
@@ -16,30 +17,30 @@ type MusicPipeline struct {
 }
 
 // Execute はタスクを実行します。
-func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (domain.PublishResult, error) {
+func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) error {
 	contextText, err := p.Collector.Collect(ctx, task)
 	if err != nil {
-		return domain.PublishResult{}, err
+		return err
 	}
 
 	recipe, err := p.Composer.Compose(ctx, contextText)
 	if err != nil {
-		return domain.PublishResult{}, err
+		return err
 	}
 
 	mp3, err := p.Generator.Generate(ctx, recipe)
 	if err != nil {
-		return domain.PublishResult{}, err
+		return err
 	}
 
 	result, err := p.Publisher.Publish(ctx, task, mp3)
 	if err != nil {
-		return domain.PublishResult{}, err
+		return err
 	}
 
 	if err := p.Notifier.Notify(ctx, result); err != nil {
-		return domain.PublishResult{}, err
+		return fmt.Errorf("notify failed: %w", err)
 	}
 
-	return result, nil
+	return nil
 }

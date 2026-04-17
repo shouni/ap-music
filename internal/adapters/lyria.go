@@ -4,12 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"ap-music/internal/config"
 	"ap-music/internal/domain"
 )
 
 // LyriaAdapter は Lyria API クライアントの雛形です。
 type LyriaAdapter struct {
 	Model string
+}
+
+func NewLyriaAdapter(ctx context.Context, cfg *config.Config) *LyriaAdapter {
+	_ = ctx
+	return &LyriaAdapter{
+		Model: cfg.LyriaModel,
+	}
 }
 
 // Compose は簡易レシピを返します。

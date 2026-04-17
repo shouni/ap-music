@@ -7,6 +7,7 @@ import (
 	"github.com/shouni/go-http-kit/httpkit"
 	"github.com/shouni/go-remote-io/remoteio"
 
+	"ap-music/internal/adapters"
 	"ap-music/internal/config"
 	"ap-music/internal/domain"
 )
@@ -21,6 +22,7 @@ type Container struct {
 	// Business Logic
 	Pipeline domain.Pipeline
 	// External Adapters
+	AI         *adapters.LyriaAdapter
 	HTTPClient httpkit.HTTPClient
 	Notifier   domain.Notifier
 }
