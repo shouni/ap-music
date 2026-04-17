@@ -1,45 +1,61 @@
 package app
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
+	"log/slog"
 
-	"ap-music/internal/builder"
+	"github.com/shouni/gcp-kit/tasks"
+	"github.com/shouni/go-http-kit/httpkit"
+	"github.com/shouni/go-remote-io/remoteio"
+
+	"ap-music/internal/adapters"
 	"ap-music/internal/config"
+	"ap-music/internal/domain"
 )
 
-// Run はアプリケーションを起動します。
-func Run() error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
+// Container はアプリケーションの依存関係（DIコンテナ）を保持します。
+type Container struct {
+	Config *config.Config
+	// I/O and Storage
+	RemoteIO *RemoteIO
+	// Asynchronous Task
+	TaskEnqueuer *tasks.Enqueuer[domain.Task]
+	// Business Logic
+	Pipeline domain.Pipeline
+	// External Adapters
+	AI         *adapters.LyriaAdapter
+	HTTPClient httpkit.HTTPClient
+	Notifier   domain.Notifier
+}
 
-	srv := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: builder.BuildRouter(cfg),
-	}
+// RemoteIO は外部ストレージ操作に関するコンポーネントをまとめます。
+type RemoteIO struct {
+	Factory remoteio.IOFactory
+	Reader  remoteio.InputReader
+	Writer  remoteio.OutputWriter
+	Signer  remoteio.URLSigner
+}
 
-	errCh := make(chan error, 1)
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			errCh <- err
+// Close は、RemoteIO が保持する Factory などの内部リソースを解放します。
+func (r *RemoteIO) Close() error {
+	if r.Factory != nil {
+		return r.Factory.Close()
+	}
+	return nil
+}
+
+// Close は、Container が保持するすべての外部接続リソースを安全に解放します。
+func (c *Container) Close() {
+	// RemoteIO のリソース解放を委譲
+	if c.RemoteIO != nil {
+		if err := c.RemoteIO.Close(); err != nil {
+			slog.Error("failed to close RemoteIO", "error", err)
 		}
-	}()
+	}
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-
-	select {
-	case err := <-errCh:
-		return fmt.Errorf("server error: %w", err)
-	case <-sigCh:
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
-		defer cancel()
-		return srv.Shutdown(ctx)
+	// TaskEnqueuer のリソース解放
+	if c.TaskEnqueuer != nil {
+		if err := c.TaskEnqueuer.Close(); err != nil {
+			slog.Error("failed to close task enqueuer", "error", err)
+		}
 	}
 }
