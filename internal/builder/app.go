@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"ap-music/internal/pipeline"
 	"context"
 	"fmt"
 	"io"
@@ -45,28 +46,12 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, err
 	}
 
-	geminiAI, errGemini := adapters.NewGeminiAIAdapter(ctx, cfg)
-	vertexAI, errVertex := adapters.NewVertexAIAdapter(ctx, cfg)
+	musicAI := adapters.LyriaAdapter(ctx, cfg)
 
-	// 両方とも初期化に失敗した場合は起動不可
-	if errGemini != nil && errVertex != nil {
-		return nil, fmt.Errorf("failed to initialize any AI client: gemini err: %v, vertex err: %v", errGemini, errVertex)
-	}
+	workflow := pipeline.Workflow()
 
-	// 片方のみ成功した場合は、もう一方の用途にもフォールバックとして使用する
-	if geminiAI == nil {
-		geminiAI = vertexAI
-	}
-	if vertexAI == nil {
-		vertexAI = geminiAI
-	}
-
-	workflows, err := adapters.NewWorkflowsAdapter(cfg, httpClient, rio, geminiAI, vertexAI)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize manga workflow: %w", err)
-	}
 	// 3. Pipeline (Core Logic)
-	mangaPipeline, err := buildPipeline(cfg, workflows, slack)
+	mangaPipeline, err := buildPipeline(cfg, workflow, slack)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize manga pipeline: %w", err)
 	}

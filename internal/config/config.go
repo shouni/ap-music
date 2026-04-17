@@ -10,6 +10,8 @@ const (
 	DefaultPort          = "8080"
 	DefaultLyriaModel    = "lyria-3"
 	DefaultShutdownGrace = 15 * time.Second
+
+	DefaultHTTPTimeout = 60 * time.Second
 )
 
 // Config はアプリ設定です。
@@ -25,6 +27,18 @@ type Config struct {
 	SlackWebhookURL     string
 	LyriaModel          string
 	ShutdownTimeout     time.Duration
+
+	// OAuth & Session Settings
+	GoogleClientID     string
+	GoogleClientSecret string
+	// SessionSecret はセッションデータのHMAC署名用シークレットキーです。
+	SessionSecret string
+	// SessionEncryptKey はセッションデータのAES暗号化用シークレットキーです。 16, 24, 32 バイトのいずれかである必要があります。
+	SessionEncryptKey string
+
+	// Authz Settings
+	AllowedEmails  []string
+	AllowedDomains []string
 }
 
 // LoadConfig は環境変数から設定を読み込みます。
