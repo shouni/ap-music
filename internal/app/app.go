@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"ap-music/internal/builder"
 	"ap-music/internal/config"
@@ -21,7 +20,7 @@ func Run() error {
 	}
 
 	srv := &http.Server{
-		Addr:    cfg.Addr,
+		Addr:    ":" + cfg.Port,
 		Handler: builder.BuildRouter(cfg),
 	}
 
@@ -39,7 +38,7 @@ func Run() error {
 	case err := <-errCh:
 		return fmt.Errorf("server error: %w", err)
 	case <-sigCh:
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 		defer cancel()
 		return srv.Shutdown(ctx)
 	}

@@ -3,44 +3,53 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
+)
+
+const (
+	DefaultPort          = "8080"
+	DefaultLyriaModel    = "lyria-3"
+	DefaultShutdownGrace = 15 * time.Second
 )
 
 // Config はアプリ設定です。
 type Config struct {
-	Addr            string
-	ServiceURL      string
-	LyriaModel      string
-	SlackWebhookURL string
-	GCPProjectID    string
-	GCPLocationID   string
-	CloudTasksQueue string
-	ServiceAccount  string
-	TaskAudienceURL string
-	GCSMusicBucket  string
+	ServiceURL          string
+	Port                string
+	ProjectID           string
+	LocationID          string
+	QueueID             string
+	TaskAudienceURL     string
+	ServiceAccountEmail string
+	GCSBucket           string
+	SlackWebhookURL     string
+	LyriaModel          string
+	ShutdownTimeout     time.Duration
 }
 
 // LoadConfig は環境変数から設定を読み込みます。
 func LoadConfig() (Config, error) {
 	cfg := Config{
-		Addr:            getenvDefault("ADDR", ":8080"),
-		ServiceURL:      os.Getenv("SERVICE_URL"),
-		LyriaModel:      getenvDefault("LYRIA_MODEL", "lyria-3"),
-		SlackWebhookURL: os.Getenv("SLACK_WEBHOOK_URL"),
-		GCPProjectID:    os.Getenv("GCP_PROJECT_ID"),
-		GCPLocationID:   os.Getenv("GCP_LOCATION_ID"),
-		CloudTasksQueue: os.Getenv("CLOUD_TASKS_QUEUE_ID"),
-		ServiceAccount:  os.Getenv("SERVICE_ACCOUNT_EMAIL"),
-		TaskAudienceURL: os.Getenv("TASK_AUDIENCE_URL"),
-		GCSMusicBucket:  os.Getenv("GCS_MUSIC_BUCKET"),
+		ServiceURL:          os.Getenv("SERVICE_URL"),
+		Port:                getenvDefault("PORT", DefaultPort),
+		ProjectID:           os.Getenv("GCP_PROJECT_ID"),
+		LocationID:          os.Getenv("GCP_LOCATION_ID"),
+		QueueID:             os.Getenv("CLOUD_TASKS_QUEUE_ID"),
+		TaskAudienceURL:     os.Getenv("TASK_AUDIENCE_URL"),
+		ServiceAccountEmail: os.Getenv("SERVICE_ACCOUNT_EMAIL"),
+		GCSBucket:           os.Getenv("GCS_MUSIC_BUCKET"),
+		SlackWebhookURL:     os.Getenv("SLACK_WEBHOOK_URL"),
+		LyriaModel:          getenvDefault("LYRIA_MODEL", DefaultLyriaModel),
+		ShutdownTimeout:     DefaultShutdownGrace,
 	}
 
 	required := map[string]string{
 		"SERVICE_URL":           cfg.ServiceURL,
-		"GCP_PROJECT_ID":        cfg.GCPProjectID,
-		"GCP_LOCATION_ID":       cfg.GCPLocationID,
-		"CLOUD_TASKS_QUEUE_ID":  cfg.CloudTasksQueue,
-		"SERVICE_ACCOUNT_EMAIL": cfg.ServiceAccount,
-		"GCS_MUSIC_BUCKET":      cfg.GCSMusicBucket,
+		"GCP_PROJECT_ID":        cfg.ProjectID,
+		"GCP_LOCATION_ID":       cfg.LocationID,
+		"CLOUD_TASKS_QUEUE_ID":  cfg.QueueID,
+		"SERVICE_ACCOUNT_EMAIL": cfg.ServiceAccountEmail,
+		"GCS_MUSIC_BUCKET":      cfg.GCSBucket,
 	}
 	for key, value := range required {
 		if value == "" {

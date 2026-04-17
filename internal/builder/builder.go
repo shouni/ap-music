@@ -15,7 +15,7 @@ import (
 func BuildRouter(cfg config.Config) http.Handler {
 	reader := adapters.ReaderAdapter{}
 	lyria := adapters.LyriaAdapter{Model: cfg.LyriaModel}
-	publisher := adapters.PublisherAdapter{Bucket: cfg.GCSMusicBucket}
+	publisher := adapters.PublisherAdapter{Bucket: cfg.GCSBucket}
 	notifier := adapters.SlackAdapter{WebhookURL: cfg.SlackWebhookURL}
 	queue := adapters.CloudTasksAdapter{}
 
