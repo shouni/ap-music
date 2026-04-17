@@ -1,0 +1,20 @@
+{{define "content"}}
+<section class="py-4">
+    <h1 class="h3 mb-3">Compose Music</h1>
+    <form method="post" action="/web/compose" class="card p-3 shadow-sm">
+        <label class="form-label" for="url">URL</label>
+        <input class="form-control mb-3" id="url" name="url" type="url" placeholder="https://example.com">
+
+        <label class="form-label" for="text">Text</label>
+        <textarea class="form-control mb-3" id="text" name="text" rows="4" placeholder="Describe your desired music..."></textarea>
+
+        <label class="form-label" for="image">Image URL</label>
+        <input class="form-control mb-3" id="image" name="image" type="url" placeholder="https://example.com/image.png">
+
+        <label class="form-label" for="model">Model</label>
+        <input class="form-control mb-3" id="model" name="model" type="text" value="lyria-3">
+
+        <button class="btn btn-primary" type="submit">Queue Job</button>
+    </form>
+</section>
+{{end}}
