@@ -61,19 +61,39 @@ Web フォーム経由で入力された URL / テキスト / 画像をジョブ
 
 ```text
 ap-music/
-├── assets/            # 静的プロンプト、テンプレート、設定資産
 ├── internal/
-│   ├── adapters/      # Lyria, Cloud Tasks, Storage, Slack 連携
-│   ├── app/           # Container とライフサイクル管理
-│   ├── builder/       # DI 構築（Web/Worker）
-│   ├── config/        # 環境変数ロード、定数、バリデーション
-│   ├── domain/        # ドメインモデルと Port 定義
-│   ├── pipeline/      # MusicPipeline の実行制御
-│   ├── prompts/       # Recipe 生成プロンプト組み立て
-│   └── server/        # Web/Worker ハンドラー、ルーティング
-├── docs/              # 設計ドキュメント、図、サンプル
-├── main.go            # アプリケーション起動
-└── README.md
+│   ├── adapters/              # 外部サービス・SDKの具象実装
+│   │   ├── lyria.go           # Lyria 3 API を叩く音楽生成クライアント
+│   │   ├── reader.go          # go-web-reader を用いたコンテンツ収集
+│   │   └── slack.go           # Slack Webhook 通知
+│   ├── app/                   # アプリケーション共通のライフサイクル管理
+│   │   └── app.go
+│   ├── builder/               # DI Container（依存関係の注入）
+│   │   └── builder.go         # Web/Worker 用の Pipeline や Handler を組み立て
+│   ├── config/                # 環境変数管理
+│   │   └── config.go          # Config 構造体と LoadConfig 関数
+│   ├── controllers/           # エントリポイントごとのハンドラー
+│   │   ├── web/               # ユーザー向け Web UI / Form 受付
+│   │   │   └── handler.go
+│   │   └── worker/            # Cloud Tasks から呼び出されるジョブ実行口
+│   │       └── handler.go
+│   ├── domain/                # ドメインモデルとインターフェース (Ports)
+│   │   ├── music_recipe.go    # 楽曲設計図の構造体
+│   │   ├── task.go            # ジョブ・タスクの定義
+│   │   ├── repository.go      # 保存・通知などの Interface 定義
+│   │   └── service.go         # 音楽生成エンジンの Interface 定義
+│   ├── pipeline/              # ワークフローのオーケストレーション
+│   │   ├── workflow.go        # Interface 定義
+│   │   └── music_pipeline.go  # Collect -> Compose -> Generate -> Publish の統制
+│   ├── prompts/               # LLM用プロンプト管理
+│   │   └── recipe_builder.go  # コンテキストから MusicRecipe を構築するロジック
+│   └── server/                # HTTP サーバーのルーティング設定
+│       └── router.go          # chi 等を用いたルーティング定義
+├── templates/                 # Web UI 用の HTML テンプレート
+│   └── compose_form.html
+├── assets/                    # 静的ファイル、固定プロンプト素材
+├── docs/                      # アーキテクチャ図、API仕様
+└── main.go            # 【起点】アプリのブートストラップ（初期化・起動）
 ```
 
 ---
