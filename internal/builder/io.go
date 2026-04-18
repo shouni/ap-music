@@ -11,9 +11,7 @@ import (
 // buildRemoteIO は、I/O コンポーネントを初期化します。
 func buildRemoteIO(storage remoteio.IOFactory) (*app.RemoteIO, error) {
 	if storage == nil {
-		return &app.RemoteIO{
-			Writer: remoteio.NewUniversalIOWriter(nil, nil),
-		}, nil
+		return nil, fmt.Errorf("storage factory cannot be nil")
 	}
 
 	r, err := storage.Reader()

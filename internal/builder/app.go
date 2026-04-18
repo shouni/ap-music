@@ -27,8 +27,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}()
 
 	// 1. I/O Infrastructure (GCS)
-	var storage *gcs.GCSClientFactory
-	storage, err = gcs.New(ctx)
+	storage, err := gcs.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GCS factory: %w", err)
 	}
