@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -35,6 +36,7 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 	})
 
 	if h == nil {
+		slog.Warn("AppHandlers is nil, skipping application routes registration")
 		return
 	}
 
