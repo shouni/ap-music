@@ -1,38 +1,81 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"ap-music/internal/builder"
 	"ap-music/internal/config"
 )
 
-// NewRouter は HTTP ルーティングを組み立てます。
-func NewRouter(_ *config.Config, h *builder.AppHandlers) http.Handler {
-	mux := http.NewServeMux()
+// NewRouter は、ミドルウェアとルーティングを統合した http.Handler を構築します。
+func NewRouter(cfg *config.Config, h *builder.AppHandlers) http.Handler {
+	r := chi.NewRouter()
+	setupCommonMiddleware(r)
+	setupRoutes(r, cfg, h)
 
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
+	return r
+}
+
+// setupCommonMiddleware は、標準的なミドルウェアを構成します。
+func setupCommonMiddleware(r *chi.Mux) {
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.CleanPath)
+}
+
+// setupRoutes は、各コンポーネントのハンドラーをルーティングに登録します。
+func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
+	// --- 1. 公開ルート (ヘルスチェック) ---
+	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	if h != nil && h.Auth != nil {
-		mux.HandleFunc("GET /auth/login", h.Auth.Login)
-		mux.HandleFunc("GET /auth/callback", h.Auth.Callback)
+	if h == nil {
+		slog.Warn("AppHandlers is nil, skipping application routes registration")
+		return
 	}
 
-	if h != nil && h.Web != nil {
-		mux.HandleFunc("GET /", h.Web.Home)
-		mux.HandleFunc("POST /web/compose", h.Web.Compose)
+	// --- 2. 認証関連エンドポイント (OAuth2 フロー) ---
+	if h.Auth != nil {
+		r.Route("/auth", func(r chi.Router) {
+			r.Get("/login", h.Auth.Login)
+			r.Get("/callback", h.Auth.Callback)
+		})
 	}
 
-	if h != nil && h.Worker != nil {
-		workerHandler := http.HandlerFunc(h.Worker.ProcessTask)
-		if h.Auth != nil {
-			workerHandler = h.Auth.TaskOIDCVerificationMiddleware(workerHandler).ServeHTTP
+	// --- 3. 認証が必要なルート (Web UI 用) ---
+	r.Group(func(r chi.Router) {
+		if h.Auth == nil {
+			if h.Web != nil {
+				slog.Error("Auth handler is nil, skipping protected web routes")
+			}
+			return
 		}
-		mux.Handle("POST /tasks/generate", http.HandlerFunc(workerHandler))
-	}
+		r.Use(h.Auth.Middleware)
 
-	return mux
+		if h.Web != nil {
+			r.Get("/", h.Web.Home)
+			r.Post("/web/compose", h.Web.Compose)
+		}
+	})
+
+	// --- 4. Cloud Tasks 専用ルート (Worker 用) ---
+	r.Group(func(r chi.Router) {
+		if h.Auth == nil {
+			if h.Worker != nil {
+				slog.Error("Auth handler is nil, skipping worker routes")
+			}
+			return
+		}
+		r.Use(h.Auth.TaskOIDCVerificationMiddleware)
+
+		if h.Worker != nil {
+			r.Post("/tasks/generate", h.Worker.ProcessTask)
+		}
+	})
 }
