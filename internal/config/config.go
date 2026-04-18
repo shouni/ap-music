@@ -46,10 +46,11 @@ func LoadConfig() (Config, error) {
 
 	cfg := Config{
 		ServiceURL:          serviceURL,
-		Port:                getEnv("PORT", "8080"),
+		Port:                getEnv("PORT", DefaultPort),
 		ProjectID:           getEnv("GCP_PROJECT_ID", "your-gcp-project"),
 		LocationID:          getEnv("GCP_LOCATION_ID", "asia-northeast1"),
 		QueueID:             getEnv("CLOUD_TASKS_QUEUE_ID", "manga-queue"),
+		TaskAudienceURL:     getEnv("TASK_AUDIENCE_URL", serviceURL),
 		ServiceAccountEmail: getEnv("SERVICE_ACCOUNT_EMAIL", ""),
 		GCSBucket:           getEnv("GCS_MUSIC_BUCKET", "your-manga-archive-bucket"),
 		SlackWebhookURL:     getEnv("SLACK_WEBHOOK_URL", ""),
