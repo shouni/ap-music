@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/shouni/go-utils/envutil"
+	"github.com/shouni/go-utils/text"
 	"github.com/shouni/netarmor/securenet"
 )
 
@@ -18,4 +19,9 @@ func getEnv(key string, defaultValue string) string {
 // getEnvAsInt は環境変数を整数として取得し、存在しないか変換に失敗した場合はデフォルト値を返します。
 func getEnvAsInt(key string, defaultValue int) int {
 	return envutil.GetEnvAsInt(key, defaultValue)
+}
+
+// parseCommaSeparatedList はカンマ区切りの文字列をパースしてスライスを返します。
+func parseCommaSeparatedList(value string) []string {
+	return text.ParseCommaSeparatedList(value)
 }

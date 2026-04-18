@@ -43,6 +43,8 @@ type Config struct {
 // LoadConfig は環境変数から設定を読み込みます。
 func LoadConfig() (Config, error) {
 	serviceURL := getEnv("SERVICE_URL", "http://localhost:8080")
+	allowedEmails := getEnv("ALLOWED_EMAILS", "")
+	allowedDomains := getEnv("ALLOWED_DOMAINS", "")
 
 	cfg := Config{
 		ServiceURL:          serviceURL,
@@ -56,6 +58,15 @@ func LoadConfig() (Config, error) {
 		SlackWebhookURL:     getEnv("SLACK_WEBHOOK_URL", ""),
 		LyriaModel:          getEnv("LYRIA_MODEL", DefaultLyriaModel),
 		ShutdownTimeout:     DefaultShutdownGrace,
+
+		// OAuth & Session
+		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+		SessionSecret:      getEnv("SESSION_SECRET", ""),
+		SessionEncryptKey:  getEnv("SESSION_ENCRYPT_KEY", ""),
+
+		AllowedEmails:  parseCommaSeparatedList(allowedEmails),
+		AllowedDomains: parseCommaSeparatedList(allowedDomains),
 	}
 	required := map[string]string{
 		"SERVICE_URL":           cfg.ServiceURL,
