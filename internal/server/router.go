@@ -50,9 +50,13 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 
 	// --- 3. 認証が必要なルート (Web UI 用) ---
 	r.Group(func(r chi.Router) {
-		if h.Auth != nil {
-			r.Use(h.Auth.Middleware)
+		if h.Auth == nil {
+			if h.Web != nil {
+				slog.Error("Auth handler is nil, skipping protected web routes")
+			}
+			return
 		}
+		r.Use(h.Auth.Middleware)
 
 		if h.Web != nil {
 			r.Get("/", h.Web.Home)
@@ -62,9 +66,13 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 
 	// --- 4. Cloud Tasks 専用ルート (Worker 用) ---
 	r.Group(func(r chi.Router) {
-		if h.Auth != nil {
-			r.Use(h.Auth.TaskOIDCVerificationMiddleware)
+		if h.Auth == nil {
+			if h.Worker != nil {
+				slog.Error("Auth handler is nil, skipping worker routes")
+			}
+			return
 		}
+		r.Use(h.Auth.TaskOIDCVerificationMiddleware)
 
 		if h.Worker != nil {
 			r.Post("/tasks/generate", h.Worker.ProcessTask)
