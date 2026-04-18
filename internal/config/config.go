@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"time"
 )
 
@@ -43,20 +42,20 @@ type Config struct {
 
 // LoadConfig は環境変数から設定を読み込みます。
 func LoadConfig() (Config, error) {
+	serviceURL := getEnv("SERVICE_URL", "http://localhost:8080")
+
 	cfg := Config{
-		ServiceURL:          os.Getenv("SERVICE_URL"),
-		Port:                getenvDefault("PORT", DefaultPort),
-		ProjectID:           os.Getenv("GCP_PROJECT_ID"),
-		LocationID:          os.Getenv("GCP_LOCATION_ID"),
-		QueueID:             os.Getenv("CLOUD_TASKS_QUEUE_ID"),
-		TaskAudienceURL:     os.Getenv("TASK_AUDIENCE_URL"),
-		ServiceAccountEmail: os.Getenv("SERVICE_ACCOUNT_EMAIL"),
-		GCSBucket:           os.Getenv("GCS_MUSIC_BUCKET"),
-		SlackWebhookURL:     os.Getenv("SLACK_WEBHOOK_URL"),
-		LyriaModel:          getenvDefault("LYRIA_MODEL", DefaultLyriaModel),
+		ServiceURL:          serviceURL,
+		Port:                getEnv("PORT", "8080"),
+		ProjectID:           getEnv("GCP_PROJECT_ID", "your-gcp-project"),
+		LocationID:          getEnv("GCP_LOCATION_ID", "asia-northeast1"),
+		QueueID:             getEnv("CLOUD_TASKS_QUEUE_ID", "manga-queue"),
+		ServiceAccountEmail: getEnv("SERVICE_ACCOUNT_EMAIL", ""),
+		GCSBucket:           getEnv("GCS_MUSIC_BUCKET", "your-manga-archive-bucket"),
+		SlackWebhookURL:     getEnv("SLACK_WEBHOOK_URL", ""),
+		LyriaModel:          getEnv("LYRIA_MODEL", DefaultLyriaModel),
 		ShutdownTimeout:     DefaultShutdownGrace,
 	}
-
 	required := map[string]string{
 		"SERVICE_URL":           cfg.ServiceURL,
 		"GCP_PROJECT_ID":        cfg.ProjectID,
@@ -72,11 +71,4 @@ func LoadConfig() (Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func getenvDefault(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
 }
