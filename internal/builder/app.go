@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/shouni/go-http-kit/httpkit"
+	"github.com/shouni/go-remote-io/remoteio/gcs"
 
 	"ap-music/internal/adapters"
 	"ap-music/internal/app"
@@ -26,11 +27,16 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}()
 
 	// 1. I/O Infrastructure (GCS)
-	rio, err := buildRemoteIO(ctx)
+	var storage *gcs.GCSClientFactory
+	storage, err = gcs.New(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCS factory: %w", err)
+	}
+	resources = append(resources, storage)
+	rio, err := buildRemoteIO(storage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize IO components: %w", err)
 	}
-	resources = append(resources, rio)
 
 	// 2. Task Enqueuer
 	enqueuer, err := buildTaskEnqueuer(ctx, cfg)
