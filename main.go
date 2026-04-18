@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -12,15 +12,24 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(fmt.Errorf("failed to load config: %w", err))
-	}
+	// 1. ロガーの設定（構造化ログの復元）
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	// 2. シグナルに反応するコンテキストの作成
+	// これにより、SIGINT/SIGTERM受信時に ctx.Done() が閉じる
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := server.Run(ctx, &cfg); err != nil {
-		log.Fatal(err)
+	// 3. 設定のロードとバリデーション
+	cfg := config.LoadConfig()
+	if err := cfg.ValidateEssentialConfig(); err != nil {
+		slog.Error("Config validation failed", "error", err)
+		os.Exit(1)
+	}
+
+	// 4. サーバーの実行
+	if err := server.Run(ctx, cfg); err != nil {
+		slog.Error("Application failed", "error", err)
+		os.Exit(1)
 	}
 }

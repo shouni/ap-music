@@ -13,7 +13,7 @@ import (
 	"ap-music/internal/server/handlers"
 )
 
-const defaultSessionName = "ap-manga-session"
+const defaultSessionName = "ap-music-session"
 
 // AppHandlers は生成されたすべての HTTP ハンドラーを保持する構造体です。
 // server パッケージはこの構造体を受け取ってルーティングを行います。

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -41,7 +40,7 @@ type Config struct {
 }
 
 // LoadConfig は環境変数から設定を読み込みます。
-func LoadConfig() (Config, error) {
+func LoadConfig() *Config {
 	serviceURL := getEnv("SERVICE_URL", "http://localhost:8080")
 	allowedEmails := getEnv("ALLOWED_EMAILS", "")
 	allowedDomains := getEnv("ALLOWED_DOMAINS", "")
@@ -68,19 +67,6 @@ func LoadConfig() (Config, error) {
 		AllowedEmails:  parseCommaSeparatedList(allowedEmails),
 		AllowedDomains: parseCommaSeparatedList(allowedDomains),
 	}
-	required := map[string]string{
-		"SERVICE_URL":           cfg.ServiceURL,
-		"GCP_PROJECT_ID":        cfg.ProjectID,
-		"GCP_LOCATION_ID":       cfg.LocationID,
-		"CLOUD_TASKS_QUEUE_ID":  cfg.QueueID,
-		"SERVICE_ACCOUNT_EMAIL": cfg.ServiceAccountEmail,
-		"GCS_MUSIC_BUCKET":      cfg.GCSBucket,
-	}
-	for key, value := range required {
-		if value == "" {
-			return Config{}, fmt.Errorf("missing required env: %s", key)
-		}
-	}
 
-	return cfg, nil
+	return &cfg
 }
