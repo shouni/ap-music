@@ -7,23 +7,20 @@
 
 ## 🚀 概要 (About) - 音楽生成のWebオーケストレーター
 
-**AP Music** は、音楽生成コア機能（`Lyria 3` + `Music Recipe`）を  
-**Cloud Run** および **Google Cloud Tasks** で Web アプリケーション化し、非同期にオーケストレーションするためのプロジェクトです。
+**AP Music** は、音楽生成コア機能（`Lyria 3 Pro` + `Music Recipe`）を **Cloud Run** および **Google Cloud Tasks** で Web アプリケーション化し、非同期にオーケストレーションするためのプロジェクトです。
 
-Web フォーム経由で入力された URL / テキスト / 画像をジョブとしてキュー投入し、ワーカーで楽曲生成を実行します。完了時には **Slack 通知** と **署名付き URL** を発行し、生成結果を即座に共有できます。
+本プロジェクトの最大の特徴は、**Lyria 3 Pro による WAV 直接出力**と、**独自開発のバイナリ結合ロジック**を組み合わせた高品質な音声生成パイプラインです。複数の楽曲パーツを並列生成し、ロスレスで統合することで、複雑な構成の楽曲生成を高速かつ安定して実現します。
 
 ---
 
 ## 🎨 ワークフロー (Workflows)
 
-用途に応じて、Web UI から以下の機能を使い分けます。
-
 | 画面 (Command) | 役割 | 主な入力 / 出力 |
 | --- | --- | --- |
 | **Compose** | URL / 文章 / 画像から楽曲設計図（Music Recipe）を生成 | URL・Text・Image / JSON (Recipe) |
-| **Generate** | Recipe から音楽を生成 | Recipe / MP3 |
-| **Publish** | 生成結果の保存と共有リンク発行 | MP3 / Signed URL |
-| **Notify** | 実行完了を通知 | Job Result / Slack Message |
+| **Generate** | Recipe に基づき、WAV パーツを生成・結合 | Recipe / **WAV (Lossless)** |
+| **Publish** | 成果物の保存と署名付き URL の発行 | WAV / Signed URL |
+| **Notify** | Slack への実行完了通知 | Job Result / Slack Message |
 
 ### 💻 実行フロー (Workflow)
 
