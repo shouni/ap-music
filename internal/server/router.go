@@ -34,6 +34,10 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 		_, _ = w.Write([]byte("ok"))
 	})
 
+	if h == nil {
+		return
+	}
+
 	// --- 2. 認証関連エンドポイント (OAuth2 フロー) ---
 	if h.Auth != nil {
 		r.Route("/auth", func(r chi.Router) {
