@@ -31,9 +31,12 @@ func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remo
 }
 
 // Publish は成果物をストレージに保存し、その結果（署名付きURL等）を返します。
-func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, outputFile []byte) (*domain.PublishResult, error) {
+func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, wav []byte) (*domain.PublishResult, error) {
 	if task.JobID == "" {
 		return nil, fmt.Errorf("job id is required")
+	}
+	if len(wav) == 0 {
+		return nil, fmt.Errorf("output file is empty")
 	}
 
 	storageURI := fmt.Sprintf("gs://%s/%s.wav", a.Bucket, task.JobID)
@@ -44,7 +47,7 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, output
 		return nil, fmt.Errorf("failed to generate signed URL: %w", err)
 	}
 
-	contentReader := bytes.NewReader(outputFile)
+	contentReader := bytes.NewReader(wav)
 	if err := a.writer.Write(ctx, storageURI, contentReader, "audio/wav"); err != nil {
 		return nil, fmt.Errorf("failed to write to storage: %w", err)
 	}
