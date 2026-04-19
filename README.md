@@ -4,6 +4,11 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/shouni/ap-music)](https://golang.org/)
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/shouni/ap-music)](https://github.com/shouni/ap-music/tags)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Status](https://img.shields.io/badge/Status-Work--in--Progress-orange)](#)
+
+> [!WARNING]
+> **現在このプロジェクトは活発に開発中（WIP）です。**
+> アーキテクチャ設計とインターフェース定義を先行して進めており、実装の一部はプレースホルダー、またはモックの状態です。破壊的な変更が頻繁に行われる可能性があるため、プロダクション環境での利用にはご注意ください。
 
 ## 🚀 概要 (About) - 音楽生成のWebオーケストレーター
 
@@ -58,46 +63,46 @@
 
 ```text
 ap-music/
-├── assets/                    # 埋め込みリソース管理
-│   ├── assets.go              # embed.FS による静的ファイル管理
-│   ├── prompts/               # LLM用システムプロンプト (prompt_recipe.md)
-│   └── templates/             # Web UI 用 HTML テンプレート (layout / form)
+├── assets/                     # 埋め込みリソース管理
+│   ├── assets.go               # embed.FS による静的ファイル管理
+│   ├── prompts/                # LLM用システムプロンプト (prompt_recipe.md)
+│   └── templates/              # Web UI 用 HTML テンプレート (layout / form)
 ├── internal/
-│   ├── adapters/              # 外部サービス・SDK の具象実装 (Adapters)
-│   │   ├── lyria.go           # Lyria 3 API を用いた音楽生成
-│   │   ├── queue.go           # Cloud Tasks へのジョブ投入
-│   │   ├── reader.go          # go-web-reader によるコンテンツ収集
-│   │   ├── publisher.go       # 成果物の保存と署名付き URL 発行
-│   │   └── slack.go           # Slack Webhook 通知
-│   ├── app/                   # アプリケーション共通のライフサイクル / コンテナ
-│   │   └── app.go             # Container 構造体定義
-│   ├── builder/               # DI Container（依存関係の組み立て）
-│   │   ├── app.go             # アプリ基盤のビルド
-│   │   ├── handlers.go        # HTTP ハンドラーの組み立て
-│   │   ├── io.go              # RemoteIO 関連の初期化
-│   │   ├── pipeline.go        # MusicPipeline の組み立て
-│   │   └── task.go            # TaskEnqueuer の初期化
-│   ├── config/                # 設定管理
-│   │   ├── config.go          # Config 構造体定義
-│   │   └── config_helpers.go  # 環境変数読み込み補助
-│   ├── domain/                # ドメインモデルとインターフェース (Ports)
-│   │   ├── music_recipe.go    # 楽曲設計図の定義
-│   │   ├── task.go            # ジョブ・タスクモデル
-│   │   ├── service.go         # 音楽生成エンジンの Port
-│   │   ├── repository.go      # ストレージ・公開の Port
-│   │   └── notification.go    # 通知サービスの Port
-│   ├── pipeline/              # ワークフローのオーケストレーション
-│   │   ├── music_pipeline.go  # Collect -> Compose -> Generate -> Publish の統制
-│   │   └── workflow.go        # Pipeline インターフェース定義
-│   ├── prompts/               # プロンプト構築ロジック
-│   │   └── recipe_builder.go  # MusicRecipe 構築用プロンプト生成
-│   └── server/                # HTTP サーバー
-│       ├── handlers/          # Web ハンドラー / Worker ハンドラー
-│       │   ├── handler.go     # Web UI 用ロジック
+│   ├── adapters/               # 外部サービス・SDK の具象実装 (Adapters)
+│   │   ├── lyria.go            # Lyria 3 API を用いた音楽生成
+│   │   ├── queue.go            # Cloud Tasks へのジョブ投入
+│   │   ├── reader.go           # go-web-reader によるコンテンツ収集
+│   │   ├── publisher.go        # 成果物の保存と署名付き URL 発行
+│   │   └── slack.go            # Slack Webhook 通知
+│   ├── app/                    # アプリケーション共通のライフサイクル / コンテナ
+│   │   └── app.go              # Container 構造体定義
+│   ├── builder/                # DI Container（依存関係の組み立て）
+│   │   ├── app.go              # アプリ基盤のビルド
+│   │   ├── handlers.go         # HTTP ハンドラーの組み立て
+│   │   ├── io.go               # RemoteIO 関連の初期化
+│   │   ├── pipeline.go         # MusicPipeline の組み立て
+│   │   └── task.go             # TaskEnqueuer の初期化
+│   ├── config/                 # 設定管理
+│   │   ├── config.go           # Config 構造体定義
+│   │   └── config_helpers.go   # 環境変数読み込み補助
+│   ├── domain/                 # ドメインモデルとインターフェース (Ports)
+│   │   ├── music_recipe.go     # 楽曲設計図の定義
+│   │   ├── task.go             # ジョブ・タスクモデル
+│   │   ├── service.go          # 音楽生成エンジンの Port
+│   │   ├── repository.go       # ストレージ・公開の Port
+│   │   └── notification.go     # 通知サービスの Port
+│   ├── pipeline/               # ワークフローのオーケストレーション
+│   │   ├── music_pipeline.go   # Collect -> Compose -> Generate -> Publish の統制
+│   │   └── workflow.go         # Pipeline インターフェース定義
+│   ├── prompts/                # プロンプト構築ロジック
+│   │   └── recipe_builder.go   # MusicRecipe 構築用プロンプト生成
+│   └── server/                 # HTTP サーバー
+│       ├── handlers/           # Web ハンドラー / Worker ハンドラー
+│       │   ├── handler.go      # Web UI 用ロジック
 │       │   └── task_handler.go # Cloud Tasks ジョブ実行ロジック
-│       ├── router.go          # chi によるルーティング定義
-│       └── server.go          # サーバーの起動・シャットダウン管理
-└── main.go            # 【起点】アプリのブートストラップ（初期化・起動）
+│       ├── router.go           # chi によるルーティング定義
+│       └── server.go           # サーバーの起動・シャットダウン管理
+└── main.go                     # 【起点】アプリのブートストラップ（初期化・起動）
 ```
 
 ---
@@ -106,38 +111,39 @@ ap-music/
 
 ```mermaid
 sequenceDiagram
-    participant User as User (Web UI)
-    participant Web as Web (Cloud Run)
-    participant Queue as Cloud Tasks
-    participant Worker as Worker (Cloud Run)
-    participant Pipeline as Music Pipeline
-    participant Collector as Collector (go-web-reader)
-    participant Composer as Composer (Recipe Builder)
-    participant Lyria as Lyria 3 API
-    participant GCS as Cloud Storage
-    participant Slack as Slack Notification
+   participant User as User (Web UI)
+   participant Web as Web (Cloud Run)
+   participant Queue as Cloud Tasks
+   participant Worker as Worker (Cloud Run)
+   participant Pipeline as Music Pipeline
+   participant Collector as Collector (go-web-reader)
+   participant Composer as Composer (Recipe Builder)
+   participant Lyria as Lyria 3 API
+   participant GCS as Cloud Storage
+   participant Slack as Slack Notification
 
-    User->>Web: フォーム送信 (URL/Text/Image/Model)
-    Web->>Queue: タスクをエンキュー (Async)
-    Web-->>User: 受付完了レスポンス
+   User->>Web: フォーム送信 (URL/Text/Image/Model)
+   Web->>Queue: タスクをエンキュー (Async)
+   Web-->>User: 受付完了レスポンス
 
-    Queue->>Worker: HTTP POST (タスク実行)
-    Worker->>Pipeline: Execute() 起動
+   Queue->>Worker: HTTP POST (タスク実行)
+   Worker->>Pipeline: Execute() 起動
 
-    Pipeline->>Collector: 入力コンテキスト収集
-    Collector-->>Pipeline: Text/Image Context
-    Pipeline->>Composer: MusicRecipe を生成
-    Composer-->>Pipeline: Recipe(JSON)
+   Pipeline->>Collector: 入力コンテキスト収集
+   Collector-->>Pipeline: Text/Image Context
+   Pipeline->>Composer: MusicRecipe を生成
+   Composer-->>Pipeline: Recipe(JSON)
 
-    rect rgba(240, 240, 240, 0.1)
-        Note over Pipeline, Lyria: 生成フェーズ
-        Pipeline->>Lyria: 音楽生成リクエスト
-        Lyria-->>Pipeline: MP3 Binary
-    end
+   rect rgba(240, 240, 240, 0.1)
+      Note over Pipeline, Lyria: 生成・結合フェーズ (In-Progress)
+      Pipeline->>Lyria: 音楽生成リクエスト
+      Lyria-->>Pipeline: WAV Binary (Lossless)
+      Note right of Pipeline: 複数パーツのバイナリ結合ロジック
+   end
 
-    Pipeline->>GCS: 成果物保存
-    Pipeline->>GCS: Signed URL 発行
-    Pipeline->>Slack: 完了通知 (閲覧URL / JobID)
+   Pipeline->>GCS: 成果物保存 (WAV/MP3)
+   Pipeline->>GCS: Signed URL 発行
+   Pipeline->>Slack: 完了通知 (閲覧URL / JobID)
 ```
 
 ---
