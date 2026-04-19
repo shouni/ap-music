@@ -47,7 +47,10 @@ func NewSlackAdapter(httpClient httpkit.Requester, webhookURL string) (*SlackAda
 }
 
 // Notify は処理完了時のSlack通知を送信します。
-func (s *SlackAdapter) Notify(ctx context.Context, result domain.PublishResult) error {
+func (s *SlackAdapter) Notify(ctx context.Context, result *domain.PublishResult) error {
+	if result == nil {
+		return fmt.Errorf("publish result is nil")
+	}
 	return s.NotifyWithRequest(ctx, result.SignedURL, result.StorageURI, domain.NotificationRequest{})
 }
 

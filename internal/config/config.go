@@ -9,7 +9,8 @@ const (
 	DefaultLyriaModel    = "lyria-3"
 	DefaultShutdownGrace = 15 * time.Second
 
-	DefaultHTTPTimeout = 60 * time.Second
+	DefaultHTTPTimeout  = 60 * time.Second
+	SignedURLExpiration = 30 * time.Minute
 )
 
 // Config はアプリ設定です。

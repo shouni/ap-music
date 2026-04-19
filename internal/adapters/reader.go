@@ -10,6 +10,8 @@ import (
 	"github.com/shouni/go-manga-kit/ports"
 	"github.com/shouni/go-remote-io/remoteio"
 	"github.com/shouni/go-web-reader/pkg/reader"
+
+	"ap-music/internal/domain"
 )
 
 const (
@@ -38,12 +40,16 @@ func NewReaderAdapter(storage remoteio.ReadWriteFactory) (*ReaderAdapter, error)
 }
 
 // Collect は、コンテンツを取得します。
-func (r *ReaderAdapter) Collect(ctx context.Context, url string) (string, error) {
-	return r.readContent(ctx, url)
+func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, error) {
+	return r.readContent(ctx, task)
 }
 
 // readContent は、指定されたソースURLからコンテンツを取得します。
-func (r *ReaderAdapter) readContent(ctx context.Context, url string) (string, error) {
+func (r *ReaderAdapter) readContent(ctx context.Context, task domain.Task) (string, error) {
+	url := task.RequestURL
+	if url == "" {
+		return "", fmt.Errorf("request URL is empty")
+	}
 	rc, err := r.contentReader.Open(ctx, url)
 	if err != nil {
 		return "", fmt.Errorf("failed to read source: %w", err)

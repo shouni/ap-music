@@ -10,7 +10,7 @@ type Pipeline interface {
 
 // Collector は入力コンテキスト収集を行います。
 type Collector interface {
-	Collect(ctx context.Context, url string) (string, error)
+	Collect(ctx context.Context, task Task) (string, error)
 }
 
 // Composer はコンテキストから MusicRecipe を生成します。

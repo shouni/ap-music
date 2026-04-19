@@ -51,8 +51,19 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	lyria := adapters.NewLyriaAdapter(ctx, cfg)
-	reader := adapters.ReaderAdapter{}
-	publisher := adapters.PublisherAdapter{Bucket: cfg.GCSBucket}
+	reader, err := adapters.NewReaderAdapter(rio.Factory)
+	if err != nil {
+		return nil, err
+	}
+
+	publisher, err := adapters.NewPublisherAdapter(
+		cfg,
+		rio.Writer,
+		rio.Signer,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// 3. Pipeline (Core Logic)
 	musicPipeline, err := buildPipeline(cfg, reader, lyria, lyria, publisher, slack)
