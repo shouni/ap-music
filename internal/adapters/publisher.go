@@ -1,37 +1,39 @@
 package adapters
 
 import (
-	"ap-music/internal/config"
 	"bytes"
 	"context"
 	"fmt"
-
-	"ap-music/internal/domain"
+	"time"
 
 	"github.com/shouni/go-remote-io/remoteio"
+
+	"ap-music/internal/config"
+	"ap-music/internal/domain"
 )
 
-// PublisherAdapter は成果物保存を行う雛形です。
+// PublisherAdapter は成果物保存を行うアダプターです。
 type PublisherAdapter struct {
-	writer remoteio.Writer
-	signer remoteio.URLSigner
-	Bucket string
+	writer     remoteio.Writer
+	signer     remoteio.URLSigner
+	Bucket     string
+	Expiration time.Duration // 有効期限をフィールドとして保持
 }
 
-// NesPublisherAdapter は成果物保存のためのアダプターを生成します。
-func NesPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remoteio.URLSigner) (*PublisherAdapter, error) {
+// NewPublisherAdapter は成果物保存のためのアダプターを生成します。
+func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remoteio.URLSigner) (*PublisherAdapter, error) {
 	return &PublisherAdapter{
-		writer: writer,
-		signer: signer,
-		Bucket: cfg.GCSBucket,
+		writer:     writer,
+		signer:     signer,
+		Bucket:     cfg.GCSBucket,
+		Expiration: config.SignedURLExpiration,
 	}, nil
 }
 
-// Publish は保存結果を返します。
-// Publish は保存結果を返します。
-func (a PublisherAdapter) Publish(ctx context.Context, task domain.Task, outputFile []byte) (domain.PublishResult, error) {
+// Publish は成果物をストレージに保存し、その結果（署名付きURL等）を返します。
+func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, outputFile []byte) (*domain.PublishResult, error) {
 	if task.JobID == "" {
-		return domain.PublishResult{}, fmt.Errorf("job id is required")
+		return nil, fmt.Errorf("job id is required")
 	}
 
 	storageURI := fmt.Sprintf("gs://%s/%s.wav", a.Bucket, task.JobID)
@@ -39,16 +41,15 @@ func (a PublisherAdapter) Publish(ctx context.Context, task domain.Task, outputF
 	// 署名付きURLの生成
 	signedURL, err := a.generateSignedResultURL(ctx, storageURI)
 	if err != nil {
-		return domain.PublishResult{}, fmt.Errorf("failed to generate signed URL: %w", err)
+		return nil, fmt.Errorf("failed to generate signed URL: %w", err)
 	}
 
-	// []byte を io.Reader に変換して Writer を呼び出し
 	contentReader := bytes.NewReader(outputFile)
 	if err := a.writer.Write(ctx, storageURI, contentReader, "audio/wav"); err != nil {
-		return domain.PublishResult{}, fmt.Errorf("failed to write to storage: %w", err)
+		return nil, fmt.Errorf("failed to write to storage: %w", err)
 	}
 
-	return domain.PublishResult{
+	return &domain.PublishResult{
 		JobID:      task.JobID,
 		StorageURI: storageURI,
 		SignedURL:  signedURL,
@@ -56,6 +57,6 @@ func (a PublisherAdapter) Publish(ctx context.Context, task domain.Task, outputF
 }
 
 // generateSignedResultURL は StorageURI から署名付きURLを作るヘルパーです。
-func (a PublisherAdapter) generateSignedResultURL(ctx context.Context, storageURI string) (string, error) {
-	return a.signer.GenerateSignedURL(ctx, storageURI, "GET", config.SignedURLExpiration)
+func (a *PublisherAdapter) generateSignedResultURL(ctx context.Context, storageURI string) (string, error) {
+	return a.signer.GenerateSignedURL(ctx, storageURI, "GET", a.Expiration)
 }

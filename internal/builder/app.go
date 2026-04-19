@@ -55,7 +55,15 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	if err != nil {
 		return nil, err
 	}
-	publisher := adapters.PublisherAdapter{Bucket: cfg.GCSBucket}
+
+	publisher, err := adapters.NewPublisherAdapter(
+		cfg,
+		rio.Writer,
+		rio.Signer,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// 3. Pipeline (Core Logic)
 	musicPipeline, err := buildPipeline(cfg, reader, lyria, lyria, publisher, slack)
