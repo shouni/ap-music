@@ -22,6 +22,9 @@ type PublisherAdapter struct {
 
 // NewPublisherAdapter は成果物保存のためのアダプターを生成します。
 func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remoteio.URLSigner) (*PublisherAdapter, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config is required")
+	}
 	return &PublisherAdapter{
 		writer:     writer,
 		signer:     signer,
@@ -31,11 +34,11 @@ func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remo
 }
 
 // Publish は成果物をストレージに保存し、その結果（署名付きURL等）を返します。
-func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, wav []byte) (*domain.PublishResult, error) {
+func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, audioData []byte) (*domain.PublishResult, error) {
 	if task.JobID == "" {
 		return nil, fmt.Errorf("job id is required")
 	}
-	if len(wav) == 0 {
+	if len(audioData) == 0 {
 		return nil, fmt.Errorf("output file is empty")
 	}
 
@@ -47,7 +50,7 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, wav []
 		return nil, fmt.Errorf("failed to generate signed URL: %w", err)
 	}
 
-	contentReader := bytes.NewReader(wav)
+	contentReader := bytes.NewReader(audioData)
 	if err := a.writer.Write(ctx, storageURI, contentReader, "audio/wav"); err != nil {
 		return nil, fmt.Errorf("failed to write to storage: %w", err)
 	}
