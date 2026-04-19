@@ -15,8 +15,6 @@ import (
 const (
 	// maxInputSize は読み込みを許可する最大テキストサイズ (5MB) です。
 	maxInputSize = 5 * 1024 * 1024
-	// maxErrorResponseLength はエラーログに含める応答抜粋の最大文字数です。
-	maxErrorResponseLength = 200
 )
 
 // ReaderAdapter は入力情報を収集します。
@@ -41,7 +39,7 @@ func NewReaderAdapter(storage remoteio.ReadWriteFactory) (*ReaderAdapter, error)
 
 // Collect は、コンテンツを取得します。
 func (r *ReaderAdapter) Collect(ctx context.Context, url string) (string, error) {
-	return url, nil
+	return r.readContent(ctx, url)
 }
 
 // readContent は、指定されたソースURLからコンテンツを取得します。
@@ -73,14 +71,13 @@ func (r *ReaderAdapter) readContent(ctx context.Context, url string) (string, er
 			"url", url,
 			"limit_bytes", maxInputSize)
 
-		// UTF-8の文字境界に合わせて末尾の不正なバイトを取り除く
-		if !utf8.Valid(content) {
-			for len(content) > 0 {
-				isStart := utf8.RuneStart(content[len(content)-1])
+		// UTF-8の文字境界に合わせて末尾の不完全なバイトを取り除く
+		for len(content) > 0 {
+			r, size := utf8.DecodeLastRune(content)
+			if r == utf8.RuneError && size == 1 {
 				content = content[:len(content)-1]
-				if isStart {
-					break
-				}
+			} else {
+				break
 			}
 		}
 	}
