@@ -111,39 +111,39 @@ ap-music/
 
 ```mermaid
 sequenceDiagram
-   participant User as User (Web UI)
-   participant Web as Web (Cloud Run)
-   participant Queue as Cloud Tasks
-   participant Worker as Worker (Cloud Run)
-   participant Pipeline as Music Pipeline
-   participant Collector as Collector (go-web-reader)
-   participant Composer as Composer (Recipe Builder)
-   participant Lyria as Lyria 3 API
-   participant GCS as Cloud Storage
-   participant Slack as Slack Notification
+    participant User as User (Web UI)
+    participant Web as Web (Cloud Run)
+    participant Queue as Cloud Tasks
+    participant Worker as Worker (Cloud Run)
+    participant Pipeline as Music Pipeline
+    participant Collector as Collector (go-web-reader)
+    participant Composer as Composer (Recipe Builder)
+    participant Lyria as Lyria 3 API
+    participant GCS as Cloud Storage
+    participant Slack as Slack Notification
 
-   User->>Web: フォーム送信 (URL/Text/Image/Model)
-   Web->>Queue: タスクをエンキュー (Async)
-   Web-->>User: 受付完了レスポンス
+    User->>Web: フォーム送信 (URL/Text/Image/Model)
+    Web->>Queue: タスクをエンキュー (Async)
+    Web-->>User: 受付完了レスポンス
 
-   Queue->>Worker: HTTP POST (タスク実行)
-   Worker->>Pipeline: Execute() 起動
+    Queue->>Worker: HTTP POST (タスク実行)
+    Worker->>Pipeline: Execute() 起動
 
-   Pipeline->>Collector: 入力コンテキスト収集
-   Collector-->>Pipeline: Text/Image Context
-   Pipeline->>Composer: MusicRecipe を生成
-   Composer-->>Pipeline: Recipe(JSON)
+    Pipeline->>Collector: 入力コンテキスト収集
+    Collector-->>Pipeline: Text/Image Context
+    Pipeline->>Composer: MusicRecipe を生成
+    Composer-->>Pipeline: Recipe(JSON)
 
-   rect rgba(240, 240, 240, 0.1)
-      Note over Pipeline, Lyria: 生成・結合フェーズ (In-Progress)
-      Pipeline->>Lyria: 音楽生成リクエスト
-      Lyria-->>Pipeline: WAV Binary (Lossless)
-      Note right of Pipeline: 複数パーツのバイナリ結合ロジック
-   end
+    rect rgba(240, 240, 240, 0.1)
+        Note over Pipeline, Lyria: 生成・結合フェーズ (In-Progress)
+        Pipeline->>Lyria: 音楽生成リクエスト
+        Lyria-->>Pipeline: WAV Binary (Lossless)
+        Note right of Pipeline: 複数パーツのバイナリ結合ロジック
+     end
 
-   Pipeline->>GCS: 成果物保存 (WAV/MP3)
-   Pipeline->>GCS: Signed URL 発行
-   Pipeline->>Slack: 完了通知 (閲覧URL / JobID)
+    Pipeline->>GCS: 成果物保存 (WAV/MP3)
+    Pipeline->>GCS: Signed URL 発行
+    Pipeline->>Slack: 完了通知 (閲覧URL / JobID)
 ```
 
 ---
