@@ -51,7 +51,10 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	lyria := adapters.NewLyriaAdapter(ctx, cfg)
-	reader := adapters.ReaderAdapter{}
+	reader, err := adapters.NewReaderAdapter(rio.Factory)
+	if err != nil {
+		return nil, err
+	}
 	publisher := adapters.PublisherAdapter{Bucket: cfg.GCSBucket}
 
 	// 3. Pipeline (Core Logic)
