@@ -17,7 +17,7 @@ type PublisherAdapter struct {
 	writer     remoteio.Writer
 	signer     remoteio.URLSigner
 	Bucket     string
-	Expiration time.Duration // 有効期限をフィールドとして保持
+	Expiration time.Duration
 }
 
 // NewPublisherAdapter は成果物保存のためのアダプターを生成します。
@@ -42,9 +42,7 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, audioD
 		return nil, fmt.Errorf("output file is empty")
 	}
 
-	storageURI := fmt.Sprintf("gs://%s/%s.wav", a.Bucket, task.JobID)
-
-	// 署名付きURLの生成
+	storageURI := remoteio.BuildGCSURI(a.Bucket, fmt.Sprintf("%s.wav", task.JobID))
 	signedURL, err := a.generateSignedResultURL(ctx, storageURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate signed URL: %w", err)
