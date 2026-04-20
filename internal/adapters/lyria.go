@@ -11,17 +11,32 @@ import (
 	"ap-music/internal/domain"
 )
 
+const (
+	defaultVertexLocationID = "global"
+)
+
 // LyriaAdapter は Lyria API クライアントの実装です。
 type LyriaAdapter struct {
 	aiClient gemini.Generator
 	model    string
 }
 
-func NewLyriaAdapter(ctx context.Context, cfg *config.Config, aiClient gemini.Generator) *LyriaAdapter {
+// NewLyriaAdapter initializes and returns a new LyriaAdapter using the provided context and configuration.
+func NewLyriaAdapter(ctx context.Context, cfg *config.Config) (*LyriaAdapter, error) {
+	clientConfig := gemini.Config{
+		ProjectID:  cfg.ProjectID,
+		LocationID: defaultVertexLocationID,
+	}
+
+	aiClient, err := gemini.NewClient(ctx, clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("Gemini API クライアントの初期化に失敗しました: %w", err)
+	}
+
 	return &LyriaAdapter{
 		aiClient: aiClient,
 		model:    cfg.LyriaModel,
-	}
+	}, nil
 }
 
 // Compose は入力から音楽の構成（レシピ）を構築します。
