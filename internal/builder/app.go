@@ -50,7 +50,10 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, err
 	}
 
-	lyria := adapters.NewLyriaAdapter(ctx, cfg)
+	lyria, err := adapters.NewLyriaAdapter(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
 	reader, err := adapters.NewReaderAdapter(rio.Factory)
 	if err != nil {
 		return nil, err
