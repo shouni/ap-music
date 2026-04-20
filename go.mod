@@ -5,6 +5,7 @@ go 1.26
 require (
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/shouni/gcp-kit v1.0.6
+	github.com/shouni/go-gemini-client v1.2.5
 	github.com/shouni/go-http-kit v1.4.0
 	github.com/shouni/go-manga-kit v1.8.17
 	github.com/shouni/go-notifier v1.2.1
@@ -70,7 +71,6 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/shouni/gemini-image-kit v1.5.7 // indirect
-	github.com/shouni/go-gemini-client v1.2.4 // indirect
 	github.com/shouni/go-web-exact/v2 v2.2.0 // indirect
 	github.com/slack-go/slack v0.19.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
@@ -91,7 +91,7 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/api v0.276.0 // indirect
-	google.golang.org/genai v1.53.0 // indirect
+	google.golang.org/genai v1.54.0 // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
