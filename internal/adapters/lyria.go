@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"ap-music/internal/config"
-	"ap-music/internal/domain"
-
 	"github.com/shouni/go-gemini-client/gemini"
 	"google.golang.org/genai"
+
+	"ap-music/internal/config"
+	"ap-music/internal/domain"
 )
 
 // LyriaAdapter は Lyria API クライアントの実装です。
@@ -74,7 +74,7 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 	}
 
 	// 5. 音声データの抽出
-	if len(resp.Audios) == 0 {
+	if resp == nil || len(resp.Audios) == 0 {
 		return nil, fmt.Errorf("no audio data (WAV) received from Lyria")
 	}
 
