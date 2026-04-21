@@ -50,6 +50,9 @@ func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, 
 		if err != nil {
 			return "", err
 		}
+		if strings.TrimSpace(content) == "" {
+			return "", fmt.Errorf("source URL content is empty: %s", requestURL)
+		}
 		parts = append(parts, fmt.Sprintf("[Source URL]\n%s\n\n[Source Content]\n%s", requestURL, content))
 	}
 
