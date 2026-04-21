@@ -30,7 +30,7 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		RequestURL: r.FormValue("url"),
 		InputText:  r.FormValue("text"),
 		ImageURL:   r.FormValue("image"),
-		Model:      r.FormValue("model"),
+		Model:      model,
 		CreatedAt:  time.Now().UTC(),
 	}
 	if task.JobID == "" {
