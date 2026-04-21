@@ -10,24 +10,24 @@
             <div class="card-body py-5 px-4">
                 <div class="mb-4">
                     <div class="display-1 text-success mb-3">
-                        <i class="bi bi-check2-circle" style="color: var(--zunda-green);"></i>
+                        <i class="bi bi-music-note-beamed" style="color: var(--zunda-green);"></i>
                     </div>
                 </div>
 
-                <h2 class="fw-bold mb-3" style="color: var(--zunda-dark);">生成リクエストを受け付けました</h2>
+                <h2 class="fw-bold mb-3" style="color: var(--zunda-dark);">音楽生成を開始しました</h2>
 
                 <p class="fs-5 text-muted mb-4">
-                    現在、AIが台本の解析と画像の生成処理を行っています。<br>
-                    完了まで数分かかる場合がありますので、このまましばらくお待ちください。
+                    現在、AIが楽曲レシピの設計とLyriaによる音楽生成を行っています。<br>
+                    高品質な楽曲を調律中ですので、完了までしばらくお待ちください。
                 </p>
 
                 <div class="bg-light p-4 rounded-4 mb-5 text-start border">
                     <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-link-45deg me-2 text-primary fs-4"></i>
-                        <span class="fw-bold text-secondary small">対象リソース:</span>
+                        <i class="bi bi-vinyl me-2 text-primary fs-4"></i>
+                        <span class="fw-bold text-secondary small">解析対象 / テーマ:</span>
                     </div>
                     <code class="text-break p-2 d-block bg-white rounded border font-monospace" style="color: #495057;">
-                        {{.Data.RequestURL}}
+                        {{if .Data.RequestURL}}{{.Data.RequestURL}}{{else}}{{.Data.InputText}}{{end}}
                     </code>
                 </div>
 
@@ -42,21 +42,26 @@
         </div>
 
         <p class="mt-4 text-secondary small">
-            <i class="bi bi-cpu me-1"></i> System Status: Processing via Gemini 3 Flash and Cloud Tasks.
+            <i class="bi bi-cpu me-1"></i> System Status: Synthesizing via Lyria 3 and Cloud Tasks.
         </p>
     </div>
 </div>
 
 <style>
-    /* ホームへ戻るボタンをメインのアクションカラー（ずんだ色）に設定しました */
+    /* ずんだ色（メインのアクションカラー）の設定 */
     .btn-primary {
         background-color: var(--zunda-green) !important;
         border: none !important;
         transition: 0.2s;
+        box-shadow: 0 4px 15px rgba(111, 190, 68, 0.3) !important;
     }
     .btn-primary:hover {
         background-color: var(--zunda-dark) !important;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+    }
+    /* 音楽に関連する要素のアクセント */
+    .bi-vinyl {
+        color: var(--zunda-green) !important;
     }
 </style>
 {{end}}
