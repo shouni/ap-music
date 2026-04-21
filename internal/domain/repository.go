@@ -10,6 +10,8 @@ type Publisher interface {
 // Notifier は完了通知を抽象化します。
 type Notifier interface {
 	Notify(ctx context.Context, result *PublishResult) error
+	NotifyWithRequest(ctx context.Context, result *PublishResult, req NotificationRequest) error
+	NotifyError(ctx context.Context, errDetail error, req NotificationRequest) error
 }
 
 // TaskQueue は非同期キューを抽象化します。

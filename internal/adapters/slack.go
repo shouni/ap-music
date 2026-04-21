@@ -52,7 +52,6 @@ func (s *SlackAdapter) Notify(ctx context.Context, result *domain.PublishResult)
 
 // NotifyWithRequest は詳細情報（NotificationRequest）付きでSlack通知を送信します。
 func (s *SlackAdapter) NotifyWithRequest(ctx context.Context, result *domain.PublishResult, req domain.NotificationRequest) error {
-	// [Blocker] 修正: 最初に nil チェックを行うことで、以降のプロパティアクセスでのパニックを防止
 	if result == nil {
 		return fmt.Errorf("publish result is nil")
 	}
@@ -123,7 +122,7 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
 	}
 
-	// 🎼 音楽ファイルのリンク
+	// 音楽ファイルのリンク
 	// 形式: <署名付きURL|Storage URI>
 	if result.SignedURL != "" && result.StorageURI != "" {
 		sb.WriteString(fmt.Sprintf("*WAV File:* <%s|%s>\n", result.SignedURL, result.StorageURI))
@@ -131,7 +130,7 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", result.StorageURI))
 	}
 
-	// 📄 レシピ JSON のリンク
+	// レシピ JSON のリンク
 	// 形式: <署名付きURL|Recipe Storage URI>
 	if result.RecipeSignedURL != "" && result.RecipeStorageURI != "" {
 		sb.WriteString(fmt.Sprintf("*Recipe JSON:* <%s|%s>\n", result.RecipeSignedURL, result.RecipeStorageURI))
