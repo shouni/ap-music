@@ -15,7 +15,9 @@ type Task struct {
 
 // PublishResult は生成結果です。
 type PublishResult struct {
-	JobID      string `json:"job_id"`
-	StorageURI string `json:"storage_uri"`
-	SignedURL  string `json:"signed_url"`
+	JobID            string `json:"job_id"`
+	StorageURI       string `json:"storage_uri"`
+	SignedURL        string `json:"signed_url"`
+	RecipeStorageURI string `json:"recipe_storage_uri"`
+	RecipeSignedURL  string `json:"recipe_signed_url"`
 }

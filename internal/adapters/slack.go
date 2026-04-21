@@ -27,7 +27,6 @@ type SlackAdapter struct {
 // NewSlackAdapter は新しいアダプターインスタンスを作成します。
 func NewSlackAdapter(httpClient httpkit.Requester, webhookURL string) (*SlackAdapter, error) {
 	if webhookURL == "" {
-		// オプショナル機能として扱い、空のままインスタンスを返す
 		return &SlackAdapter{}, nil
 	}
 
@@ -46,29 +45,36 @@ func NewSlackAdapter(httpClient httpkit.Requester, webhookURL string) (*SlackAda
 	}, nil
 }
 
-// Notify は処理完了時のSlack通知を送信します。
+// Notify は処理完了時の標準的なSlack通知を送信します。
 func (s *SlackAdapter) Notify(ctx context.Context, result *domain.PublishResult) error {
+	return s.NotifyWithRequest(ctx, result, domain.NotificationRequest{})
+}
+
+// NotifyWithRequest は詳細情報（NotificationRequest）付きでSlack通知を送信します。
+func (s *SlackAdapter) NotifyWithRequest(ctx context.Context, result *domain.PublishResult, req domain.NotificationRequest) error {
+	// [Blocker] 修正: 最初に nil チェックを行うことで、以降のプロパティアクセスでのパニックを防止
 	if result == nil {
 		return fmt.Errorf("publish result is nil")
 	}
-	return s.NotifyWithRequest(ctx, result.SignedURL, result.StorageURI, domain.NotificationRequest{})
-}
 
-// NotifyWithRequest は詳細情報付きでSlack通知を送信します。
-func (s *SlackAdapter) NotifyWithRequest(ctx context.Context, publicURL, storageURI string, req domain.NotificationRequest) error {
+	// クライアントの有効性チェック
 	if s.webhookURL == "" || s.slackClient == nil {
-		slog.InfoContext(ctx, "Slack通知が無効化されているか、クライアントが未初期化のためスキップします。", "storage_uri", storageURI)
+		slog.InfoContext(ctx, "Slack通知が無効化されているか、クライアントが未初期化のためスキップします。", "storage_uri", result.StorageURI)
 		return nil
 	}
 
 	title := fmt.Sprintf("%s 処理が完了しました！", "🎼")
-	content := s.buildSlackContent(publicURL, storageURI, req)
+	content := s.buildSlackContent(result, req)
 
 	if err := s.slackClient.SendTextWithHeader(ctx, title, content); err != nil {
 		return fmt.Errorf("Slackへの投稿に失敗しました: %w", err)
 	}
 
-	slog.Info("Slack に完了通知を送信しました。", "public_url", publicURL)
+	slog.Info("Slack に完了通知を送信しました。",
+		"public_url", result.SignedURL,
+		"recipe_url", result.RecipeSignedURL,
+		"job_id", result.JobID,
+	)
 	return nil
 }
 
@@ -106,8 +112,8 @@ func (s *SlackAdapter) NotifyError(ctx context.Context, errDetail error, req dom
 	return nil
 }
 
-// buildSlackContent 指定された公開URL、ストレージURI、通知リクエストに基づき、Slack メッセージの内容を生成します。
-func (s *SlackAdapter) buildSlackContent(publicURL, storageURI string, req domain.NotificationRequest) string {
+// buildSlackContent 指定された結果とリクエストに基づき、Slack メッセージの内容を生成します。
+func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domain.NotificationRequest) string {
 	var sb strings.Builder
 
 	if req.SourceURL != "" {
@@ -116,12 +122,22 @@ func (s *SlackAdapter) buildSlackContent(publicURL, storageURI string, req domai
 	if req.OutputCategory != "" {
 		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
 	}
-	if publicURL != "" {
-		sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", publicURL))
+
+	// [Minor] 修正: 呼び出し元の NotifyWithRequest で nil チェックが保証されているため、
+	// 不要な if result != nil ブロックを削除し、ネストを浅くしました。
+	if result.SignedURL != "" {
+		sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", result.SignedURL))
 	}
-	if storageURI != "" {
-		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", storageURI))
+	if result.StorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", result.StorageURI))
 	}
+	if result.RecipeSignedURL != "" {
+		sb.WriteString(fmt.Sprintf("*Recipe JSON:* %s\n", result.RecipeSignedURL))
+	}
+	if result.RecipeStorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Recipe Storage URI:* %s\n", result.RecipeStorageURI))
+	}
+
 	if sb.Len() == 0 {
 		sb.WriteString(domain.NotAvailable)
 	}
