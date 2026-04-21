@@ -34,11 +34,6 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "compose_form.html", "Compose", nil)
 }
 
-// Compose はフォーム入力を Cloud Tasks にキュー投入します。
-func (h *Handler) Compose(w http.ResponseWriter, r *http.Request) {
-	h.EnqueueTask(w, r)
-}
-
 // NewHandler は指定された構成に基づいて新しいハンドラーを初期化します。
 // テンプレートをコンパイルし、レイアウトファイルが存在することを確認します。
 func NewHandler(
