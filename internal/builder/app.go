@@ -50,10 +50,18 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, err
 	}
 
-	lyria, err := adapters.NewLyriaAdapter(ctx, cfg)
+	// 3. Prompt Generator
+	promptGen, err := adapters.NewPromptAdapter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize prompt adapter: %w", err)
+	}
+
+	// 4. Lyria Adapter
+	lyria, err := adapters.NewLyriaAdapter(ctx, cfg, promptGen)
 	if err != nil {
 		return nil, err
 	}
+
 	reader, err := adapters.NewReaderAdapter(rio.Factory)
 	if err != nil {
 		return nil, err

@@ -28,14 +28,12 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 	// 1. テンプレートの読み込み
 	recipeTemplates, err := assets.LoadPrompts()
 	if err != nil {
-		// 31行目: 修正
 		return nil, fmt.Errorf("レシピテンプレートの読み込みに失敗: %w", err)
 	}
 
 	// 2. ビルダーの構築
 	recipe, err := prompts.NewBuilder(recipeTemplates)
 	if err != nil {
-		// 37行目: 修正
 		return nil, fmt.Errorf("レシピビルダーの構築に失敗: %w", err)
 	}
 

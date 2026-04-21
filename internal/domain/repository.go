@@ -16,3 +16,8 @@ type Notifier interface {
 type TaskQueue interface {
 	Enqueue(ctx context.Context, task Task) error
 }
+
+// PromptGenerator は、AIプロンプトを生成するインターフェースです。
+type PromptGenerator interface {
+	GenerateRecipe(mode, content string) (string, error)
+}

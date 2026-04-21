@@ -2,7 +2,9 @@ package adapters
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/shouni/go-gemini-client/gemini"
 	"google.golang.org/genai"
@@ -17,12 +19,13 @@ const (
 
 // LyriaAdapter は Lyria API クライアントの実装です。
 type LyriaAdapter struct {
-	aiClient gemini.Generator
-	model    string
+	aiClient  gemini.Generator
+	promptGen domain.PromptGenerator
+	model     string
 }
 
 // NewLyriaAdapter initializes and returns a new LyriaAdapter using the provided context and configuration.
-func NewLyriaAdapter(ctx context.Context, cfg *config.Config) (*LyriaAdapter, error) {
+func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.PromptGenerator) (*LyriaAdapter, error) {
 	clientConfig := gemini.Config{
 		ProjectID:  cfg.ProjectID,
 		LocationID: defaultVertexLocationID,
@@ -34,32 +37,34 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config) (*LyriaAdapter, er
 	}
 
 	return &LyriaAdapter{
-		aiClient: aiClient,
-		model:    cfg.LyriaModel,
+		aiClient:  aiClient,
+		promptGen: promptGen,
+		model:     cfg.LyriaModel,
 	}, nil
 }
 
 // Compose は入力から音楽の構成（レシピ）を構築します。
-// ※ ここでは Gemini 1.5 等を使ってプロンプトを構造化するロジックを想定
 func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicRecipe, error) {
 	if input == "" {
 		return domain.MusicRecipe{}, fmt.Errorf("empty input")
 	}
 
-	// 実際にはここで別の LLM を使い、入力を [Verse][Chorus] 等の
-	// Lyria が解釈しやすいプロンプト形式に変換する処理を挟むのが理想的です。
-	// 今回は簡易的に入力をそのままテーマとして扱います。
-	return domain.MusicRecipe{
-		Title: "Generated Track",
-		Theme: input,
-		Mood:  "Dynamic",
-		Tempo: 120,
-		Sections: []domain.MusicSection{{
-			Name:     "Full Track",
-			Duration: 30, // Lyria 3 Clip なら 30秒固定
-			Prompt:   input,
-		}},
-	}, nil
+	// 1. PromptAdapter を使って LLM から JSON 文字列（Markdown 含む）を取得
+	rawRecipe, err := a.promptGen.GenerateRecipe("recipe", input)
+	if err != nil {
+		return domain.MusicRecipe{}, fmt.Errorf("failed to generate recipe: %w", err)
+	}
+
+	// 2. Markdown のコードブロックを除去して純粋な JSON を抽出
+	jsonStr := cleanJSONResponse(rawRecipe)
+
+	// 3. JSON を domain.MusicRecipe 構造体にデコード
+	var recipe domain.MusicRecipe
+	if err := json.Unmarshal([]byte(jsonStr), &recipe); err != nil {
+		return domain.MusicRecipe{}, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
+	}
+
+	return recipe, nil
 }
 
 // Generate は Lyria 3 モデルを使用して WAV 形式の音声データを生成します。
@@ -95,4 +100,13 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 
 	// 生成されたバイナリ（WAV）を返却
 	return resp.Audios[0], nil
+}
+
+// cleanJSONResponse は LLM が出力しがちな Markdown の装飾を除去します
+func cleanJSONResponse(input string) string {
+	res := strings.TrimSpace(input)
+	res = strings.TrimPrefix(res, "```json")
+	res = strings.TrimPrefix(res, "```")
+	res = strings.TrimSuffix(res, "```")
+	return strings.TrimSpace(res)
 }
