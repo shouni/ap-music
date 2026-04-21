@@ -62,7 +62,7 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 		recipe.Metadata["model"] = model
 	}
 
-	// Step C: 音楽生成（Lyria 3）
+	// Step C: 音楽生成
 	wav, err := p.Generator.Generate(ctx, recipe)
 	if err != nil {
 		return fmt.Errorf("generate (lyria engine) failed: %w", err)

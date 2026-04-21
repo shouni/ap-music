@@ -52,7 +52,7 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 		return nil, fmt.Errorf("failed to write audio to storage: %w", err)
 	}
 
-	// 2. レシピJSONの生成 (修正: パフォーマンス向上のため MarshalIndent から Marshal へ変更)
+	// 2. レシピJSONの生成
 	recipeData, err := json.Marshal(recipe)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal recipe json: %w", err)
@@ -61,7 +61,6 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 	// 3. レシピJSONの書き込み
 	recipeReader := bytes.NewReader(recipeData)
 	if err := a.writer.Write(ctx, recipeStorageURI, recipeReader, "application/json"); err != nil {
-		// 修正: エラーメッセージに副作用（音声ファイルの書き込み完了）を含めることでデバッグ性を向上
 		return nil, fmt.Errorf("failed to write recipe to storage (audio file %s was already written): %w", storageURI, err)
 	}
 

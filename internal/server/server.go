@@ -46,12 +46,11 @@ func Run(ctx context.Context, cfg *config.Config) error {
 		}
 	}()
 
-	// シグナル処理は main.go から渡された ctx に一任する
 	select {
 	case err := <-serverErrors:
 		return fmt.Errorf("server error: %w", err)
 
-	case <-ctx.Done(): // シグナル受信時にここが通知される
+	case <-ctx.Done():
 		slog.Info("⚠️ Shutdown signal received via context, starting graceful shutdown...")
 		return gracefulShutdown(srv, cfg.ShutdownTimeout)
 	}
