@@ -66,7 +66,6 @@ func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicR
 	}
 
 	// 3. レスポンスの存在確認とAIの回答（JSON文字列）を取得
-	// nil パニックを防止し、エラー原因を特定しやすくするためのチェック
 	if resp == nil {
 		return domain.MusicRecipe{}, fmt.Errorf("AI response is nil")
 	}
