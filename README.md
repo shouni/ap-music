@@ -62,46 +62,45 @@
 
 ```text
 ap-music/
-├── assets/                     # 埋め込みリソース管理
-│   ├── assets.go               # embed.FS による静的ファイル管理
+├── assets/                     # 埋め込みリソース管理 (embed.FS)
+│   ├── assets.go               # 静的リソースの公開定義
 │   ├── prompts/                # LLM用システムプロンプト (prompt_recipe.md)
-│   └── templates/              # Web UI 用 HTML テンプレート (layout / form)
+│   └── templates/              # Web UI 用 HTML テンプレート
+│       ├── compose_form.html   # 楽曲生成リクエストフォーム
+│       └── layout.html         # 共通レイアウト基盤
 ├── internal/
 │   ├── adapters/               # 外部サービス・SDK の具象実装 (Adapters)
-│   │   ├── lyria.go            # Lyria 3 API を用いた音楽生成
-│   │   ├── queue.go            # Cloud Tasks へのジョブ投入
-│   │   ├── reader.go           # go-web-reader によるコンテンツ収集
-│   │   ├── publisher.go        # 成果物の保存と署名付き URL 発行
+│   │   ├── lyria.go            # Lyria 3 API (audio/wav) 連携
+│   │   ├── prompt.go           # go-prompt-kit によるプロンプト生成
+│   │   ├── publisher.go        # GCS 保存と署名付き URL 発行
+│   │   ├── reader.go           # go-web-reader による入力収集
 │   │   └── slack.go            # Slack Webhook 通知
-│   ├── app/                    # アプリケーション共通のライフサイクル / コンテナ
-│   │   └── app.go              # Container 構造体定義
-│   ├── builder/                # DI Container（依存関係の組み立て）
-│   │   ├── app.go              # アプリ基盤のビルド
-│   │   ├── handlers.go         # HTTP ハンドラーの組み立て
-│   │   ├── io.go               # RemoteIO 関連の初期化
-│   │   ├── pipeline.go         # MusicPipeline の組み立て
-│   │   └── task.go             # TaskEnqueuer の初期化
+│   ├── app/                    # アプリケーション共通コンテナ
+│   │   └── app.go              # Container 構造体 (DI 保持用)
+│   ├── builder/                # DI Container (依存関係の組み立て)
+│   │   ├── app.go              # 【基盤】BuildContainer (オーケストレーター)
+│   │   ├── handlers.go         # HTTP ハンドラー群の生成
+│   │   ├── io.go               # RemoteIO / GCS 関連の初期化
+│   │   ├── pipeline.go         # MusicPipeline の構築
+│   │   └── task.go             # Cloud Tasks (Enqueuer) の初期化
 │   ├── config/                 # 設定管理
-│   │   ├── config.go           # Config 構造体定義
-│   │   └── config_helpers.go   # 環境変数読み込み補助
+│   │   ├── config.go           # Config 構造体
+│   │   └── config_helpers.go   # 環境変数読み込みユーティリティ
 │   ├── domain/                 # ドメインモデルとインターフェース (Ports)
-│   │   ├── music_recipe.go     # 楽曲設計図の定義
-│   │   ├── task.go             # ジョブ・タスクモデル
-│   │   ├── service.go          # 音楽生成エンジンの Port
+│   │   ├── music_recipe.go     # 楽曲設計図・セクション定義
+│   │   ├── notification.go     # 通知サービスの Port
 │   │   ├── repository.go       # ストレージ・公開の Port
-│   │   └── notification.go     # 通知サービスの Port
+│   │   ├── service.go          # 音楽生成・Compose の Port
+│   │   └── task.go             # 非同期タスク・ジョブモデル
 │   ├── pipeline/               # ワークフローのオーケストレーション
-│   │   ├── music_pipeline.go   # Collect -> Compose -> Generate -> Publish の統制
-│   │   └── workflow.go         # Pipeline インターフェース定義
-│   ├── prompts/                # プロンプト構築ロジック
-│   │   └── recipe_builder.go   # MusicRecipe 構築用プロンプト生成
-│   └── server/                 # HTTP サーバー
-│       ├── handlers/           # Web ハンドラー / Worker ハンドラー
-│       │   ├── handler.go      # Web UI 用ロジック
-│       │   └── task_handler.go # Cloud Tasks ジョブ実行ロジック
+│   │   └── music_pipeline.go   # Collect -> Compose -> Generate -> Publish 統制
+│   └── server/                 # HTTP サーバー基盤
+│       ├── handlers/           # HTTP ハンドラー実装
+│       │   ├── handler.go      # Web UI (フォーム・送信受付)
+│       │   └── task_handler.go # Worker (Cloud Tasks ジョブ実行)
 │       ├── router.go           # chi によるルーティング定義
-│       └── server.go           # サーバーの起動・シャットダウン管理
-└── main.go                     # 【起点】アプリのブートストラップ（初期化・起動）
+│       └── server.go           # サーバーの起動・停止管理
+└── main.go                     # 【起点】ブートストラップ
 ```
 
 ---

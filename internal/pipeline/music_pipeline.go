@@ -28,12 +28,12 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) error {
 		return err
 	}
 
-	mp3, err := p.Generator.Generate(ctx, recipe)
+	wav, err := p.Generator.Generate(ctx, recipe)
 	if err != nil {
 		return err
 	}
 
-	result, err := p.Publisher.Publish(ctx, task, mp3)
+	result, err := p.Publisher.Publish(ctx, task, wav)
 	if err != nil {
 		return err
 	}
