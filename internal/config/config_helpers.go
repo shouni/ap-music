@@ -48,6 +48,15 @@ func (c *Config) ValidateEssentialConfig() error {
 	if c.LocationID == "" {
 		return fmt.Errorf("GCP_LOCATION_ID が設定されていません (デフォルト: asia-northeast1)")
 	}
+	if c.QueueID == "" {
+		return fmt.Errorf("CLOUD_TASKS_QUEUE_ID が設定されていません")
+	}
+	if c.ServiceAccountEmail == "" {
+		return fmt.Errorf("SERVICE_ACCOUNT_EMAIL が設定されていません")
+	}
+	if c.GCSBucket == "" {
+		return fmt.Errorf("GCS_MUSIC_BUCKET が設定されていません")
+	}
 
 	if c.SessionEncryptKey == "" {
 		return fmt.Errorf("SESSION_ENCRYPT_KEY が設定されていません。セキュアな運用のために必須です")

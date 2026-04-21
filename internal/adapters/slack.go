@@ -81,7 +81,21 @@ func (s *SlackAdapter) NotifyError(ctx context.Context, errDetail error, req dom
 
 	title := slackErrorTitle
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("**ソース:** %s\n\n", req.SourceURL))
+	if req.SourceURL != "" {
+		sb.WriteString(fmt.Sprintf("*ソース:* %s\n", req.SourceURL))
+	}
+	if req.OutputCategory != "" {
+		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
+	}
+	if sb.Len() > 0 {
+		sb.WriteString("\n")
+	}
+	sb.WriteString(slackErrorContentHeader)
+	if errDetail != nil {
+		sb.WriteString(errDetail.Error())
+	} else {
+		sb.WriteString(domain.NotAvailable)
+	}
 	content := sb.String()
 
 	if err := s.slackClient.SendTextWithHeader(ctx, title, content); err != nil {
@@ -94,10 +108,23 @@ func (s *SlackAdapter) NotifyError(ctx context.Context, errDetail error, req dom
 
 // buildSlackContent 指定された公開URL、ストレージURI、通知リクエストに基づき、Slack メッセージの内容を生成します。
 func (s *SlackAdapter) buildSlackContent(publicURL, storageURI string, req domain.NotificationRequest) string {
-
-	// 基本メッセージの構築
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("**ソース:** %s\n\n", req.SourceURL))
+
+	if req.SourceURL != "" {
+		sb.WriteString(fmt.Sprintf("*ソース:* %s\n", req.SourceURL))
+	}
+	if req.OutputCategory != "" {
+		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
+	}
+	if publicURL != "" {
+		sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", publicURL))
+	}
+	if storageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", storageURI))
+	}
+	if sb.Len() == 0 {
+		sb.WriteString(domain.NotAvailable)
+	}
 
 	return sb.String()
 }

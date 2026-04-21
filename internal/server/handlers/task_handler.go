@@ -14,6 +14,10 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
 
 	task := domain.Task{
 		JobID:      r.FormValue("job_id"),
