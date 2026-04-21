@@ -14,15 +14,12 @@ import (
 	"ap-music/internal/domain"
 )
 
-const (
-	defaultVertexLocationID = "global"
-)
-
 // LyriaAdapter は Lyria API クライアントの実装です。
 type LyriaAdapter struct {
-	aiClient  gemini.Generator
-	promptGen domain.PromptGenerator
-	model     string
+	aiClient   gemini.Generator
+	promptGen  domain.PromptGenerator
+	model      string
+	lyriaModel string
 }
 
 // NewLyriaAdapter initializes and returns a new LyriaAdapter using the provided context and configuration.
@@ -40,9 +37,10 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 	}
 
 	return &LyriaAdapter{
-		aiClient:  aiClient,
-		promptGen: promptGen,
-		model:     cfg.LyriaModel,
+		aiClient:   aiClient,
+		promptGen:  promptGen,
+		model:      cfg.GeminiModel,
+		lyriaModel: cfg.LyriaModel,
 	}, nil
 }
 
@@ -52,16 +50,37 @@ func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicR
 		return domain.MusicRecipe{}, fmt.Errorf("empty input")
 	}
 
-	// 1. PromptAdapter を使って LLM から JSON 文字列（Markdown 含む）を取得
-	rawRecipe, err := a.promptGen.GenerateRecipe("recipe", input)
+	// 1. プロンプトの組み立て
+	promptText, err := a.promptGen.GenerateRecipe("recipe", input)
 	if err != nil {
-		return domain.MusicRecipe{}, fmt.Errorf("failed to generate recipe: %w", err)
+		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt: %w", err)
 	}
 
-	// 2. Markdown のコードブロックを除去して純粋な JSON を抽出
+	// 2. 構築したプロンプトを実際にAI（Gemini）に投げる
+	// TODO::あとでライブラリ側の引き数を直す
+	//resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText, gemini.GenerateOptions{
+	//	ResponseMIMEType: "application/json", // JSONモードを強制
+	//})
+	resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText)
+	if err != nil {
+		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", a.model, err)
+	}
+
+	// 3. レスポンスの存在確認とAIの回答（JSON文字列）を取得
+	// 万が一の nil パニックを防ぎ、原因を特定しやすくするのだ。
+	if resp == nil {
+		return domain.MusicRecipe{}, fmt.Errorf("AI response is nil")
+	}
+
+	rawRecipe := strings.TrimSpace(resp.Text)
+	if rawRecipe == "" {
+		return domain.MusicRecipe{}, fmt.Errorf("AI returned an empty string for the recipe")
+	}
+
+	// 4. Markdown の除去（一応残しておくが、JSONモードなら不要な場合も多い）
 	jsonStr := cleanJSONResponse(rawRecipe)
 
-	// 3. JSON を domain.MusicRecipe 構造体にデコード
+	// 5. JSON をデコード
 	var recipe domain.MusicRecipe
 	if err := json.Unmarshal([]byte(jsonStr), &recipe); err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
@@ -106,18 +125,10 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 		},
 	}
 
-	// 4. モデル選択の堅牢化
-	model := a.model
-	if recipe.Metadata != nil {
-		if selected := strings.TrimSpace(recipe.Metadata["model"]); selected != "" {
-			model = selected
-		}
-	}
-
-	// 5. ラッパー経由で Lyria API を実行
-	resp, err := a.aiClient.GenerateWithParts(ctx, model, parts, opts)
+	// 5. Lyria API を実行
+	resp, err := a.aiClient.GenerateWithParts(ctx, a.lyriaModel, parts, opts)
 	if err != nil {
-		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", model, err)
+		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", a.lyriaModel, err)
 	}
 
 	// 6. 音声データの抽出
