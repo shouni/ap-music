@@ -14,6 +14,7 @@ require (
 	github.com/shouni/go-utils v1.0.20
 	github.com/shouni/go-web-reader v1.0.2
 	github.com/shouni/netarmor v1.0.2
+	google.golang.org/genai v1.54.0
 )
 
 require (
@@ -91,7 +92,6 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/api v0.276.0 // indirect
-	google.golang.org/genai v1.54.0 // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
