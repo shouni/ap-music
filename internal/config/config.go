@@ -6,6 +6,7 @@ import (
 
 const (
 	DefaultPort          = "8080"
+	DefaultGeminiModel   = "gemini-3-flash-preview"
 	DefaultLyriaModel    = "lyria-3-pro-preview"
 	DefaultShutdownGrace = 15 * time.Second
 
@@ -25,6 +26,7 @@ type Config struct {
 	GCSBucket           string
 	SlackWebhookURL     string
 	GeminiAPIKey        string
+	GeminiModel         string
 	LyriaModel          string
 	ShutdownTimeout     time.Duration
 
@@ -58,6 +60,7 @@ func LoadConfig() *Config {
 		GCSBucket:           getEnv("GCS_MUSIC_BUCKET", ""),
 		SlackWebhookURL:     getEnv("SLACK_WEBHOOK_URL", ""),
 		GeminiAPIKey:        getEnv("GEMINI_API_KEY", ""),
+		GeminiModel:         getEnv("GEMINI_MODEL", DefaultGeminiModel),
 		LyriaModel:          getEnv("LYRIA_MODEL", DefaultLyriaModel),
 		ShutdownTimeout:     DefaultShutdownGrace,
 

@@ -26,7 +26,10 @@
 * **Markdownの禁止**: **Markdownのコードブロック（```json ... ```）を使用せず、純粋なJSON文字列のみを出力してください。**
 * **言語**: `prompt` フィールドは必ず**英語**で記述。その他のフィールドは日本語。
 
+---
+
 #### 4. 出力スキーマ（※例示ではなく「定義」です）
+
 応答は以下の構造を持つ有効なJSONオブジェクト1つのみとしてください。
 
 * **title**: (string)
@@ -37,13 +40,29 @@
 * **sections**: (array)
   * **name**: "Main"
   * **duration_seconds**: 30
-  * **prompt**: (string) ※戦隊ヒーローのために書き下ろした新曲のライナーノーツを英語で書くつもりで、詳細な音楽指示を記述してください。
+  * **prompt**: (string)
+
+**【期待するJSON構造のサンプル】**
+※以下の値（value）は構造を示すためのダミーです。実際の内容は「元文章」に基づき、TKサウンドと戦隊の魂を込めて作成してください。
+
+```json
+{
+  "title": "（ここに独創的なタイトルを生成）",
+  "theme": "（ここに楽曲コンセプトを生成）",
+  "mood": "Heroic Techno",
+  "tempo": 155,
+  "instruments": ["Vivid Synthesizer", "Power Guitar", "90s Drum Machine"],
+  "sections": [
+    {
+      "name": "Main",
+      "duration_seconds": 30,
+      "prompt": "(Write detailed English musical instructions here. Do not copy this placeholder.)"
+    }
+  ]
+}
+```
+
+---
 
 --- 元文章 ---
 {{.InputText}}
-
-### 最終実行命令
-伝説のプロデューサーとして、元文章を至高のテクノ歌謡へと変換したJSONを出力してください。
-**Everything is for the victory of the digital warriors!**
-
----
