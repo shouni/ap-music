@@ -72,12 +72,21 @@ func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicR
 
 // Generate は Lyria 3 モデルを使用して WAV 形式の音声データを生成します。
 func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) ([]byte, error) {
-	// 1. プロンプトの構築
-	// レシピの各セクションやテーマ、テンポを統合して最終的な指示文字列を作成します。
-	// TODO::実際には domain.MusicRecipe 側に BuildPrompt() メソッドなどを持たせるとより綺麗です。
+	// 1. プロンプトの高度な構築
+	var sectionPrompt string
+	if len(recipe.Sections) > 0 {
+		sectionPrompt = recipe.Sections[0].Prompt
+	}
+
+	// 楽器構成やテンポ、ムードを補足情報として統合
 	fullPrompt := fmt.Sprintf(
-		"%s. Mood: %s, Tempo: %d BPM. Instrumental only, no vocals.",
-		recipe.Theme, recipe.Mood, recipe.Tempo,
+		"Title: %s. %s. Instruments: %s. Mood: %s, Tempo: %d BPM. %s",
+		recipe.Title,
+		recipe.Theme,
+		strings.Join(recipe.Instruments, ", "),
+		recipe.Mood,
+		recipe.Tempo,
+		sectionPrompt,
 	)
 
 	// 2. parts の組み立て
