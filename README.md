@@ -39,6 +39,13 @@
 
 ---
 
+## 🎨 概要イメージ
+
+![Page 1](./docs/manga_page_1.png)
+
+---
+
+
 ## 🏗 アーキテクチャ設計 (Architecture)
 
 本プロジェクトは、**Hexagonal Architecture (Ports and Adapters)** と  
@@ -185,7 +192,7 @@ sequenceDiagram
 
 ---
 
-## 🔗 エコシステム連携 (Evolution)
+### 🔗 エコシステム連携 (Evolution)
 
 - **[AP Chain](https://github.com/shouni/ap-chain) 連携**: 構造化ドキュメントからテーマ曲を自動生成。
 - **[AP Voice](https://github.com/shouni/ap-voice) 連携**: ナレーション音声と BGM を合成し音声コンテンツ化。
@@ -193,6 +200,7 @@ sequenceDiagram
 
 ---
 
-## 📜 ライセンス (License)
+### 📜 ライセンス (License)
 
-このプロジェクトは [MIT License](https://opensource.org/licenses/MIT) の下で公開されています。
+* デフォルトキャラクター: VOICEVOX:ずんだもん、VOICEVOX:四国めたん
+* このプロジェクトは [MIT License](https://opensource.org/licenses/MIT) の下で公開されています。
