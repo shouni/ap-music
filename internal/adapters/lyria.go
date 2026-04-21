@@ -35,7 +35,9 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 	if err != nil {
 		return nil, fmt.Errorf("Gemini API クライアントの初期化に失敗しました: %w", err)
 	}
-
+	if cfg.GeminiModel == "" {
+		return nil, fmt.Errorf("GeminiModel is required but not set")
+	}
 	return &LyriaAdapter{
 		aiClient:   aiClient,
 		promptGen:  promptGen,
@@ -57,17 +59,14 @@ func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicR
 	}
 
 	// 2. 構築したプロンプトを実際にAI（Gemini）に投げる
-	// TODO::あとでライブラリ側の引き数を直す
-	//resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText, gemini.GenerateOptions{
-	//	ResponseMIMEType: "application/json", // JSONモードを強制
-	//})
+	// TODO: ライブラリ側の引数を修正し、JSONモード(ResponseMIMEType: "application/json")を強制するように変更する
 	resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText)
 	if err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", a.model, err)
 	}
 
 	// 3. レスポンスの存在確認とAIの回答（JSON文字列）を取得
-	// 万が一の nil パニックを防ぎ、原因を特定しやすくするのだ。
+	// nil パニックを防止し、エラー原因を特定しやすくするためのチェック
 	if resp == nil {
 		return domain.MusicRecipe{}, fmt.Errorf("AI response is nil")
 	}
