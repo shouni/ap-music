@@ -51,7 +51,20 @@ func (s *SlackAdapter) Notify(ctx context.Context, result *domain.PublishResult)
 	if result == nil {
 		return fmt.Errorf("publish result is nil")
 	}
-	return s.NotifyWithRequest(ctx, result.SignedURL, result.StorageURI, domain.NotificationRequest{})
+	if s.webhookURL == "" || s.slackClient == nil {
+		slog.InfoContext(ctx, "Slack通知が無効化されているか、クライアントが未初期化のためスキップします。", "storage_uri", result.StorageURI)
+		return nil
+	}
+
+	title := fmt.Sprintf("%s 処理が完了しました！", "🎼")
+	content := s.buildSlackContent(result, domain.NotificationRequest{})
+
+	if err := s.slackClient.SendTextWithHeader(ctx, title, content); err != nil {
+		return fmt.Errorf("Slackへの投稿に失敗しました: %w", err)
+	}
+
+	slog.Info("Slack に完了通知を送信しました。", "public_url", result.SignedURL, "recipe_url", result.RecipeSignedURL)
+	return nil
 }
 
 // NotifyWithRequest は詳細情報付きでSlack通知を送信します。
@@ -62,7 +75,10 @@ func (s *SlackAdapter) NotifyWithRequest(ctx context.Context, publicURL, storage
 	}
 
 	title := fmt.Sprintf("%s 処理が完了しました！", "🎼")
-	content := s.buildSlackContent(publicURL, storageURI, req)
+	content := s.buildSlackContent(&domain.PublishResult{
+		SignedURL:  publicURL,
+		StorageURI: storageURI,
+	}, req)
 
 	if err := s.slackClient.SendTextWithHeader(ctx, title, content); err != nil {
 		return fmt.Errorf("Slackへの投稿に失敗しました: %w", err)
@@ -107,7 +123,7 @@ func (s *SlackAdapter) NotifyError(ctx context.Context, errDetail error, req dom
 }
 
 // buildSlackContent 指定された公開URL、ストレージURI、通知リクエストに基づき、Slack メッセージの内容を生成します。
-func (s *SlackAdapter) buildSlackContent(publicURL, storageURI string, req domain.NotificationRequest) string {
+func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domain.NotificationRequest) string {
 	var sb strings.Builder
 
 	if req.SourceURL != "" {
@@ -116,11 +132,17 @@ func (s *SlackAdapter) buildSlackContent(publicURL, storageURI string, req domai
 	if req.OutputCategory != "" {
 		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
 	}
-	if publicURL != "" {
-		sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", publicURL))
+	if result != nil && result.SignedURL != "" {
+		sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", result.SignedURL))
 	}
-	if storageURI != "" {
-		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", storageURI))
+	if result != nil && result.StorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", result.StorageURI))
+	}
+	if result != nil && result.RecipeSignedURL != "" {
+		sb.WriteString(fmt.Sprintf("*Recipe JSON:* %s\n", result.RecipeSignedURL))
+	}
+	if result != nil && result.RecipeStorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Recipe Storage URI:* %s\n", result.RecipeStorageURI))
 	}
 	if sb.Len() == 0 {
 		sb.WriteString(domain.NotAvailable)

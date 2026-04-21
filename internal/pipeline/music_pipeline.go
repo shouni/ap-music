@@ -40,7 +40,7 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) error {
 		return err
 	}
 
-	result, err := p.Publisher.Publish(ctx, task, wav)
+	result, err := p.Publisher.Publish(ctx, task, recipe, wav)
 	if err != nil {
 		return err
 	}
