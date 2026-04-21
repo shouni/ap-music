@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"ap-music/internal/domain"
@@ -36,6 +37,12 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "queued", "job_id": task.JobID})
+	// Acceptヘッダーを確認し、JSONを要求している場合は既存の挙動を維持する
+	if strings.Contains(r.Header.Get("Accept"), "application/json") {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "queued", "job_id": task.JobID})
+		return
+	}
+
+	h.render(w, http.StatusAccepted, "accepted.html", "タスク受付完了", task)
 }
