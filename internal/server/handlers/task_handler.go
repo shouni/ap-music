@@ -20,6 +20,11 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	model := r.FormValue("model")
+	if model == "" {
+		model = h.cfg.LyriaModel
+	}
+
 	task := domain.Task{
 		JobID:      r.FormValue("job_id"),
 		RequestURL: r.FormValue("url"),
