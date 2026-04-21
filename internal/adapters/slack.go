@@ -51,8 +51,8 @@ func (s *SlackAdapter) Notify(ctx context.Context, result *domain.PublishResult)
 }
 
 // NotifyWithRequest は詳細情報（NotificationRequest）付きでSlack通知を送信します。
-// 共通の送信ロジックをここに集約しました。
 func (s *SlackAdapter) NotifyWithRequest(ctx context.Context, result *domain.PublishResult, req domain.NotificationRequest) error {
+	// [Blocker] 修正: 最初に nil チェックを行うことで、以降のプロパティアクセスでのパニックを防止
 	if result == nil {
 		return fmt.Errorf("publish result is nil")
 	}
@@ -122,19 +122,20 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 	if req.OutputCategory != "" {
 		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
 	}
-	if result != nil {
-		if result.SignedURL != "" {
-			sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", result.SignedURL))
-		}
-		if result.StorageURI != "" {
-			sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", result.StorageURI))
-		}
-		if result.RecipeSignedURL != "" {
-			sb.WriteString(fmt.Sprintf("*Recipe JSON:* %s\n", result.RecipeSignedURL))
-		}
-		if result.RecipeStorageURI != "" {
-			sb.WriteString(fmt.Sprintf("*Recipe Storage URI:* %s\n", result.RecipeStorageURI))
-		}
+
+	// [Minor] 修正: 呼び出し元の NotifyWithRequest で nil チェックが保証されているため、
+	// 不要な if result != nil ブロックを削除し、ネストを浅くしました。
+	if result.SignedURL != "" {
+		sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", result.SignedURL))
+	}
+	if result.StorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", result.StorageURI))
+	}
+	if result.RecipeSignedURL != "" {
+		sb.WriteString(fmt.Sprintf("*Recipe JSON:* %s\n", result.RecipeSignedURL))
+	}
+	if result.RecipeStorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Recipe Storage URI:* %s\n", result.RecipeStorageURI))
 	}
 
 	if sb.Len() == 0 {
