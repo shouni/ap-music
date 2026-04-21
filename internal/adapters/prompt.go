@@ -10,7 +10,7 @@ import (
 
 // recipeData はレシピプロンプトのテンプレートに渡すデータ構造です。
 type recipeData struct {
-	Content string
+	InputText string
 }
 
 // promptBuilder は、フォーマット済みのプロンプトを作成するためのインターフェース
@@ -45,7 +45,7 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 // GenerateRecipe はレシピのMarkdownを生成します。
 func (pa *PromptAdapter) GenerateRecipe(mode, content string) (string, error) {
 	data := recipeData{
-		Content: content,
+		InputText: content,
 	}
 	prompt, err := pa.recipeBuilder.Build(mode, data)
 	if err != nil {
