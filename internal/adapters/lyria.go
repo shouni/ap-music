@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -26,6 +27,9 @@ type LyriaAdapter struct {
 
 // NewLyriaAdapter initializes and returns a new LyriaAdapter using the provided context and configuration.
 func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.PromptGenerator) (*LyriaAdapter, error) {
+	if cfg.GeminiAPIKey == "" {
+		return nil, errors.New("GeminiAPIKey is required for LyriaAdapter")
+	}
 	clientConfig := gemini.Config{
 		APIKey: cfg.GeminiAPIKey,
 	}
