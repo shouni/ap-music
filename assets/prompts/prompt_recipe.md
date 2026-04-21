@@ -6,16 +6,22 @@
 提供された「--- 元文章 ---」を深く分析し、シンセサイザーの旋律が火花を散らすような、Lyria 3用のMusic Recipe（設計図）を生成してください。
 
 #### 1. 制作指針
-* **TKサウンドの継承**: 16ビートの疾走感、きらびやかなシンセ arpeggio、ドラマチックな転調を予感させる構成にすること。
-* **戦隊ヒーローの熱量**: 勇壮でヒロイックなメロディラインを、重厚なデジタルビートで包み込むこと。
-* **独自性の担保**: **出力するJSONの値には、プレースホルダーや説明的なテキストを含めないでください。** 全ての値は、元文章の内容をあなたがプロデュースした結果として新しく創造すること。
+
+* **90s Digital Rave & Cybernetic Pulse**:
+  16ビートの超高速なリズムシーケンス、クリスタルで煌びやかなシンセサイザーの arpeggio（アルペジオ）、そして聴き手の感情を極限まで高揚させるドラマチックな転調と展開を徹底すること。
+* **Techno-Futurism**:
+  アナログとデジタルの境界が消えるような、鋭利で硬質なリードサウンドと、重厚に脈動するデジタルベースを軸に構成すること。
+* **Heroic Crescendo**:
+  戦隊ヒーローの勇壮さと、ハイパー・テクノが融合した、圧倒的なポジティブさとエネルギーを感じさせる旋律を生成すること。
+
+---
 
 #### 2. Music Recipe の構成要素
 * **title**: 楽曲のタイトル（コンテンツの魂を射抜くキャッチーなもの）
 * **theme**: 楽曲の核となるコンセプト（短文）
 * **mood**: 楽曲の雰囲気（例: Euphoric, High-Energy, Cybernetic, Heroic）
 * **tempo**: BPMを整数で指定（例: 135-160の高速域を推奨）。
-* **instruments**: TKサウンドを象徴する楽器（Synthesizer, Drum Machine, Electric Guitar, Digital Piano等）。
+* **instruments**: 90年代のデジタル・レイヴを象徴する楽器（Synthesizer, Drum Machine, Electric Guitar, Digital Piano等）。
 * **sections**:
   * **name**: "Main" 固定。
   * **duration_seconds**: **30** 固定。
@@ -42,21 +48,21 @@
   * **duration_seconds**: 30
   * **prompt**: (string)
 
-**【期待するJSON構造のサンプル】**
-※以下の値（value）は構造を示すためのダミーです。実際の内容は「元文章」に基づき、TKサウンドと戦隊の魂を込めて作成してください。
+**【出力構造の制約（厳守）】**
+※以下のJSONは「構造（型）」を定義するためのもの**であり、値（value）の内容は一切参考にしないでください。あなたはプロフェッショナルとして、提供された「--- 元文章 ---」をゼロからプロデュースし、独自の表現で全ての値を埋める義務があります。
 
 ```json
 {
-  "title": "（ここに独創的なタイトルを生成）",
-  "theme": "（ここに楽曲コンセプトを生成）",
-  "mood": "Heroic Techno",
-  "tempo": 155,
-  "instruments": ["Vivid Synthesizer", "Power Guitar", "90s Drum Machine"],
+  "title": "（元文章の魂を射抜くタイトルを生成）",
+  "theme": "（楽曲の哲学的な核となるコンセプトを記述）",
+  "mood": "（例: Cybernetic, Heroic, Nostalgic等から最適なものを選択）",
+  "tempo": 150,
+  "instruments": ["（具体的な楽器1）", "（具体的な楽器2）", "（具体的な楽器3）"],
   "sections": [
     {
       "name": "Main",
       "duration_seconds": 30,
-      "prompt": "(Write detailed English musical instructions here. Do not copy this placeholder.)"
+      "prompt": "（Lyria 3を極限まで駆動させるための、緻密で独創的な英文プロンプトをここに記述。既存の定型文は一切禁止。）"
     }
   ]
 }
