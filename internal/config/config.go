@@ -6,7 +6,7 @@ import (
 
 const (
 	DefaultPort          = "8080"
-	DefaultLyriaModel    = "lyria-3"
+	DefaultLyriaModel    = "lyria-3-pro-preview"
 	DefaultShutdownGrace = 15 * time.Second
 
 	DefaultHTTPTimeout  = 60 * time.Second
