@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -36,6 +35,5 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "queued", "job_id": task.JobID})
+	h.render(w, http.StatusAccepted, "accepted.html", "タスク受付完了", task)
 }
