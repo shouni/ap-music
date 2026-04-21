@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"ap-music/internal/domain"
 )
@@ -26,6 +27,12 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) error {
 	recipe, err := p.Composer.Compose(ctx, contextText)
 	if err != nil {
 		return err
+	}
+	if model := strings.TrimSpace(task.Model); model != "" {
+		if recipe.Metadata == nil {
+			recipe.Metadata = make(map[string]string)
+		}
+		recipe.Metadata["model"] = model
 	}
 
 	wav, err := p.Generator.Generate(ctx, recipe)

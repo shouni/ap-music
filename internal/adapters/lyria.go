@@ -88,7 +88,13 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 	}
 
 	// 4. ラッパー経由で Lyria API を実行
-	resp, err := a.aiClient.GenerateWithParts(ctx, a.model, parts, opts)
+	model := a.model
+	if recipe.Metadata != nil {
+		if selectedModel := strings.TrimSpace(recipe.Metadata["model"]); selectedModel != "" {
+			model = selectedModel
+		}
+	}
+	resp, err := a.aiClient.GenerateWithParts(ctx, model, parts, opts)
 	if err != nil {
 		return nil, fmt.Errorf("lyria generation failed: %w", err)
 	}

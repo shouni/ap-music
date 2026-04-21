@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/shouni/go-manga-kit/ports"
@@ -41,12 +42,36 @@ func NewReaderAdapter(storage remoteio.ReadWriteFactory) (*ReaderAdapter, error)
 
 // Collect は、コンテンツを取得します。
 func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, error) {
-	return r.readContent(ctx, task)
+	var parts []string
+
+	requestURL := strings.TrimSpace(task.RequestURL)
+	if requestURL != "" {
+		content, err := r.readURLContent(ctx, requestURL)
+		if err != nil {
+			return "", err
+		}
+		parts = append(parts, fmt.Sprintf("[Source URL]\n%s\n\n[Source Content]\n%s", requestURL, content))
+	}
+
+	inputText := strings.TrimSpace(task.InputText)
+	if inputText != "" {
+		parts = append(parts, fmt.Sprintf("[User Input]\n%s", inputText))
+	}
+
+	imageURL := strings.TrimSpace(task.ImageURL)
+	if imageURL != "" {
+		parts = append(parts, fmt.Sprintf("[Image URL]\n%s", imageURL))
+	}
+
+	if len(parts) == 0 {
+		return "", fmt.Errorf("at least one input is required: url, text, or image")
+	}
+
+	return strings.Join(parts, "\n\n"), nil
 }
 
-// readContent は、指定されたソースURLからコンテンツを取得します。
-func (r *ReaderAdapter) readContent(ctx context.Context, task domain.Task) (string, error) {
-	url := task.RequestURL
+// readURLContent は、指定されたソースURLからコンテンツを取得します。
+func (r *ReaderAdapter) readURLContent(ctx context.Context, url string) (string, error) {
 	if url == "" {
 		return "", fmt.Errorf("request URL is empty")
 	}
