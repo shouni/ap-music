@@ -24,6 +24,7 @@ type Config struct {
 	ServiceAccountEmail string
 	GCSBucket           string
 	SlackWebhookURL     string
+	GeminiAPIKey        string
 	LyriaModel          string
 	ShutdownTimeout     time.Duration
 
@@ -56,6 +57,7 @@ func LoadConfig() *Config {
 		ServiceAccountEmail: getEnv("SERVICE_ACCOUNT_EMAIL", ""),
 		GCSBucket:           getEnv("GCS_MUSIC_BUCKET", ""),
 		SlackWebhookURL:     getEnv("SLACK_WEBHOOK_URL", ""),
+		GeminiAPIKey:        getEnv("GEMINI_API_KEY", ""),
 		LyriaModel:          getEnv("LYRIA_MODEL", DefaultLyriaModel),
 		ShutdownTimeout:     DefaultShutdownGrace,
 
