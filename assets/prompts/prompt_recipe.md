@@ -10,7 +10,7 @@
 * **title**: 楽曲のタイトル（コンテキストを反映したもの）
 * **theme**: 楽曲のメインテーマやコンセプト（短文）
 * **mood**: 楽曲の雰囲気（例: Energetic, Melancholic, Cinematic）
-* **tempo**: **BPMを整数（Number）**で指定してください（例: 120）。
+* **tempo**: BPMを整数（Number）で指定してください（例: 120）。
 * **instruments**: 使用する主要な楽器のリスト。
 * **sections**:
   * **name**: セクション名（例: "Main"）
