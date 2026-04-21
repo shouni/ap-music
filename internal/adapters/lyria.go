@@ -22,7 +22,7 @@ type LyriaAdapter struct {
 	lyriaModel string
 }
 
-// NewLyriaAdapter initializes and returns a new LyriaAdapter using the provided context and configuration.
+// NewLyriaAdapter は、指定されたコンテキストと構成を使用して、新しい LyriaAdapter を初期化して返します。
 func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.PromptGenerator) (*LyriaAdapter, error) {
 	if cfg.GeminiAPIKey == "" {
 		return nil, errors.New("GeminiAPIKey is required for LyriaAdapter")
@@ -120,7 +120,6 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 			{Category: genai.HarmCategoryHateSpeech, Threshold: genai.HarmBlockThresholdBlockNone},
 			{Category: genai.HarmCategorySexuallyExplicit, Threshold: genai.HarmBlockThresholdBlockNone},
 			{Category: genai.HarmCategoryDangerousContent, Threshold: genai.HarmBlockThresholdBlockNone},
-			{Category: genai.HarmCategoryCivicIntegrity, Threshold: genai.HarmBlockThresholdBlockNone},
 		},
 	}
 
