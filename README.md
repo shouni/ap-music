@@ -17,6 +17,35 @@
 
 ---
 
+## ✨ コア・コンセプト (Core Concepts)
+
+**"Designed for 'Techno-Futurism': 技術ドキュメントを、90s デジタル・レイヴの疾走感とともに音声化する特化型オーケストレーター"**
+
+本プロジェクトは、大規模な楽曲生成パイプラインにおいて「音楽的クオリティ」と「システム的堅牢性」を両立させるため、以下の4つの柱を基盤としています。
+
+### 🧬 3-Factor Music Consistency
+Lyria 3 Pro のポテンシャルを極限まで引き出し、生成される楽曲の「質感」と「構成」を厳密に制御（Control）します。
+* **Seed Determinism**: 楽曲の乱数シードを厳密に管理。同一の `MusicRecipe` に対し、再現可能な生成結果を保証。
+* **Stylistic Prompting**: 90年代のデジタルサウンド（Supersaw, 16-bit Arpeggio等）を言語的に定義し、AIに音楽的文脈を強制注入。
+* **Phonetic Direction**: 母音強調と英語音素表記（Phonetic Spelling）を指示に組み込み、グローバルモデルから「熱き日本語の魂」を呼び起こす。
+
+### 🛡 Production-Ready Concurrency Control
+APIの物理的制約を超え、決して「止まらない、壊れない」パイプラインを標準装備しています。
+* **Throttling Semaphore**: 並列実行数をセマフォで厳密に統制。APIのクォータを遵守し、`RESOURCE_EXHAUSTED` (429) エラーを未然に封殺。
+* **Resilient Retry**: 一時的なネットワーク障害やタイムアウトに対し、Exponential Backoff（指数バックオフ）による戦略的再試行を適用し、ジョブの完走を死守。
+
+### ⚡ Smart Request & Stream Management
+オーバーヘッドを極限まで削ぎ落とし、生成コストとスループットを最適化します。
+* **Singleflight Sync**: `golang.org/x/sync/singleflight` を実装。並列処理中の重複リクエストを単一の実行に集約し、APIリソースの浪費を排除。
+* **Lossless Binary Merging**: 分割生成された WAV セクションを、デコードなしでバイナリレベルで直接結合。世代損失（音質劣化）をゼロに抑えた長尺楽曲構成を実現。
+
+### 🌍 Cloud-Native Orchestration
+Google Cloud のマネージドパワーをフル活用した、モダンなサーバーレス・アーキテクチャ。
+* **Autoscaling Run**: Cloud Run による需要に応じたオンデマンドな計算リソースの展開。
+* **Async Orchestration**: Cloud Tasks による非同期キューイング。数分間に及ぶ生成処理をバックグラウンドへ完全に隠蔽し、シームレスなUXを提供。
+
+---
+
 ## 🎨 ワークフロー (Workflows)
 
 | 画面 (Command) | 役割 | 主な入力 / 出力 |
