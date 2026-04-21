@@ -46,6 +46,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 		}
 	}()
 
+	// シグナル処理は呼び出し元から渡されたコンテキストに委譲する
 	select {
 	case err := <-serverErrors:
 		return fmt.Errorf("server error: %w", err)
