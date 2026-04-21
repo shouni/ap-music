@@ -179,7 +179,7 @@ sequenceDiagram
 | `CLOUD_TASKS_QUEUE_ID` | 必須 | Cloud Tasks キュー名 |
 | `SERVICE_ACCOUNT_EMAIL` | 必須 | タスク実行に使うサービスアカウント |
 | `TASK_AUDIENCE_URL` | 任意 | OIDC Audience (認証が必要な場合) |
-| `GCS_MUSIC_BUCKET` | 必須 | 生成 MP3 の保存先バケット |
+| `GCS_MUSIC_BUCKET` | 必須 | 生成 WAV の保存先バケット |
 | `LYRIA_MODEL` | 任意 | 使用する Lyria モデル名 (デフォルト値がある場合) |
 | `SLACK_WEBHOOK_URL` | 任意 | 完了通知先 Webhook URL |
 
