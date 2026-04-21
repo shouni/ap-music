@@ -1,4 +1,4 @@
-# 🎼 AP Music
+# 🎼 AP Music(Provisional)
 
 [![Language](https://img.shields.io/badge/Language-Go-blue)](https://golang.org/)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/shouni/ap-music)](https://golang.org/)
