@@ -123,18 +123,19 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
 	}
 
-	// [Minor] 修正: 呼び出し元の NotifyWithRequest で nil チェックが保証されているため、
-	// 不要な if result != nil ブロックを削除し、ネストを浅くしました。
-	if result.SignedURL != "" {
-		sb.WriteString(fmt.Sprintf("*再生URL:* %s\n", result.SignedURL))
-	}
-	if result.StorageURI != "" {
+	// 🎼 音楽ファイルのリンク
+	// 形式: <署名付きURL|Storage URI>
+	if result.SignedURL != "" && result.StorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*WAV File:* <%s|%s>\n", result.SignedURL, result.StorageURI))
+	} else if result.StorageURI != "" {
 		sb.WriteString(fmt.Sprintf("*Storage URI:* %s\n", result.StorageURI))
 	}
-	if result.RecipeSignedURL != "" {
-		sb.WriteString(fmt.Sprintf("*Recipe JSON:* %s\n", result.RecipeSignedURL))
-	}
-	if result.RecipeStorageURI != "" {
+
+	// 📄 レシピ JSON のリンク
+	// 形式: <署名付きURL|Recipe Storage URI>
+	if result.RecipeSignedURL != "" && result.RecipeStorageURI != "" {
+		sb.WriteString(fmt.Sprintf("*Recipe JSON:* <%s|%s>\n", result.RecipeSignedURL, result.RecipeStorageURI))
+	} else if result.RecipeStorageURI != "" {
 		sb.WriteString(fmt.Sprintf("*Recipe Storage URI:* %s\n", result.RecipeStorageURI))
 	}
 
