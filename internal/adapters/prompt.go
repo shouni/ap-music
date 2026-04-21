@@ -28,13 +28,15 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 	// 1. テンプレートの読み込み
 	recipeTemplates, err := assets.LoadPrompts()
 	if err != nil {
-		return nil, fmt.Errorf("レビューテンプレートの読み込みに失敗: %w", err)
+		// 31行目: 修正
+		return nil, fmt.Errorf("レシピテンプレートの読み込みに失敗: %w", err)
 	}
 
 	// 2. ビルダーの構築
 	recipe, err := prompts.NewBuilder(recipeTemplates)
 	if err != nil {
-		return nil, fmt.Errorf("レビュービルダーの構築に失敗: %w", err)
+		// 37行目: 修正
+		return nil, fmt.Errorf("レシピビルダーの構築に失敗: %w", err)
 	}
 
 	return &PromptAdapter{
@@ -49,7 +51,8 @@ func (pa *PromptAdapter) GenerateRecipe(mode, content string) (string, error) {
 	}
 	prompt, err := pa.recipeBuilder.Build(mode, data)
 	if err != nil {
-		return "", fmt.Errorf("レビューテンプレートの実行に失敗: %w", err)
+		// 52行目: 修正
+		return "", fmt.Errorf("レシピテンプレートの実行に失敗: %w", err)
 	}
 	return prompt, nil
 }
