@@ -34,7 +34,7 @@
 4. **Pipeline**:
     - **Phase 1: Collect**: `go-web-reader` で入力コンテキスト収集。
     - **Phase 2: Compose**: LLM で `MusicRecipe` 生成。
-    - **Phase 3: Generate**: `Lyria 3` で MP3 生成。
+    - **Phase 3: Generate**: `Lyria 3` で WAV 生成。
     - **Phase 4: Publish/Notify**: GCS/Local 保存、Signed URL 発行、Slack 通知。
 
 ---
@@ -155,7 +155,7 @@ sequenceDiagram
 | **非同期実行** | **Google Cloud Tasks** | 楽曲生成ジョブの非同期キューイング |
 | **コンテキスト収集** | **go-web-reader** | URL / 画像の収集と抽出 |
 | **音楽生成** | **Lyria 3 API** | Recipe ベースの音楽生成 |
-| **結果保存** | **go-remote-io / GCS** | MP3 保存、署名付き URL 発行 |
+| **結果保存** | **go-remote-io / GCS** | WAV 保存、署名付き URL 発行 |
 | **通知** | **Slack Webhook** | 実行完了通知 |
 
 ---
