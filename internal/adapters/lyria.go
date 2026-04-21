@@ -104,9 +104,10 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 
 // cleanJSONResponse は LLM が出力しがちな Markdown の装飾を除去します
 func cleanJSONResponse(input string) string {
-	res := strings.TrimSpace(input)
-	res = strings.TrimPrefix(res, "```json")
-	res = strings.TrimPrefix(res, "```")
-	res = strings.TrimSuffix(res, "```")
-	return strings.TrimSpace(res)
+	start := strings.Index(input, "{")
+	end := strings.LastIndex(input, "}")
+	if start != -1 && end != -1 && start < end {
+		return input[start : end+1]
+	}
+	return input
 }
