@@ -8,7 +8,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/shouni/go-manga-kit/ports"
 	"github.com/shouni/go-remote-io/remoteio"
 	"github.com/shouni/go-web-reader/pkg/reader"
 
@@ -20,9 +19,14 @@ const (
 	maxInputSize = 5 * 1024 * 1024
 )
 
+// ContentReader は、指定されたURIからコンテンツを取得するためのインターフェースです。
+type ContentReader interface {
+	Open(ctx context.Context, uri string) (io.ReadCloser, error)
+}
+
 // ReaderAdapter は入力情報を収集します。
 type ReaderAdapter struct {
-	contentReader ports.ContentReader
+	contentReader ContentReader
 }
 
 func NewReaderAdapter(storage remoteio.ReadWriteFactory) (*ReaderAdapter, error) {
