@@ -6,11 +6,17 @@ import (
 	"github.com/shouni/go-prompt-kit/prompts"
 
 	"ap-music/assets"
+	"ap-music/internal/domain"
 )
 
-// recipeData はレシピプロンプトのテンプレートに渡すデータ構造です。
-type recipeData struct {
+// lyricsPromptData は歌詞プロンプトのテンプレートに渡すデータ構造です。
+type lyricsPromptData struct {
 	InputText string
+}
+
+// recipePromptData はレシピプロンプトのテンプレートに渡すデータ構造です。
+type recipePromptData struct {
+	Lyrics domain.LyricsDraft
 }
 
 // promptBuilder は、フォーマット済みのプロンプトを作成するためのインターフェース
@@ -20,7 +26,7 @@ type promptBuilder interface {
 
 // PromptAdapter は、さまざまなモードとデータに基づいてプロンプトを生成する役割を担います。
 type PromptAdapter struct {
-	recipeBuilder promptBuilder
+	builder promptBuilder
 }
 
 // NewPromptAdapter は動的に読み込んだテンプレートを使用して Builder を構築します。
@@ -38,18 +44,29 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 	}
 
 	return &PromptAdapter{
-		recipeBuilder: recipe,
+		builder: recipe,
 	}, nil
 }
 
-// GenerateRecipe はレシピのMarkdownを生成します。
-func (pa *PromptAdapter) GenerateRecipe(mode, content string) (string, error) {
-	data := recipeData{
+// GenerateLyrics は歌詞生成用プロンプトを返します。
+func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
+	data := lyricsPromptData{
 		InputText: content,
 	}
-	prompt, err := pa.recipeBuilder.Build(mode, data)
+	prompt, err := pa.builder.Build(assets.ModeLyrics, data)
 	if err != nil {
-		// 52行目: 修正
+		return "", fmt.Errorf("歌詞テンプレートの実行に失敗: %w", err)
+	}
+	return prompt, nil
+}
+
+// GenerateRecipe はレシピ生成用プロンプトを返します。
+func (pa *PromptAdapter) GenerateRecipe(lyrics domain.LyricsDraft) (string, error) {
+	data := recipePromptData{
+		Lyrics: lyrics,
+	}
+	prompt, err := pa.builder.Build(assets.ModeMusic, data)
+	if err != nil {
 		return "", fmt.Errorf("レシピテンプレートの実行に失敗: %w", err)
 	}
 	return prompt, nil

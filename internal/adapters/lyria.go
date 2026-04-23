@@ -52,10 +52,13 @@ func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicR
 		return domain.MusicRecipe{}, fmt.Errorf("empty input")
 	}
 
-	// 1. プロンプトの組み立て
-	// TODO:modeは、指定可能にする
-	promptText, err := a.promptGen.GenerateRecipe("recipe", input)
-	//	promptText, err := a.promptGen.GenerateRecipe("90s_rave_heroic", input)
+	lyrics, err := a.generateLyrics(ctx, input)
+	if err != nil {
+		return domain.MusicRecipe{}, err
+	}
+
+	// 1. レシピプロンプトの組み立て
+	promptText, err := a.promptGen.GenerateRecipe(lyrics)
 	if err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt: %w", err)
 	}
@@ -85,8 +88,41 @@ func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicR
 	if err := json.Unmarshal([]byte(jsonStr), &recipe); err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
 	}
+	recipe.Lyrics = &lyrics
 
 	return recipe, nil
+}
+
+// generateLyrics generates a draft of lyrics based on the input string using AI and returns it as LyricsDraft.
+func (a *LyriaAdapter) generateLyrics(ctx context.Context, input string) (domain.LyricsDraft, error) {
+	promptText, err := a.promptGen.GenerateLyrics(input)
+	if err != nil {
+		return domain.LyricsDraft{}, fmt.Errorf("failed to build lyrics prompt: %w", err)
+	}
+
+	resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText)
+	if err != nil {
+		return domain.LyricsDraft{}, fmt.Errorf("lyrics generation failed (model: %s): %w", a.model, err)
+	}
+	if resp == nil {
+		return domain.LyricsDraft{}, fmt.Errorf("lyrics response is nil")
+	}
+
+	rawLyrics := strings.TrimSpace(resp.Text)
+	if rawLyrics == "" {
+		return domain.LyricsDraft{}, fmt.Errorf("AI returned an empty string for the lyrics")
+	}
+
+	var lyrics domain.LyricsDraft
+	jsonStr := cleanJSONResponse(rawLyrics)
+	if err := json.Unmarshal([]byte(jsonStr), &lyrics); err != nil {
+		return domain.LyricsDraft{}, fmt.Errorf("failed to unmarshal lyrics json: %w (raw: %s)", err, jsonStr)
+	}
+	if strings.TrimSpace(lyrics.Lyrics) == "" {
+		return domain.LyricsDraft{}, fmt.Errorf("lyrics draft is empty")
+	}
+
+	return lyrics, nil
 }
 
 // Generate は Lyria 3 モデルを使用して WAV 形式の音声データを生成します。
