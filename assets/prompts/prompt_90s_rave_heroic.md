@@ -50,7 +50,7 @@
 
 * 勇敢・前進・覚醒・勝利・結束を感じる旋律
 * 劇的なコード進行、上昇感、転調感、ブレイクからの再突入を重視
-* 30秒の中で、**導入 → 加速 → 解放 → クライマックス** の流れを意識すること
+* 180秒の中で、**導入 → 加速 → 解放 → クライマックス** の流れを意識すること
 
 ---
 
@@ -64,7 +64,7 @@
 * **sections**
 
   * **name**: `"Main"` 固定
-  * **duration_seconds**: `30` 固定
+  * **duration_seconds**: `180` 固定
   * **prompt**: **Lyria 3 用の詳細な英文プロンプト**
 
 ---
@@ -83,7 +83,7 @@
 * drum machine style
 * harmonic / melodic arc
 * emotional trajectory
-* arrangement dynamics across 30 seconds
+* arrangement dynamics across 180 seconds
 * climax / drop / lift behavior
 * vocal texture if needed
 * production / mix cues
@@ -91,7 +91,7 @@
 
 また、`prompt` は **style tag の羅列ではなく、完成トラックを明確に指示する制作ブリーフ** のように記述すること。
 
-さらに、`prompt` は **a producer's exact generation brief for a flagship 30-second track** として読める密度で書き、短すぎる表現や曖昧な表現を避けること。
+さらに、`prompt` は **a producer's exact generation brief for a flagship 180-second track** として読める密度で書き、短すぎる表現や曖昧な表現を避けること。
 
 ---
 
@@ -132,7 +132,7 @@
 * `mood` と `instruments` と `prompt` は **英語**
 * `sections` は **必ず1要素**
 * `name` は **必ず `"Main"`**
-* `duration_seconds` は **必ず `30`**
+* `duration_seconds` は **必ず `180`**
 
 ---
 
@@ -148,7 +148,7 @@
   "sections": [
     {
       "name": "Main",
-      "duration_seconds": 30,
+      "duration_seconds": 180,
       "prompt": "string"
     }
   ]
