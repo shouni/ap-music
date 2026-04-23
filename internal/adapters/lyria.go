@@ -54,7 +54,8 @@ func (a *LyriaAdapter) Compose(ctx context.Context, input string) (domain.MusicR
 
 	// 1. プロンプトの組み立て
 	// TODO:modeは、指定可能にする
-	promptText, err := a.promptGen.GenerateRecipe("90s_rave_heroic", input)
+	promptText, err := a.promptGen.GenerateRecipe("recipe", input)
+	//	promptText, err := a.promptGen.GenerateRecipe("90s_rave_heroic", input)
 	if err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt: %w", err)
 	}
