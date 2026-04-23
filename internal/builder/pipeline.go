@@ -15,6 +15,7 @@ func buildPipeline(
 ) (domain.Pipeline, error) {
 	return pipeline.MusicPipeline{
 		Collector: collector,
+		Lyricist:  composer,
 		Composer:  composer,
 		Generator: generator,
 		Publisher: publisher,

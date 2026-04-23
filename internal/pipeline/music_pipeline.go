@@ -12,8 +12,6 @@ import (
 // MusicPipeline は Collect -> Lyricist -> Composer -> Generator -> Publish -> Notify を統制します。
 type MusicPipeline struct {
 	Collector domain.Collector
-	// Lyricist と Composer は domain.Composer インターフェースを共有しますが、
-	// 役割を分離して定義することで、将来的な差し替えを容易にします。
 	Lyricist  domain.Composer
 	Composer  domain.Composer
 	Generator domain.Generator
