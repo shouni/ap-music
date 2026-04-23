@@ -13,7 +13,7 @@ import (
 type MusicPipeline struct {
 	Collector domain.Collector
 	Lyricist  domain.Lyricist
-	Composer  domain.Composer
+	Composer  domain.RecipeComposer
 	Generator domain.Generator
 	Publisher domain.Publisher
 	Notifier  domain.Notifier
