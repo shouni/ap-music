@@ -57,6 +57,7 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, input string) (domain
 		return domain.LyricsDraft{}, fmt.Errorf("failed to build lyrics prompt: %w", err)
 	}
 
+	// TODO: APIクライアントを改修し、ResponseMIMEType: "application/json" を指定してJSON出力を強制する
 	resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText)
 	if err != nil {
 		return domain.LyricsDraft{}, fmt.Errorf("lyrics generation failed (model: %s): %w", a.model, err)
@@ -127,13 +128,20 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 		sectionPrompt = recipe.Sections[0].Prompt
 	}
 
-	// 3. プロンプトの構築（ドキュメントの cURL 例に基づく自然言語形式）
+	// 3. プロンプトの構築
 	// [Verse], [Chorus] タグを含む歌詞を核とし、具体的な音楽的制約を付加します。
+	var lyricsSection string
+	if lyricsText != "" {
+		lyricsSection = fmt.Sprintf(" with the following lyrics:\n\n%s\n\n", lyricsText)
+	} else {
+		lyricsSection = ".\n\n"
+	}
+
 	fullPrompt := fmt.Sprintf(
-		"Create a %s song with the following lyrics:\n\n%s\n\n"+
+		"Create a %s song%s"+
 			"Additional constraints: Music Detail: %s. Title: '%s', Theme: '%s', Instruments: %s, Tempo: %d BPM.",
 		recipe.Mood,
-		lyricsText,
+		lyricsSection,
 		sectionPrompt,
 		recipe.Title,
 		recipe.Theme,
