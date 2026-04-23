@@ -13,14 +13,20 @@ type Collector interface {
 	Collect(ctx context.Context, task Task) (string, error)
 }
 
-// Lyricist はコンテキストから歌詞案を生成します。
+// Lyricist は歌詞生成を担う役割です。
 type Lyricist interface {
 	GenerateLyrics(ctx context.Context, input string) (LyricsDraft, error)
 }
 
-// Composer は歌詞案から MusicRecipe を生成します。
-type Composer interface {
+// RecipeComposer はレシピ構築を担う役割です。
+type RecipeComposer interface {
 	ComposeRecipe(ctx context.Context, lyrics LyricsDraft) (MusicRecipe, error)
+}
+
+// Composer は歌詞生成とレシピ構築の両方を備えた統合インターフェースです。
+type Composer interface {
+	Lyricist
+	RecipeComposer
 }
 
 // Generator は MusicRecipe から音楽バイナリを生成します。
