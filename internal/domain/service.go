@@ -15,7 +15,8 @@ type Collector interface {
 
 // Composer はコンテキストから MusicRecipe を生成します。
 type Composer interface {
-	Compose(ctx context.Context, input string) (MusicRecipe, error)
+	GenerateLyrics(ctx context.Context, input string) (LyricsDraft, error)
+	ComposeRecipe(ctx context.Context, lyrics LyricsDraft) (MusicRecipe, error)
 }
 
 // Generator は MusicRecipe から音楽バイナリを生成します。

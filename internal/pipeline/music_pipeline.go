@@ -9,9 +9,12 @@ import (
 	"ap-music/internal/domain"
 )
 
-// MusicPipeline は Collect -> Compose -> Generate -> Publish -> Notify を統制します。
+// MusicPipeline は Collect -> Lyricist -> Composer -> Generator -> Publish -> Notify を統制します。
 type MusicPipeline struct {
 	Collector domain.Collector
+	// Lyricist と Composer は domain.Composer インターフェースを共有しますが、
+	// 役割を分離して定義することで、将来的な差し替えを容易にします。
+	Lyricist  domain.Composer
 	Composer  domain.Composer
 	Generator domain.Generator
 	Publisher domain.Publisher
@@ -29,9 +32,7 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 	// 2. エラートラップ用の defer 処理
 	defer func() {
 		if err != nil {
-			// エラーが発生していた場合、Slack に詳細を通知
 			if notifyErr := p.Notifier.NotifyError(ctx, err, notifReq); notifyErr != nil {
-				// 通知自体の失敗は slog で構造化ログとして出力
 				slog.ErrorContext(ctx, "failed to send error notification",
 					"original_error", err,
 					"notification_error", notifyErr,
@@ -48,13 +49,21 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 		return fmt.Errorf("collect phase failed: %w", err)
 	}
 
-	// Step B: レシピ構築（LLM）
-	recipe, err := p.Composer.Compose(ctx, contextText)
+	// Step B-1: 作詞フェーズ
+	// Lyricist 役割の Composer を使用して歌詞を生成
+	lyricsDraft, err := p.Lyricist.GenerateLyrics(ctx, contextText)
 	if err != nil {
-		return fmt.Errorf("compose (recipe generation) failed: %w", err)
+		return fmt.Errorf("lyrics generation failed: %w", err)
 	}
 
-	// モデルの上書き制御（空文字列による破壊をガード）
+	// Step B-2: レシピ構築フェーズ
+	// Composer 役割の Composer を使用して、歌詞案からレシピを構築
+	recipe, err := p.Composer.ComposeRecipe(ctx, lyricsDraft)
+	if err != nil {
+		return fmt.Errorf("compose recipe failed: %w", err)
+	}
+
+	// モデルの上書き制御
 	if model := strings.TrimSpace(task.Model); model != "" {
 		if recipe.Metadata == nil {
 			recipe.Metadata = make(map[string]string)
@@ -68,7 +77,7 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 		return fmt.Errorf("generate (lyria engine) failed: %w", err)
 	}
 
-	// Step D: 成果物の永続化（GCS保存）
+	// Step D: 成果物の永続化
 	result, err := p.Publisher.Publish(ctx, task, recipe, wav)
 	if err != nil {
 		return fmt.Errorf("publish (storage) failed: %w", err)
