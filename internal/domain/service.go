@@ -23,13 +23,14 @@ type RecipeComposer interface {
 	ComposeRecipe(ctx context.Context, lyrics LyricsDraft) (MusicRecipe, error)
 }
 
-// Composer は歌詞生成とレシピ構築の両方を備えた統合インターフェースです。
-type Composer interface {
-	Lyricist
-	RecipeComposer
-}
-
 // Generator は MusicRecipe から音楽バイナリを生成します。
 type Generator interface {
 	Generate(ctx context.Context, recipe MusicRecipe) ([]byte, error)
+}
+
+// MusicRunner は音楽生成の統合インターフェースです。
+type MusicRunner interface {
+	Lyricist
+	RecipeComposer
+	Generator
 }

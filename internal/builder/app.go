@@ -77,7 +77,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	// 3. Pipeline (Core Logic)
-	musicPipeline, err := buildPipeline(reader, lyria, lyria, publisher, slack)
+	musicPipeline, err := buildPipeline(reader, lyria, publisher, slack)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize music pipeline: %w", err)
 	}
