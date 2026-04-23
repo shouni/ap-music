@@ -21,5 +21,6 @@ type TaskQueue interface {
 
 // PromptGenerator は、AIプロンプトを生成するインターフェースです。
 type PromptGenerator interface {
-	GenerateRecipe(mode, content string) (string, error)
+	GenerateLyrics(content string) (string, error)
+	GenerateRecipe(lyrics LyricsDraft) (string, error)
 }

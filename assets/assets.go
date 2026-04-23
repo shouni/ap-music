@@ -9,6 +9,11 @@ import (
 const (
 	promptDir    = "prompts"
 	promptPrefix = "prompt_"
+
+	// ModeLyrics represents a constant string identifier for "lyrics".
+	ModeLyrics = "lyrics"
+	// ModeMusic represents a constant string identifier for "music".
+	ModeMusic = "music"
 )
 
 var (
