@@ -12,7 +12,7 @@ import (
 // MusicPipeline は Collect -> Lyricist -> Composer -> Generator -> Publish -> Notify を統制します。
 type MusicPipeline struct {
 	Collector domain.Collector
-	Lyricist  domain.Composer
+	Lyricist  domain.Lyricist
 	Composer  domain.Composer
 	Generator domain.Generator
 	Publisher domain.Publisher

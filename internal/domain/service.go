@@ -13,9 +13,13 @@ type Collector interface {
 	Collect(ctx context.Context, task Task) (string, error)
 }
 
-// Composer はコンテキストから MusicRecipe を生成します。
-type Composer interface {
+// Lyricist はコンテキストから歌詞案を生成します。
+type Lyricist interface {
 	GenerateLyrics(ctx context.Context, input string) (LyricsDraft, error)
+}
+
+// Composer は歌詞案から MusicRecipe を生成します。
+type Composer interface {
 	ComposeRecipe(ctx context.Context, lyrics LyricsDraft) (MusicRecipe, error)
 }
 
