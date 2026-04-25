@@ -22,26 +22,8 @@
         * 日本語歌唱の場合は `Clear Japanese female/male vocals with precise enunciation` 等を含める。
         * 歌詞全体に対するエフェクトや、バッキングの構成を具体化する。
 
-#### 3. 出力ルール
-* **出力は必ず以下の JSON 構造のみとし、Markdown の ```json ... ``` ブロックで囲むこと。**
-* `prompt`、`mood`、`instruments` は**英語**。それ以外は日本語でよい。
-
-```json
-{
-  "title": "string",
-  "theme": "string",
-  "mood": "string",
-  "tempo": 120,
-  "instruments": ["string"],
-  "sections": [
-    {
-      "name": "Main",
-      "duration_seconds": 30,
-      "prompt": "string"
-    }
-  ]
-}
-```
+#### 3. 出力ルール（厳守）
+* **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
 
 #### 4. 歌詞案
 
@@ -53,3 +35,10 @@ Narrative: {{.Lyrics.Narrative}}
 Keywords: {{range $i, $keyword := .Lyrics.Keywords}}{{if $i}}, {{end}}{{$keyword}}{{end}}
 Lyrics:
 {{.Lyrics.Lyrics}}
+
+#### 5. 出力スキーマ
+
+応答は以下の構造を持つ有効なJSONオブジェクト1つのみとしてください。
+Markdownのコードブロック（```json）や解説は一切不要です。
+
+{{.OutputSchema}}

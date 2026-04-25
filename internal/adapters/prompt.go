@@ -18,7 +18,8 @@ type lyricsPromptData struct {
 
 // recipePromptData はレシピプロンプトのテンプレートに渡すデータ構造です。
 type recipePromptData struct {
-	Lyrics *domain.LyricsDraft
+	Lyrics       *domain.LyricsDraft
+	OutputSchema string
 }
 
 // promptBuilder は、フォーマット済みのプロンプトを作成するためのインターフェース
@@ -92,9 +93,27 @@ func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
 
 // GenerateRecipe はレシピ生成用プロンプトを返します。
 func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft) (string, error) {
-	data := recipePromptData{
-		Lyrics: lyrics,
+	recipeTemplate := domain.MusicRecipe{
+		Title:       "楽曲のタイトル",
+		Theme:       "楽曲のコンセプト",
+		Mood:        "Euphoric High-Energy (英語)",
+		Tempo:       160,
+		Instruments: []string{"Synthesizer", "Drum Machine"},
+		Sections: []domain.MusicSection{
+			{
+				Name:     "Main",
+				Duration: 30,
+				Prompt:   "Lyria 3用の詳細な英文プロンプト...",
+			},
+		},
 	}
+
+	schemaBytes, _ := json.MarshalIndent(recipeTemplate, "", "  ")
+	data := recipePromptData{
+		Lyrics:       lyrics,
+		OutputSchema: string(schemaBytes),
+	}
+
 	prompt, err := pa.compose.Build(mode, data)
 	if err != nil {
 		return "", fmt.Errorf("レシピテンプレートの実行に失敗: %w", err)
