@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"ap-music/assets"
 	"context"
 	"encoding/json"
 	"errors"
@@ -90,9 +91,10 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model st
 
 // Compose は歌詞案をもとに MusicRecipe を生成します。
 func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, model string) (domain.MusicRecipe, error) {
-	// TODO::form入力で行う
-	//	promptText, err := a.promptGen.GenerateRecipe(assets.ModeCompose, lyrics)
-	promptText, err := a.promptGen.GenerateRecipe("rave", lyrics)
+	// TODO::Form入力で行う
+	mode := assets.ModeCompose
+	mode = "rave"
+	promptText, err := a.promptGen.GenerateRecipe(mode, lyrics)
 	if err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt: %w", err)
 	}
