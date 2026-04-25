@@ -115,6 +115,9 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model st
 
 // Compose は歌詞案をもとに MusicRecipe を生成します。
 func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, model, mode string) (*domain.MusicRecipe, error) {
+	if lyrics == nil {
+		return nil, fmt.Errorf("lyrics cannot be nil")
+	}
 	// 1. プロンプトモードの決定。空の場合は assets のデフォルトを使用
 	targetMode := mode
 	if targetMode == "" {
@@ -162,6 +165,9 @@ func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, 
 
 // GenerateAudio は Lyria 3 モデルを使用して WAV バイナリを生成します。
 func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
+	if recipe == nil {
+		return nil, fmt.Errorf("recipe cannot be nil")
+	}
 	// 1. データの抽出
 	var lyricsText string
 	if recipe.Lyrics != nil {
