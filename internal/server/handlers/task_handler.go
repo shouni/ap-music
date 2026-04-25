@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"ap-music/internal/domain"
 )
 
@@ -45,9 +47,8 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	// JobID が空の場合はタイムスタンプから生成
 	if task.JobID == "" {
-		task.JobID = time.Now().UTC().Format("20060102150405")
+		task.JobID = uuid.New().String()
 	}
 
 	// Cloud Tasks 等へのエンキュー実行

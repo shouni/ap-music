@@ -12,9 +12,9 @@ const (
 	lyricsPrefix  = "lyrics_"
 	composePrefix = "compose_"
 
-	// ModeLyrics represents a constant string identifier for "lyrics".
+	// ModeLyrics represents the default template key for lyrics generation.
 	ModeLyrics = "default"
-	// ModeCompose represents a constant string identifier for "compose".
+	// ModeCompose represents the default template key for music composition.
 	ModeCompose = "default"
 )
 

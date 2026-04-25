@@ -49,19 +49,23 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 }
 
 // GenerateLyrics は入力から歌詞のドラフトを生成します。
-func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, input string) (domain.LyricsDraft, error) {
-	if input == "" {
+func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model string) (domain.LyricsDraft, error) {
+	if contextText == "" {
 		return domain.LyricsDraft{}, fmt.Errorf("empty input")
 	}
 
-	promptText, err := a.promptGen.GenerateLyrics(input)
+	promptText, err := a.promptGen.GenerateLyrics(contextText)
 	if err != nil {
 		return domain.LyricsDraft{}, fmt.Errorf("failed to build lyrics prompt: %w", err)
 	}
 
-	resp, err := a.aiClient.GenerateContent(ctx, a.defaultModel, promptText)
+	targetModel := a.defaultModel
+	if model != "" {
+		targetModel = model
+	}
+	resp, err := a.aiClient.GenerateContent(ctx, targetModel, promptText)
 	if err != nil {
-		return domain.LyricsDraft{}, fmt.Errorf("lyrics generation failed (model: %s): %w", a.defaultModel, err)
+		return domain.LyricsDraft{}, fmt.Errorf("lyrics generation failed (model: %s): %w", targetModel, err)
 	}
 	if resp == nil {
 		return domain.LyricsDraft{}, fmt.Errorf("lyrics response is nil")
@@ -85,15 +89,19 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, input string) (domain
 }
 
 // Compose は歌詞案をもとに MusicRecipe を生成します。
-func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft) (domain.MusicRecipe, error) {
+func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, model string) (domain.MusicRecipe, error) {
 	promptText, err := a.promptGen.GenerateRecipe(lyrics)
 	if err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt: %w", err)
 	}
 
-	resp, err := a.aiClient.GenerateContent(ctx, a.defaultModel, promptText)
+	targetModel := a.defaultModel
+	if model != "" {
+		targetModel = model
+	}
+	resp, err := a.aiClient.GenerateContent(ctx, targetModel, promptText)
 	if err != nil {
-		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", a.defaultModel, err)
+		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
 	}
 
 	if resp == nil {
@@ -170,12 +178,12 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe domain.MusicRec
 	}
 	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, parts, opts)
 	if err != nil {
-		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", a.defaultLyriaModel, err)
+		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", targetModel, err)
 	}
 
 	// 6. 音声データの抽出
 	if resp == nil || len(resp.Audios) == 0 {
-		return nil, fmt.Errorf("no audio data (WAV) received from Lyria (model: %s)", a.defaultLyriaModel)
+		return nil, fmt.Errorf("no audio data (WAV) received from Lyria (model: %s)", targetModel)
 	}
 
 	return resp.Audios[0], nil

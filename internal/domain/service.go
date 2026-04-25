@@ -14,12 +14,12 @@ type Collector interface {
 
 // Lyricist は歌詞生成を担う役割です。
 type Lyricist interface {
-	GenerateLyrics(ctx context.Context, input string) (LyricsDraft, error)
+	GenerateLyrics(ctx context.Context, contextText, model string) (LyricsDraft, error)
 }
 
 // Composer は楽曲の設計（レシピ構築）を担う役割です。
 type Composer interface {
-	Compose(ctx context.Context, lyrics LyricsDraft) (MusicRecipe, error)
+	Compose(ctx context.Context, lyrics LyricsDraft, model string) (MusicRecipe, error)
 }
 
 // AudioGenerator は MusicRecipe から音声バイナリを生成します。
