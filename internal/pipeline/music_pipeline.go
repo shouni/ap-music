@@ -57,6 +57,10 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 		return fmt.Errorf("compose phase failed: %w", err)
 	}
 
+	// Compose 時にデフォルト値が設定される可能性があるため、
+	// task に含まれるユーザー指定のモデル情報で上書き（または補完）します。
+	recipe.AIModels = task.AIModels
+
 	// Step C: 音楽生成（音声バイナリの生成）
 	wav, err := p.Generator.GenerateAudio(ctx, recipe)
 	if err != nil {

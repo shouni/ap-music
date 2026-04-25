@@ -47,13 +47,13 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 	// 3. テンプレートの読み込み
 	composeTemplates, err := assets.LoadComposeFiles()
 	if err != nil {
-		return nil, fmt.Errorf("レシピテンプレートの読み込みに失敗: %w", err)
+		return nil, fmt.Errorf("作曲テンプレートの読み込みに失敗: %w", err)
 	}
 
 	// 4. ビルダーの構築
 	compose, err := prompts.NewBuilder(composeTemplates)
 	if err != nil {
-		return nil, fmt.Errorf("レシピビルダーの構築に失敗: %w", err)
+		return nil, fmt.Errorf("作曲ビルダーの構築に失敗: %w", err)
 	}
 
 	return &PromptAdapter{

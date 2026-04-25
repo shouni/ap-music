@@ -39,5 +39,5 @@ func LoadLyricsFiles() (map[string]string, error) {
 
 // LoadComposeFiles は埋め込まれたプロンプトファイルを読み込みます。
 func LoadComposeFiles() (map[string]string, error) {
-	return resource.Load(lyricsFiles, promptDir, composePrefix)
+	return resource.Load(composeFiles, promptDir, composePrefix)
 }

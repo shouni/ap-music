@@ -164,7 +164,11 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe domain.MusicRec
 	}
 
 	// 5. Lyria API を実行
-	resp, err := a.aiClient.GenerateWithParts(ctx, a.defaultLyriaModel, parts, opts)
+	targetModel := a.defaultLyriaModel
+	if recipe.ComposeModel != "" {
+		targetModel = recipe.ComposeModel
+	}
+	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, parts, opts)
 	if err != nil {
 		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", a.defaultLyriaModel, err)
 	}
