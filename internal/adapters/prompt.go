@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/shouni/go-prompt-kit/prompts"
@@ -11,12 +12,14 @@ import (
 
 // lyricsPromptData は歌詞プロンプトのテンプレートに渡すデータ構造です。
 type lyricsPromptData struct {
-	InputText string
+	InputText    string
+	OutputSchema string
 }
 
 // recipePromptData はレシピプロンプトのテンプレートに渡すデータ構造です。
 type recipePromptData struct {
-	Lyrics *domain.LyricsDraft
+	Lyrics       *domain.LyricsDraft
+	OutputSchema string
 }
 
 // promptBuilder は、フォーマット済みのプロンプトを作成するためのインターフェース
@@ -64,8 +67,25 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 
 // GenerateLyrics は歌詞生成用プロンプトを返します。
 func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
+	draft := domain.LyricsDraft{
+		Title:     "楽曲のタイトル",
+		Theme:     "世界観の核",
+		Hook:      "印象的なフレーズ",
+		Lyrics:    "[Verse]\n...\n[Chorus]\n...",
+		Keywords:  []string{"キーワード1", "キーワード2"},
+		Mood:      "雰囲気",
+		Narrative: "背景物語",
+	}
+
+	schemaBytes, err := json.MarshalIndent(draft, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("歌詞出力スキーマの生成に失敗: %w", err)
+	}
+	outputSchema := string(schemaBytes)
+
 	data := lyricsPromptData{
-		InputText: content,
+		InputText:    content,
+		OutputSchema: outputSchema,
 	}
 	prompt, err := pa.lyrics.Build(assets.ModeLyrics, data)
 	if err != nil {
@@ -76,9 +96,30 @@ func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
 
 // GenerateRecipe はレシピ生成用プロンプトを返します。
 func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft) (string, error) {
-	data := recipePromptData{
-		Lyrics: lyrics,
+	recipeTemplate := domain.MusicRecipe{
+		Title:       "楽曲のタイトル",
+		Theme:       "楽曲のコンセプト",
+		Mood:        "Euphoric High-Energy (英語)",
+		Tempo:       160,
+		Instruments: []string{"Synthesizer", "Drum Machine"},
+		Sections: []domain.MusicSection{
+			{
+				Name:     "Main",
+				Duration: 30,
+				Prompt:   "Lyria 3用の詳細な英文プロンプト...",
+			},
+		},
 	}
+
+	schemaBytes, err := json.MarshalIndent(recipeTemplate, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("レシピ出力スキーマの生成に失敗: %w", err)
+	}
+	data := recipePromptData{
+		Lyrics:       lyrics,
+		OutputSchema: string(schemaBytes),
+	}
+
 	prompt, err := pa.compose.Build(mode, data)
 	if err != nil {
 		return "", fmt.Errorf("レシピテンプレートの実行に失敗: %w", err)

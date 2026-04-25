@@ -30,8 +30,6 @@
     * **Vocal Direction**: 日本語歌唱の際は、AIの自然な発音を活かしつつ "Clear Japanese vocals with passionate enunciation" と指示し、熱量を重視すること。
 
 #### 3. 出力ルール（厳守）
-* **JSONのみを出力**: 解説、挨拶、Markdownのコードブロック外のテキストは一切不要。
-* **Markdownの禁止**: **Markdownのコードブロック（```json ... ```）を使用せず、純粋なJSON文字列のみを出力してください。**
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
 
 #### 4. 歌詞案
@@ -48,22 +46,6 @@ Lyrics:
 #### 5. 出力スキーマ
 
 応答は以下の構造を持つ有効なJSONオブジェクト1つのみとしてください。
+Markdownのコードブロック（```json）や解説は一切不要です。
 
-```json
-{
-  "title": "string",
-  "theme": "string",
-  "mood": "string",
-  "tempo": 160,
-  "instruments": [
-    "string"
-  ],
-  "sections": [
-    {
-      "name": "Main",
-      "duration_seconds": 30,
-      "prompt": "string"
-    }
-  ]
-}
-```
+{{.OutputSchema}}
