@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -36,7 +37,7 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if task.JobID == "" {
-		task.JobID = uuid.New().String()
+		task.JobID = fmt.Sprintf("%s-%s", time.Now().UTC().Format("20060102150405"), uuid.New().String()[:8])
 	}
 
 	// Cloud Tasks 等へのエンキュー実行

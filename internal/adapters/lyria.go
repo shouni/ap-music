@@ -194,6 +194,7 @@ func cleanJSONResponse(input string) string {
 	start := strings.Index(input, "{")
 	end := strings.LastIndex(input, "}")
 	if start == -1 || end == -1 || start > end {
+		// インデックスが不正な場合はそのまま返し、後続の Unmarshal でエラーをハンドリングさせる
 		return input
 	}
 	return input[start : end+1]
