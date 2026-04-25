@@ -75,11 +75,11 @@ func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
 }
 
 // GenerateRecipe はレシピ生成用プロンプトを返します。
-func (pa *PromptAdapter) GenerateRecipe(lyrics domain.LyricsDraft) (string, error) {
+func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics domain.LyricsDraft) (string, error) {
 	data := recipePromptData{
 		Lyrics: lyrics,
 	}
-	prompt, err := pa.compose.Build(assets.ModeCompose, data)
+	prompt, err := pa.compose.Build(mode, data)
 	if err != nil {
 		return "", fmt.Errorf("レシピテンプレートの実行に失敗: %w", err)
 	}
