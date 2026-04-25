@@ -3,10 +3,10 @@ package domain
 import "time"
 
 type AIModels struct {
-	// LyricsModel は歌詞生成に使用するモデル
-	LyricsModel string `json:"lyrics_model,omitempty"`
-	// ComposeModel は音声生成に使用するモデル
-	ComposeModel string `json:"compose_model,omitempty"`
+	// TextModel は歌詞生成およびレシピ構築（LLM）に使用するモデル
+	TextModel string `json:"text_model,omitempty"`
+	// AudioModel は音声生成に使用するモデル
+	AudioModel string `json:"audio_model,omitempty"`
 }
 
 // Task は生成ジョブです。

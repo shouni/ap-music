@@ -46,13 +46,13 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 	}
 
 	// Step B-1: 作詞フェーズ
-	lyricsDraft, err := p.Lyricist.GenerateLyrics(ctx, contextText, task.AIModels.LyricsModel)
+	lyricsDraft, err := p.Lyricist.GenerateLyrics(ctx, contextText, task.AIModels.TextModel)
 	if err != nil {
 		return fmt.Errorf("lyrics generation failed: %w", err)
 	}
 
 	// Step B-2: 作曲（レシピ構築）フェーズ
-	recipe, err := p.Composer.Compose(ctx, lyricsDraft, task.AIModels.LyricsModel)
+	recipe, err := p.Composer.Compose(ctx, lyricsDraft, task.AIModels.TextModel)
 	if err != nil {
 		return fmt.Errorf("compose phase failed: %w", err)
 	}

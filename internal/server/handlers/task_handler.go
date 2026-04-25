@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -24,15 +24,15 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 役割ごとにモデル入力を取得
-	lyricsModel := strings.TrimSpace(r.FormValue("lyrics_model"))
-	composeModel := strings.TrimSpace(r.FormValue("compose_model"))
+	textModel := strings.TrimSpace(r.FormValue("lyrics_model"))
+	audioModel := strings.TrimSpace(r.FormValue("compose_model"))
 
 	// デフォルト値のフォールバック
-	if lyricsModel == "" {
-		lyricsModel = h.cfg.GeminiModel
+	if textModel == "" {
+		textModel = h.cfg.GeminiModel
 	}
-	if composeModel == "" {
-		composeModel = h.cfg.LyriaModel
+	if audioModel == "" {
+		audioModel = h.cfg.LyriaModel
 	}
 
 	task := domain.Task{
@@ -42,8 +42,8 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		ImageURL:   r.FormValue("image"),
 		CreatedAt:  time.Now().UTC(),
 		AIModels: domain.AIModels{
-			LyricsModel:  lyricsModel,
-			ComposeModel: composeModel,
+			TextModel:  textModel,
+			AudioModel: audioModel,
 		},
 	}
 
@@ -53,7 +53,8 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 
 	// Cloud Tasks 等へのエンキュー実行
 	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
-		http.Error(w, fmt.Sprintf("failed to enqueue task: %v", err), http.StatusInternalServerError)
+		slog.Error("failed to enqueue task", "error", err)
+		http.Error(w, "Internal Server Error: failed to enqueue task", http.StatusInternalServerError)
 		return
 	}
 

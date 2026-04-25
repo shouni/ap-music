@@ -35,13 +35,13 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 	// 1. テンプレートの読み込み
 	lyricsTemplates, err := assets.LoadLyricsFiles()
 	if err != nil {
-		return nil, fmt.Errorf("レシピテンプレートの読み込みに失敗: %w", err)
+		return nil, fmt.Errorf("歌詞テンプレートの読み込みに失敗: %w", err)
 	}
 
 	// 2. ビルダーの構築
 	lyrics, err := prompts.NewBuilder(lyricsTemplates)
 	if err != nil {
-		return nil, fmt.Errorf("レシピビルダーの構築に失敗: %w", err)
+		return nil, fmt.Errorf("歌詞ビルダーの構築に失敗: %w", err)
 	}
 
 	// 3. テンプレートの読み込み

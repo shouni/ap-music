@@ -173,8 +173,8 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe domain.MusicRec
 
 	// 5. Lyria API を実行
 	targetModel := a.defaultLyriaModel
-	if recipe.ComposeModel != "" {
-		targetModel = recipe.ComposeModel
+	if recipe.AudioModel != "" {
+		targetModel = recipe.AudioModel
 	}
 	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, parts, opts)
 	if err != nil {
