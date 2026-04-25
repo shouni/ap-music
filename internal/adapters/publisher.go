@@ -35,7 +35,7 @@ func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remo
 }
 
 // Publish は成果物をストレージに保存し、その結果（署名付きURL等）を返します。
-func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe domain.MusicRecipe, audioData []byte) (*domain.PublishResult, error) {
+func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe *domain.MusicRecipe, audioData []byte) (*domain.PublishResult, error) {
 	if task.JobID == "" {
 		return nil, fmt.Errorf("job id is required")
 	}

@@ -14,9 +14,7 @@ func buildPipeline(
 ) (domain.Pipeline, error) {
 	return pipeline.MusicPipeline{
 		Collector: collector,
-		Lyricist:  runner,
-		Composer:  runner,
-		Generator: runner,
+		Runner:    runner,
 		Publisher: publisher,
 		Notifier:  notifier,
 	}, nil
