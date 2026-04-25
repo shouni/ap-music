@@ -21,7 +21,7 @@ type Container struct {
 	// Business Logic
 	Pipeline domain.Pipeline
 	// External Adapters
-	HTTPClient httpkit.HTTPClient
+	HTTPClient httpkit.Requester
 	Notifier   domain.Notifier
 }
 
