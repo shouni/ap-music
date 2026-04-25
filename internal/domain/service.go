@@ -19,7 +19,7 @@ type Lyricist interface {
 
 // Composer は楽曲の設計（レシピ構築）を担う役割です。
 type Composer interface {
-	Compose(ctx context.Context, lyrics LyricsDraft, model string) (MusicRecipe, error)
+	Compose(ctx context.Context, lyrics LyricsDraft, model, mode string) (MusicRecipe, error)
 }
 
 // AudioGenerator は MusicRecipe から音声バイナリを生成します。
