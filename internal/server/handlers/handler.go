@@ -23,6 +23,7 @@ type Handler struct {
 	templateCache map[string]*template.Template
 	taskEnqueuer  *tasks.Enqueuer[domain.Task]
 	remoteIO      *app.RemoteIO
+	composeModes  []string
 }
 
 // Home はトップ画面を表示します。
@@ -31,7 +32,14 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	h.render(w, http.StatusOK, "compose_form.html", "Compose", nil)
+
+	data := struct {
+		ComposeModes []string
+	}{
+		ComposeModes: h.composeModes,
+	}
+
+	h.render(w, http.StatusOK, "compose_form.html", "Compose", data)
 }
 
 // NewHandler は指定された構成に基づいて新しいハンドラーを初期化します。
@@ -83,11 +91,23 @@ func NewHandler(
 		cache[pageName] = tmpl
 	}
 
+	// プロンプトファイル名からモードリストを動的に読み込む
+	composePrompts, err := assets.LoadComposeFiles()
+	if err != nil {
+		return nil, fmt.Errorf("composeプロンプトの読み込み失敗: %w", err)
+	}
+
+	modes := make([]string, 0, len(composePrompts))
+	for k := range composePrompts {
+		modes = append(modes, k)
+	}
+
 	return &Handler{
 		cfg:           cfg,
 		templateCache: cache,
 		taskEnqueuer:  taskEnqueuer,
 		remoteIO:      remoteIO,
+		composeModes:  modes,
 	}, nil
 }
 

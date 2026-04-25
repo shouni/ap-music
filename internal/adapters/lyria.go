@@ -1,7 +1,6 @@
 package adapters
 
 import (
-	"ap-music/assets"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +10,7 @@ import (
 	"github.com/shouni/go-gemini-client/gemini"
 	"google.golang.org/genai"
 
+	"ap-music/assets"
 	"ap-music/internal/config"
 	"ap-music/internal/domain"
 )
