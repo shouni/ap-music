@@ -1,10 +1,11 @@
 package pipeline
 
 import (
-	"ap-music/internal/domain"
 	"context"
 	"fmt"
 	"log/slog"
+
+	"ap-music/internal/domain"
 )
 
 // MusicPipeline は Collect -> Lyrics -> Compose -> GenerateAudio -> Publish -> Notify を統制します。
@@ -22,7 +23,7 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 	// 1. 通知用のメタデータを準備
 	notifReq := domain.NotificationRequest{
 		SourceURL:      task.RequestURL,
-		OutputCategory: "Music Generation",
+		OutputCategory: task.AIModels.ComposeMode,
 	}
 
 	// 2. エラートラップ用の defer 処理
