@@ -232,6 +232,125 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 	return resp.Audios[0], nil
 }
 
+// GenerateFullAudio は Sub, Main, Ending の3セクションを順番に生成し、結合したバイナリを返します。
+func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
+	type sectionSpec struct {
+		name     string
+		duration int
+	}
+
+	specs := []sectionSpec{
+		{"Verse", 40},
+		{"Chorus", 45},
+		{"Outro", 15},
+	}
+
+	var fullAudio []byte
+	for _, spec := range specs {
+		data, err := a.GenerateAudioSection(ctx, recipe, spec.name, spec.duration)
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO::ここでは単純に結合（※音楽的なクロスフェードは別途検討）
+		fullAudio = append(fullAudio, data...)
+	}
+
+	return fullAudio, nil
+}
+
+// GenerateAudioSection は特定のセクション（Sub/Main/Ending）に特化したプロンプトで音声を生成します。
+func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.MusicRecipe, sectionName string, duration int) ([]byte, error) {
+	if recipe == nil {
+		return nil, fmt.Errorf("recipe cannot be nil")
+	}
+
+	// --- 1. データの抽出 (元のロジックを継承) ---
+	var lyricsText string
+	if recipe.Lyrics != nil {
+		lyricsText = recipe.Lyrics.Lyrics
+	}
+
+	var sectionPrompt string
+	if len(recipe.Sections) > 0 {
+		sectionPrompt = recipe.Sections[0].Prompt
+	}
+
+	// --- 2. strings.Builder を使用した明確なプロンプト構築 ---
+	var pb strings.Builder
+	pb.WriteString(fmt.Sprintf("Current Section: [%s]. Duration: %d seconds.\n", sectionName, duration))
+
+	// セクションごとに歌唱指示を出し分ける
+	switch sectionName {
+	case "Verse":
+		pb.WriteString("Vocal Direction: Focus on singing the [Verse] section of the lyrics. ")
+	case "Chorus":
+		pb.WriteString("Vocal Direction: This is the peak! Sing the [Chorus] and the Hook intensely. ")
+	case "Outro":
+		pb.WriteString("Vocal Direction: Sing the [Outro] part as the song fades out into digital echoes. ")
+	}
+
+	// 歌詞全体をコンテキストとして渡す
+	pb.WriteString(fmt.Sprintf("\nFull Lyrics to reference:\n%s\n", recipe.Lyrics.Lyrics))
+
+	// 歌詞の流し込み
+	if lyricsText != "" {
+		pb.WriteString(fmt.Sprintf("With the following lyrics:\n\n%s\n\n", lyricsText))
+	}
+
+	// 詳細制約の統合
+	pb.WriteString(fmt.Sprintf(
+		"Additional constraints: Music Detail: %s. Title: '%s', Theme: '%s', Instruments: %s, Tempo: %d BPM.",
+		sectionPrompt,
+		recipe.Title,
+		recipe.Theme,
+		strings.Join(recipe.Instruments, ", "),
+		recipe.Tempo,
+	))
+
+	fullPrompt := pb.String()
+
+	// --- 3. parts の組み立てとオプション設定 ---
+	parts := []*genai.Part{
+		{Text: fullPrompt},
+	}
+
+	// recipe.Lyrics.Seed など、ベースとなるシード値をここで使用します
+	seedValue := int64(12345) // 本来は recipe 内に保持している Seed を使用
+	// TODO: 本来は recipe 内に保持している Seed を使用
+	//if recipe.Lyrics != nil && recipe.Lyrics.Seed != 0 {
+	//	seedValue = recipe.Lyrics.Seed
+	//}
+
+	opts := gemini.GenerateOptions{
+		ResponseMIMEType: "audio/wav",
+		Seed:             &seedValue, // ここでポインタを渡してシードを固定！
+		SafetySettings: []*genai.SafetySetting{
+			{Category: genai.HarmCategoryHarassment, Threshold: genai.HarmBlockThresholdBlockNone},
+			{Category: genai.HarmCategoryHateSpeech, Threshold: genai.HarmBlockThresholdBlockNone},
+			{Category: genai.HarmCategorySexuallyExplicit, Threshold: genai.HarmBlockThresholdBlockNone},
+			{Category: genai.HarmCategoryDangerousContent, Threshold: genai.HarmBlockThresholdBlockNone},
+		},
+	}
+
+	// --- 4. Lyria API 実行 ---
+	targetModel := a.defaultLyriaModel
+	if recipe.AudioModel != "" {
+		targetModel = recipe.AudioModel
+	}
+
+	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, parts, opts)
+	if err != nil {
+		return nil, fmt.Errorf("lyria generation failed for section %s: %w", sectionName, err)
+	}
+
+	if resp == nil || len(resp.Audios) == 0 {
+		return nil, fmt.Errorf("no audio data for section %s", sectionName)
+	}
+
+	return resp.Audios[0], nil
+}
+
 // cleanJSONResponse は LLM が出力しがちな Markdown の装飾を除去します。
 func cleanJSONResponse(input string) string {
 	start := strings.Index(input, "{")
