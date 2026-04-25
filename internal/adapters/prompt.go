@@ -77,7 +77,10 @@ func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
 		Narrative: "背景物語",
 	}
 
-	schemaBytes, _ := json.MarshalIndent(draft, "", "  ")
+	schemaBytes, err := json.MarshalIndent(draft, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("歌詞出力スキーマの生成に失敗: %w", err)
+	}
 	outputSchema := string(schemaBytes)
 
 	data := lyricsPromptData{
@@ -108,7 +111,10 @@ func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft)
 		},
 	}
 
-	schemaBytes, _ := json.MarshalIndent(recipeTemplate, "", "  ")
+	schemaBytes, err := json.MarshalIndent(recipeTemplate, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("レシピ出力スキーマの生成に失敗: %w", err)
+	}
 	data := recipePromptData{
 		Lyrics:       lyrics,
 		OutputSchema: string(schemaBytes),
