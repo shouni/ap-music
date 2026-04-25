@@ -26,25 +26,39 @@ type promptBuilder interface {
 
 // PromptAdapter は、さまざまなモードとデータに基づいてプロンプトを生成する役割を担います。
 type PromptAdapter struct {
-	builder promptBuilder
+	lyrics  promptBuilder
+	compose promptBuilder
 }
 
 // NewPromptAdapter は動的に読み込んだテンプレートを使用して Builder を構築します。
 func NewPromptAdapter() (*PromptAdapter, error) {
 	// 1. テンプレートの読み込み
-	recipeTemplates, err := assets.LoadPrompts()
+	lyricsTemplates, err := assets.LoadLyricsFiles()
 	if err != nil {
 		return nil, fmt.Errorf("レシピテンプレートの読み込みに失敗: %w", err)
 	}
 
 	// 2. ビルダーの構築
-	recipe, err := prompts.NewBuilder(recipeTemplates)
+	lyrics, err := prompts.NewBuilder(lyricsTemplates)
+	if err != nil {
+		return nil, fmt.Errorf("レシピビルダーの構築に失敗: %w", err)
+	}
+
+	// 3. テンプレートの読み込み
+	composeTemplates, err := assets.LoadComposeFiles()
+	if err != nil {
+		return nil, fmt.Errorf("レシピテンプレートの読み込みに失敗: %w", err)
+	}
+
+	// 4. ビルダーの構築
+	compose, err := prompts.NewBuilder(composeTemplates)
 	if err != nil {
 		return nil, fmt.Errorf("レシピビルダーの構築に失敗: %w", err)
 	}
 
 	return &PromptAdapter{
-		builder: recipe,
+		lyrics:  lyrics,
+		compose: compose,
 	}, nil
 }
 
@@ -53,7 +67,7 @@ func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
 	data := lyricsPromptData{
 		InputText: content,
 	}
-	prompt, err := pa.builder.Build(assets.ModeLyrics, data)
+	prompt, err := pa.lyrics.Build(assets.ModeLyrics, data)
 	if err != nil {
 		return "", fmt.Errorf("歌詞テンプレートの実行に失敗: %w", err)
 	}
@@ -65,7 +79,7 @@ func (pa *PromptAdapter) GenerateRecipe(lyrics domain.LyricsDraft) (string, erro
 	data := recipePromptData{
 		Lyrics: lyrics,
 	}
-	prompt, err := pa.builder.Build(assets.ModeMusic, data)
+	prompt, err := pa.compose.Build(assets.ModeCompose, data)
 	if err != nil {
 		return "", fmt.Errorf("レシピテンプレートの実行に失敗: %w", err)
 	}

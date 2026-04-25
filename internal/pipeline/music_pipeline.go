@@ -1,20 +1,18 @@
 package pipeline
 
 import (
+	"ap-music/internal/domain"
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
-
-	"ap-music/internal/domain"
 )
 
-// MusicPipeline は Collect -> Lyricist -> Composer -> Generator -> Publish -> Notify を統制します。
+// MusicPipeline は Collect -> Lyrics -> Compose -> GenerateAudio -> Publish -> Notify を統制します。
 type MusicPipeline struct {
 	Collector domain.Collector
 	Lyricist  domain.Lyricist
-	Composer  domain.RecipeComposer
-	Generator domain.Generator
+	Composer  domain.Composer
+	Generator domain.AudioGenerator
 	Publisher domain.Publisher
 	Notifier  domain.Notifier
 }
@@ -48,37 +46,27 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 	}
 
 	// Step B-1: 作詞フェーズ
-	// Lyricist 役割の Composer を使用して歌詞を生成
 	lyricsDraft, err := p.Lyricist.GenerateLyrics(ctx, contextText)
 	if err != nil {
 		return fmt.Errorf("lyrics generation failed: %w", err)
 	}
 
-	// Step B-2: レシピ構築フェーズ
-	// Composer 役割の Composer を使用して、歌詞案からレシピを構築
-	recipe, err := p.Composer.ComposeRecipe(ctx, lyricsDraft)
+	// Step B-2: 作曲（レシピ構築）フェーズ
+	recipe, err := p.Composer.Compose(ctx, lyricsDraft)
 	if err != nil {
-		return fmt.Errorf("compose recipe failed: %w", err)
+		return fmt.Errorf("compose phase failed: %w", err)
 	}
 
-	// モデルの上書き制御
-	if model := strings.TrimSpace(task.Model); model != "" {
-		if recipe.Metadata == nil {
-			recipe.Metadata = make(map[string]string)
-		}
-		recipe.Metadata["model"] = model
-	}
-
-	// Step C: 音楽生成
-	wav, err := p.Generator.Generate(ctx, recipe)
+	// Step C: 音楽生成（音声バイナリの生成）
+	wav, err := p.Generator.GenerateAudio(ctx, recipe)
 	if err != nil {
-		return fmt.Errorf("generate (lyria engine) failed: %w", err)
+		return fmt.Errorf("audio generation (lyria engine) failed: %w", err)
 	}
 
 	// Step D: 成果物の永続化
 	result, err := p.Publisher.Publish(ctx, task, recipe, wav)
 	if err != nil {
-		return fmt.Errorf("publish (storage) failed: %w", err)
+		return fmt.Errorf("publish phase failed: %w", err)
 	}
 
 	// Step E: 成功通知

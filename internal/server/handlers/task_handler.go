@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -20,9 +21,16 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	selectedModel := strings.TrimSpace(r.FormValue("model"))
-	if selectedModel == "" {
-		selectedModel = h.cfg.LyriaModel
+	// 役割ごとにモデル入力を取得
+	lyricsModel := strings.TrimSpace(r.FormValue("lyrics_model"))
+	composeModel := strings.TrimSpace(r.FormValue("compose_model"))
+
+	// デフォルト値のフォールバック
+	if lyricsModel == "" {
+		lyricsModel = h.cfg.GeminiModel
+	}
+	if composeModel == "" {
+		composeModel = h.cfg.LyriaModel
 	}
 
 	task := domain.Task{
@@ -30,24 +38,34 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		RequestURL: r.FormValue("url"),
 		InputText:  r.FormValue("text"),
 		ImageURL:   r.FormValue("image"),
-		Model:      selectedModel,
 		CreatedAt:  time.Now().UTC(),
+		AIModels: domain.AIModels{
+			LyricsModel:  lyricsModel,
+			ComposeModel: composeModel,
+		},
 	}
+
+	// JobID が空の場合はタイムスタンプから生成
 	if task.JobID == "" {
 		task.JobID = time.Now().UTC().Format("20060102150405")
 	}
 
+	// Cloud Tasks 等へのエンキュー実行
 	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to enqueue task: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Acceptヘッダーを確認し、JSONを要求している場合は既存の挙動を維持する
+	// Acceptヘッダーを確認し、JSONを要求している場合はJSONでレスポンス
 	if strings.Contains(r.Header.Get("Accept"), "application/json") {
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "queued", "job_id": task.JobID})
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status": "queued",
+			"job_id": task.JobID,
+		})
 		return
 	}
 
+	// HTML レンダリング
 	h.render(w, http.StatusAccepted, "accepted.html", "タスク受付完了", task)
 }

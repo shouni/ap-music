@@ -4,7 +4,6 @@ import "context"
 
 // Pipeline は、デコードされたペイロードを受け取って実際の処理を行うインターフェースです。
 type Pipeline interface {
-	// Execute は、指定されたコンテキストに基づいて GenerateTaskPayload を処理し、問題が発生した場合はエラーを返します。
 	Execute(ctx context.Context, payload Task) (err error)
 }
 
@@ -18,19 +17,19 @@ type Lyricist interface {
 	GenerateLyrics(ctx context.Context, input string) (LyricsDraft, error)
 }
 
-// RecipeComposer はレシピ構築を担う役割です。
-type RecipeComposer interface {
-	ComposeRecipe(ctx context.Context, lyrics LyricsDraft) (MusicRecipe, error)
+// Composer は楽曲の設計（レシピ構築）を担う役割です。
+type Composer interface {
+	Compose(ctx context.Context, lyrics LyricsDraft) (MusicRecipe, error)
 }
 
-// Generator は MusicRecipe から音楽バイナリを生成します。
-type Generator interface {
-	Generate(ctx context.Context, recipe MusicRecipe) ([]byte, error)
+// AudioGenerator は MusicRecipe から音声バイナリを生成します。
+type AudioGenerator interface {
+	GenerateAudio(ctx context.Context, recipe MusicRecipe) ([]byte, error)
 }
 
-// MusicRunner は音楽生成の統合インターフェースです。
+// MusicRunner は音楽生成のプロセスを統合したインターフェースです。
 type MusicRunner interface {
 	Lyricist
-	RecipeComposer
-	Generator
+	Composer
+	AudioGenerator
 }
