@@ -7,26 +7,37 @@ import (
 )
 
 const (
-	promptDir    = "prompts"
-	promptPrefix = "prompt_"
+	promptDir = "prompts"
 
-	// ModeLyrics represents a constant string identifier for "lyrics".
-	ModeLyrics = "lyrics"
-	// ModeMusic represents a constant string identifier for "music".
-	ModeMusic = "music"
+	lyricsPrefix  = "lyrics_"
+	composePrefix = "compose_"
+
+	// ModeLyrics represents the default template key for lyrics generation.
+	ModeLyrics = "default"
+	// ModeCompose represents the default template key for music composition.
+	ModeCompose = "default"
 )
 
 var (
-	// promptFiles はプロンプトテンプレートです。
-	//go:embed prompts/prompt_*.md
-	promptFiles embed.FS
+	// lyricsFiles はプロンプトテンプレートです。
+	//go:embed prompts/lyrics_*.md
+	lyricsFiles embed.FS
+
+	// composeFiles はプロンプトテンプレートです。
+	//go:embed prompts/compose_*.md
+	composeFiles embed.FS
 
 	// Templates は、すべてのHTMLテンプレートを保持します。
 	//go:embed templates/*.html
 	Templates embed.FS
 )
 
-// LoadPrompts は埋め込まれたプロンプトファイルを読み込みます。
-func LoadPrompts() (map[string]string, error) {
-	return resource.Load(promptFiles, promptDir, promptPrefix)
+// LoadLyricsFiles は埋め込まれたプロンプトファイルを読み込みます。
+func LoadLyricsFiles() (map[string]string, error) {
+	return resource.Load(lyricsFiles, promptDir, lyricsPrefix)
+}
+
+// LoadComposeFiles は埋め込まれたプロンプトファイルを読み込みます。
+func LoadComposeFiles() (map[string]string, error) {
+	return resource.Load(composeFiles, promptDir, composePrefix)
 }

@@ -16,10 +16,10 @@ import (
 
 // LyriaAdapter は Lyria API クライアントの実装です。
 type LyriaAdapter struct {
-	aiClient   gemini.Generator
-	promptGen  domain.PromptGenerator
-	model      string
-	lyriaModel string
+	aiClient          gemini.Generator
+	promptGen         domain.PromptGenerator
+	defaultModel      string // 作詞・作曲(LLM)用デフォルト
+	defaultLyriaModel string // 音声生成(Lyria)用デフォルト
 }
 
 // NewLyriaAdapter は、指定されたコンテキストと構成を使用して、新しい LyriaAdapter を初期化して返します。
@@ -35,31 +35,37 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 	if err != nil {
 		return nil, fmt.Errorf("Gemini API クライアントの初期化に失敗しました: %w", err)
 	}
+
 	if cfg.GeminiModel == "" {
 		return nil, fmt.Errorf("GeminiModel is required but not set")
 	}
+
 	return &LyriaAdapter{
-		aiClient:   aiClient,
-		promptGen:  promptGen,
-		model:      cfg.GeminiModel,
-		lyriaModel: cfg.LyriaModel,
+		aiClient:          aiClient,
+		promptGen:         promptGen,
+		defaultModel:      cfg.GeminiModel,
+		defaultLyriaModel: cfg.LyriaModel,
 	}, nil
 }
 
 // GenerateLyrics は入力から歌詞のドラフトを生成します。
-func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, input string) (domain.LyricsDraft, error) {
-	if input == "" {
+func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model string) (domain.LyricsDraft, error) {
+	if contextText == "" {
 		return domain.LyricsDraft{}, fmt.Errorf("empty input")
 	}
 
-	promptText, err := a.promptGen.GenerateLyrics(input)
+	promptText, err := a.promptGen.GenerateLyrics(contextText)
 	if err != nil {
 		return domain.LyricsDraft{}, fmt.Errorf("failed to build lyrics prompt: %w", err)
 	}
 
-	resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText)
+	targetModel := a.defaultModel
+	if model != "" {
+		targetModel = model
+	}
+	resp, err := a.aiClient.GenerateContent(ctx, targetModel, promptText)
 	if err != nil {
-		return domain.LyricsDraft{}, fmt.Errorf("lyrics generation failed (model: %s): %w", a.model, err)
+		return domain.LyricsDraft{}, fmt.Errorf("lyrics generation failed (model: %s): %w", targetModel, err)
 	}
 	if resp == nil {
 		return domain.LyricsDraft{}, fmt.Errorf("lyrics response is nil")
@@ -82,16 +88,20 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, input string) (domain
 	return lyrics, nil
 }
 
-// ComposeRecipe は歌詞案をもとに MusicRecipe を生成します。
-func (a *LyriaAdapter) ComposeRecipe(ctx context.Context, lyrics domain.LyricsDraft) (domain.MusicRecipe, error) {
+// Compose は歌詞案をもとに MusicRecipe を生成します。
+func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, model string) (domain.MusicRecipe, error) {
 	promptText, err := a.promptGen.GenerateRecipe(lyrics)
 	if err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt: %w", err)
 	}
 
-	resp, err := a.aiClient.GenerateContent(ctx, a.model, promptText)
+	targetModel := a.defaultModel
+	if model != "" {
+		targetModel = model
+	}
+	resp, err := a.aiClient.GenerateContent(ctx, targetModel, promptText)
 	if err != nil {
-		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", a.model, err)
+		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
 	}
 
 	if resp == nil {
@@ -113,8 +123,8 @@ func (a *LyriaAdapter) ComposeRecipe(ctx context.Context, lyrics domain.LyricsDr
 	return recipe, nil
 }
 
-// Generate は Lyria 3 モデルを使用して、ドキュメントの推奨形式で音楽を生成します。
-func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) ([]byte, error) {
+// GenerateAudio は Lyria 3 モデルを使用して WAV バイナリを生成します。
+func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe domain.MusicRecipe) ([]byte, error) {
 	// 1. データの抽出
 	var lyricsText string
 	if recipe.Lyrics != nil {
@@ -162,20 +172,24 @@ func (a *LyriaAdapter) Generate(ctx context.Context, recipe domain.MusicRecipe) 
 	}
 
 	// 5. Lyria API を実行
-	resp, err := a.aiClient.GenerateWithParts(ctx, a.lyriaModel, parts, opts)
+	targetModel := a.defaultLyriaModel
+	if recipe.AudioModel != "" {
+		targetModel = recipe.AudioModel
+	}
+	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, parts, opts)
 	if err != nil {
-		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", a.lyriaModel, err)
+		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", targetModel, err)
 	}
 
 	// 6. 音声データの抽出
 	if resp == nil || len(resp.Audios) == 0 {
-		return nil, fmt.Errorf("no audio data (WAV) received from Lyria")
+		return nil, fmt.Errorf("no audio data (WAV) received from Lyria (model: %s)", targetModel)
 	}
 
 	return resp.Audios[0], nil
 }
 
-// cleanJSONResponse は LLM が出力しがちな Markdown の装飾を除去します。 。
+// cleanJSONResponse は LLM が出力しがちな Markdown の装飾を除去します。
 func cleanJSONResponse(input string) string {
 	start := strings.Index(input, "{")
 	end := strings.LastIndex(input, "}")

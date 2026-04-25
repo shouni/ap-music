@@ -2,9 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"ap-music/internal/domain"
 )
@@ -20,34 +24,39 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	selectedModel := strings.TrimSpace(r.FormValue("model"))
-	if selectedModel == "" {
-		selectedModel = h.cfg.LyriaModel
-	}
-
 	task := domain.Task{
 		JobID:      r.FormValue("job_id"),
 		RequestURL: r.FormValue("url"),
 		InputText:  r.FormValue("text"),
 		ImageURL:   r.FormValue("image"),
-		Model:      selectedModel,
 		CreatedAt:  time.Now().UTC(),
-	}
-	if task.JobID == "" {
-		task.JobID = time.Now().UTC().Format("20060102150405")
+		AIModels: domain.AIModels{
+			TextModel:  strings.TrimSpace(r.FormValue("lyrics_model")),
+			AudioModel: strings.TrimSpace(r.FormValue("compose_model")),
+		},
 	}
 
+	if task.JobID == "" {
+		task.JobID = fmt.Sprintf("%s-%s", time.Now().UTC().Format("20060102150405"), uuid.New().String()[:8])
+	}
+
+	// Cloud Tasks 等へのエンキュー実行
 	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		slog.Error("failed to enqueue task", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	// Acceptヘッダーを確認し、JSONを要求している場合は既存の挙動を維持する
+	// Acceptヘッダーを確認し、JSONを要求している場合はJSONでレスポンス
 	if strings.Contains(r.Header.Get("Accept"), "application/json") {
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "queued", "job_id": task.JobID})
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status": "queued",
+			"job_id": task.JobID,
+		})
 		return
 	}
 
+	// HTML レンダリング
 	h.render(w, http.StatusAccepted, "accepted.html", "タスク受付完了", task)
 }
