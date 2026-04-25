@@ -66,7 +66,6 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 
 // GenerateLyrics は歌詞生成用プロンプトを返します。
 func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
-	// 1. 構造体の定義からデフォルトのJSONテンプレートを生成
 	draft := domain.LyricsDraft{
 		Title:     "楽曲のタイトル",
 		Theme:     "世界観の核",
