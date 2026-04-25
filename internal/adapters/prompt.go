@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/shouni/go-prompt-kit/prompts"
@@ -11,7 +12,8 @@ import (
 
 // lyricsPromptData は歌詞プロンプトのテンプレートに渡すデータ構造です。
 type lyricsPromptData struct {
-	InputText string
+	InputText    string
+	OutputSchema string
 }
 
 // recipePromptData はレシピプロンプトのテンプレートに渡すデータ構造です。
@@ -64,8 +66,23 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 
 // GenerateLyrics は歌詞生成用プロンプトを返します。
 func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
+	// 1. 構造体の定義からデフォルトのJSONテンプレートを生成
+	draft := domain.LyricsDraft{
+		Title:     "楽曲のタイトル",
+		Theme:     "世界観の核",
+		Hook:      "印象的なフレーズ",
+		Lyrics:    "[Verse]\n...\n[Chorus]\n...",
+		Keywords:  []string{"キーワード1", "キーワード2"},
+		Mood:      "雰囲気",
+		Narrative: "背景物語",
+	}
+
+	schemaBytes, _ := json.MarshalIndent(draft, "", "  ")
+	outputSchema := string(schemaBytes)
+
 	data := lyricsPromptData{
-		InputText: content,
+		InputText:    content,
+		OutputSchema: outputSchema,
 	}
 	prompt, err := pa.lyrics.Build(assets.ModeLyrics, data)
 	if err != nil {

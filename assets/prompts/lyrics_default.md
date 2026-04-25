@@ -20,20 +20,11 @@
 * `narrative` は歌詞の感情線を一文で要約する。
 
 #### 3. 出力ルール
-* **出力は必ず以下の JSON 構造のみとし、Markdown の ```json ... ``` ブロックで囲むこと。**
-* 以下のスキーマに厳密に従う。
+* JSONオブジェクト1つのみを出力してください。
+* Markdownのコードブロック（```json）は不要です。
+* 以下のスキーマを埋める形で出力してください。
 
-```json
-{
-  "title": "string",
-  "theme": "string",
-  "hook": "string",
-  "lyrics": "[Verse]\n歌詞一行目\n...\n[Chorus]\nサビ一行目...",
-  "keywords": ["string"],
-  "mood": "string",
-  "narrative": "string"
-}
-```
+{{.OutputSchema}}
 
 #### 4. 元文章
 
