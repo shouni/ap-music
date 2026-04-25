@@ -7,6 +7,9 @@ type AIModels struct {
 	TextModel string `json:"text_model,omitempty"`
 	// AudioModel は音声生成に使用するモデル
 	AudioModel string `json:"audio_model,omitempty"`
+	// ComposeMode は使用するプロンプトテンプレートのキー (assets/prompts)
+	// 例: "default", "heroic", "techno"
+	ComposeMode string `json:"compose_mode,omitempty"`
 }
 
 // Task は生成ジョブです。

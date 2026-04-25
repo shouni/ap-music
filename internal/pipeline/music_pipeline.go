@@ -52,7 +52,7 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 	}
 
 	// Step B-2: 作曲（レシピ構築）フェーズ
-	recipe, err := p.Composer.Compose(ctx, lyricsDraft, task.AIModels.TextModel)
+	recipe, err := p.Composer.Compose(ctx, lyricsDraft, task.AIModels.TextModel, task.AIModels.ComposeMode)
 	if err != nil {
 		return fmt.Errorf("compose phase failed: %w", err)
 	}
