@@ -49,15 +49,39 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 	}, nil
 }
 
+// Run は音楽生成のコアプロセス（作詞〜音声生成）を一括で行います。
+func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText string) (*domain.MusicRecipe, []byte, error) {
+	// Step 1: 作詞
+	lyrics, err := a.GenerateLyrics(ctx, contextText, task.AIModels.TextModel)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Step 2: 作曲 (レシピ)
+	recipe, err := a.Compose(ctx, lyrics, task.AIModels.TextModel, task.AIModels.ComposeMode)
+	if err != nil {
+		return nil, nil, err
+	}
+	recipe.AIModels = task.AIModels
+
+	// Step 3: 音声生成
+	wav, err := a.GenerateAudio(ctx, recipe)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return recipe, wav, nil
+}
+
 // GenerateLyrics は入力から歌詞のドラフトを生成します。
-func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model string) (domain.LyricsDraft, error) {
+func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model string) (*domain.LyricsDraft, error) {
 	if contextText == "" {
-		return domain.LyricsDraft{}, fmt.Errorf("empty input")
+		return nil, fmt.Errorf("empty input")
 	}
 
 	promptText, err := a.promptGen.GenerateLyrics(contextText)
 	if err != nil {
-		return domain.LyricsDraft{}, fmt.Errorf("failed to build lyrics prompt: %w", err)
+		return nil, fmt.Errorf("failed to build lyrics prompt: %w", err)
 	}
 
 	targetModel := a.defaultModel
@@ -66,31 +90,34 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model st
 	}
 	resp, err := a.aiClient.GenerateContent(ctx, targetModel, promptText)
 	if err != nil {
-		return domain.LyricsDraft{}, fmt.Errorf("lyrics generation failed (model: %s): %w", targetModel, err)
+		return nil, fmt.Errorf("lyrics generation failed (model: %s): %w", targetModel, err)
 	}
 	if resp == nil {
-		return domain.LyricsDraft{}, fmt.Errorf("lyrics response is nil")
+		return nil, fmt.Errorf("lyrics response is nil")
 	}
 
 	rawLyrics := strings.TrimSpace(resp.Text)
 	if rawLyrics == "" {
-		return domain.LyricsDraft{}, fmt.Errorf("AI returned an empty string for the lyrics")
+		return nil, fmt.Errorf("AI returned an empty string for the lyrics")
 	}
 
 	var lyrics domain.LyricsDraft
 	jsonStr := cleanJSONResponse(rawLyrics)
 	if err := json.Unmarshal([]byte(jsonStr), &lyrics); err != nil {
-		return domain.LyricsDraft{}, fmt.Errorf("failed to unmarshal lyrics json: %w (raw: %s)", err, jsonStr)
+		return nil, fmt.Errorf("failed to unmarshal lyrics json: %w (raw: %s)", err, jsonStr)
 	}
 	if strings.TrimSpace(lyrics.Lyrics) == "" {
-		return domain.LyricsDraft{}, fmt.Errorf("lyrics draft is empty")
+		return nil, fmt.Errorf("lyrics draft is empty")
 	}
 
-	return lyrics, nil
+	return &lyrics, nil
 }
 
 // Compose は歌詞案をもとに MusicRecipe を生成します。
-func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, model, mode string) (domain.MusicRecipe, error) {
+func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, model, mode string) (*domain.MusicRecipe, error) {
+	if lyrics == nil {
+		return nil, fmt.Errorf("lyrics cannot be nil")
+	}
 	// 1. プロンプトモードの決定。空の場合は assets のデフォルトを使用
 	targetMode := mode
 	if targetMode == "" {
@@ -100,7 +127,7 @@ func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, m
 	// 2. 指定されたモードでプロンプトを構築
 	promptText, err := a.promptGen.GenerateRecipe(targetMode, lyrics)
 	if err != nil {
-		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt (mode: %s): %w", targetMode, err)
+		return nil, fmt.Errorf("failed to build prompt (mode: %s): %w", targetMode, err)
 	}
 
 	// 3. モデルの決定
@@ -112,32 +139,35 @@ func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, m
 	// 4. LLM 実行
 	resp, err := a.aiClient.GenerateContent(ctx, targetModel, promptText)
 	if err != nil {
-		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
+		return nil, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
 	}
 
 	if resp == nil {
-		return domain.MusicRecipe{}, fmt.Errorf("AI response is nil")
+		return nil, fmt.Errorf("AI response is nil")
 	}
 
 	rawRecipe := strings.TrimSpace(resp.Text)
 	if rawRecipe == "" {
-		return domain.MusicRecipe{}, fmt.Errorf("AI returned an empty string for the recipe")
+		return nil, fmt.Errorf("AI returned an empty string for the recipe")
 	}
 
 	// 5. JSON クリーニングとパース
 	jsonStr := cleanJSONResponse(rawRecipe)
 	var recipe domain.MusicRecipe
 	if err := json.Unmarshal([]byte(jsonStr), &recipe); err != nil {
-		return domain.MusicRecipe{}, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
+		return nil, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
 	}
 
 	// 6. 後続の処理のために情報を保持
-	recipe.Lyrics = &lyrics
-	return recipe, nil
+	recipe.Lyrics = lyrics
+	return &recipe, nil
 }
 
 // GenerateAudio は Lyria 3 モデルを使用して WAV バイナリを生成します。
-func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe domain.MusicRecipe) ([]byte, error) {
+func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
+	if recipe == nil {
+		return nil, fmt.Errorf("recipe cannot be nil")
+	}
 	// 1. データの抽出
 	var lyricsText string
 	if recipe.Lyrics != nil {
@@ -150,14 +180,14 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe domain.MusicRec
 	}
 
 	// 2. strings.Builder を使用した明確なプロンプト構築
-	var promptBuilder strings.Builder
-	promptBuilder.WriteString(fmt.Sprintf("Create a %s song.\n\n", recipe.Mood))
+	var pb strings.Builder
+	pb.WriteString(fmt.Sprintf("Create a %s song.\n\n", recipe.Mood))
 
 	if lyricsText != "" {
-		promptBuilder.WriteString(fmt.Sprintf("With the following lyrics:\n\n%s\n\n", lyricsText))
+		pb.WriteString(fmt.Sprintf("With the following lyrics:\n\n%s\n\n", lyricsText))
 	}
 
-	promptBuilder.WriteString(fmt.Sprintf(
+	pb.WriteString(fmt.Sprintf(
 		"Additional constraints: Music Detail: %s. Title: '%s', Theme: '%s', Instruments: %s, Tempo: %d BPM.",
 		sectionPrompt,
 		recipe.Title,
@@ -166,7 +196,7 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe domain.MusicRec
 		recipe.Tempo,
 	))
 
-	fullPrompt := promptBuilder.String()
+	fullPrompt := pb.String()
 
 	// 3. parts の組み立て
 	parts := []*genai.Part{

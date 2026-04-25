@@ -8,12 +8,11 @@ import (
 	"ap-music/internal/domain"
 )
 
-// MusicPipeline は Collect -> Lyrics -> Compose -> GenerateAudio -> Publish -> Notify を統制します。
+// MusicPipeline は外部システムとの連携（Collect/Publish/Notify）と、
+// コア生成ロジック（Runner）を統制します。
 type MusicPipeline struct {
 	Collector domain.Collector
-	Lyricist  domain.Lyricist
-	Composer  domain.Composer
-	Generator domain.AudioGenerator
+	Runner    domain.MusicRunner
 	Publisher domain.Publisher
 	Notifier  domain.Notifier
 }
@@ -38,43 +37,28 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 		}
 	}()
 
-	// 3. 各フェーズの実行（Early Return パターン）
+	// 3. 各フェーズの実行
 
-	// Step A: コンテキスト収集
+	// Step A: コンテキスト収集（外部情報の取得）
 	contextText, err := p.Collector.Collect(ctx, task)
 	if err != nil {
 		return fmt.Errorf("collect phase failed: %w", err)
 	}
 
-	// Step B-1: 作詞フェーズ
-	lyricsDraft, err := p.Lyricist.GenerateLyrics(ctx, contextText, task.AIModels.TextModel)
+	// Step B: コア生成プロセス（AIによる作詞・作曲・音声生成を一括実行）
+	// 生成の順序や中間データの扱いは Runner が隠蔽する
+	recipe, wav, err := p.Runner.Run(ctx, task, contextText)
 	if err != nil {
-		return fmt.Errorf("lyrics generation failed: %w", err)
+		return fmt.Errorf("music generation failed: %w", err)
 	}
 
-	// Step B-2: 作曲（レシピ構築）フェーズ
-	recipe, err := p.Composer.Compose(ctx, lyricsDraft, task.AIModels.TextModel, task.AIModels.ComposeMode)
-	if err != nil {
-		return fmt.Errorf("compose phase failed: %w", err)
-	}
-
-	// Compose 時にデフォルト値が設定される可能性があるため、
-	// task に含まれるユーザー指定のモデル情報で上書き（または補完）します。
-	recipe.AIModels = task.AIModels
-
-	// Step C: 音楽生成（音声バイナリの生成）
-	wav, err := p.Generator.GenerateAudio(ctx, recipe)
-	if err != nil {
-		return fmt.Errorf("audio generation (lyria engine) failed: %w", err)
-	}
-
-	// Step D: 成果物の永続化
+	// Step C: 成果物の永続化
 	result, err := p.Publisher.Publish(ctx, task, recipe, wav)
 	if err != nil {
 		return fmt.Errorf("publish phase failed: %w", err)
 	}
 
-	// Step E: 成功通知
+	// Step D: 成功通知
 	if nErr := p.Notifier.NotifyWithRequest(ctx, result, notifReq); nErr != nil {
 		slog.WarnContext(ctx, "success notification failed", "error", nErr)
 	}

@@ -16,7 +16,7 @@ type lyricsPromptData struct {
 
 // recipePromptData はレシピプロンプトのテンプレートに渡すデータ構造です。
 type recipePromptData struct {
-	Lyrics domain.LyricsDraft
+	Lyrics *domain.LyricsDraft
 }
 
 // promptBuilder は、フォーマット済みのプロンプトを作成するためのインターフェース
@@ -75,7 +75,7 @@ func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
 }
 
 // GenerateRecipe はレシピ生成用プロンプトを返します。
-func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics domain.LyricsDraft) (string, error) {
+func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft) (string, error) {
 	data := recipePromptData{
 		Lyrics: lyrics,
 	}

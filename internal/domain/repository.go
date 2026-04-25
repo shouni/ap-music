@@ -4,7 +4,7 @@ import "context"
 
 // Publisher は生成物の保存先を抽象化します。
 type Publisher interface {
-	Publish(ctx context.Context, task Task, recipe MusicRecipe, audioData []byte) (*PublishResult, error)
+	Publish(ctx context.Context, task Task, recipe *MusicRecipe, audioData []byte) (*PublishResult, error)
 }
 
 // Notifier は完了通知を抽象化します。
@@ -22,5 +22,5 @@ type TaskQueue interface {
 // PromptGenerator は、AIプロンプトを生成するインターフェースです。
 type PromptGenerator interface {
 	GenerateLyrics(content string) (string, error)
-	GenerateRecipe(mode string, lyrics LyricsDraft) (string, error)
+	GenerateRecipe(mode string, lyrics *LyricsDraft) (string, error)
 }
