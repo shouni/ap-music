@@ -18,6 +18,17 @@
         </div>
 
         <div class="mb-4">
+            <h5 class="text-secondary border-bottom pb-2">3. Music Concept (Prompt Mode)</h5>
+            <label class="form-label" for="compose_mode">Concept Recipe</label>
+            <select class="form-select" id="compose_mode" name="compose_mode">
+                {{ range .Data.ComposeModes }}
+                <option value="{{ . }}" {{ if eq . "default" }}selected{{ end }}>{{ . }}</option>
+                {{ end }}
+            </select>
+            <div class="form-text">assets/prompts から読み込まれた楽曲設計レシピを選択します。</div>
+        </div>
+
+        <div class="mb-4">
             <h5 class="text-secondary border-bottom pb-2">2. AI Orchestration</h5>
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -31,17 +42,6 @@
                     <div class="form-text">作曲・生成を担当するAIモデル</div>
                 </div>
             </div>
-        </div>
-
-        <div class="mb-4">
-            <h5 class="text-secondary border-bottom pb-2">3. Music Concept (Prompt Mode)</h5>
-            <label class="form-label" for="compose_mode">Concept Recipe</label>
-            <select class="form-select" id="compose_mode" name="compose_mode">
-                {{ range .Data.ComposeModes }}
-                <option value="{{ . }}" {{ if eq . "default" }}selected{{ end }}>{{ . }}</option>
-                {{ end }}
-            </select>
-            <div class="form-text">assets/prompts から読み込まれた楽曲設計レシピを選択します。</div>
         </div>
 
         <div class="d-grid">
