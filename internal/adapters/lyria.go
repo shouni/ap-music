@@ -232,7 +232,7 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 	return resp.Audios[0], nil
 }
 
-// GenerateFullAudio は Sub, Main, Ending の3セクションを順番に生成し、結合したバイナリを返します。
+// GenerateFullAudio は Verse, Chorus, Outro の3セクションを順番に生成し、結合したバイナリを返します。
 func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
 	type sectionSpec struct {
 		name     string
@@ -272,7 +272,15 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 	}
 
 	var sectionPrompt string
-	if len(recipe.Sections) > 0 {
+	for _, sec := range recipe.Sections {
+		if sec.Name == sectionName {
+			sectionPrompt = sec.Prompt
+			break
+		}
+	}
+
+	// 万が一マッチするセクションがなかった場合のフォールバック
+	if sectionPrompt == "" && len(recipe.Sections) > 0 {
 		sectionPrompt = recipe.Sections[0].Prompt
 	}
 
