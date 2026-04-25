@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"sort"
 
 	"github.com/shouni/gcp-kit/tasks"
 
@@ -101,6 +102,7 @@ func NewHandler(
 	for k := range composePrompts {
 		modes = append(modes, k)
 	}
+	sort.Strings(modes) // 表示順序を固定するためにソートを追加
 
 	return &Handler{
 		cfg:           cfg,
