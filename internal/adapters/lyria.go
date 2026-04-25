@@ -90,19 +90,26 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model st
 }
 
 // Compose は歌詞案をもとに MusicRecipe を生成します。
-func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, model string) (domain.MusicRecipe, error) {
-	// TODO::Form入力で行う
-	mode := assets.ModeCompose
-	mode = "rave"
-	promptText, err := a.promptGen.GenerateRecipe(mode, lyrics)
-	if err != nil {
-		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt: %w", err)
+func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, model, mode string) (domain.MusicRecipe, error) {
+	// 1. プロンプトモードの決定。空の場合は assets のデフォルトを使用
+	targetMode := mode
+	if targetMode == "" {
+		targetMode = assets.ModeCompose
 	}
 
+	// 2. 指定されたモードでプロンプトを構築
+	promptText, err := a.promptGen.GenerateRecipe(targetMode, lyrics)
+	if err != nil {
+		return domain.MusicRecipe{}, fmt.Errorf("failed to build prompt (mode: %s): %w", targetMode, err)
+	}
+
+	// 3. モデルの決定
 	targetModel := a.defaultModel
 	if model != "" {
 		targetModel = model
 	}
+
+	// 4. LLM 実行
 	resp, err := a.aiClient.GenerateContent(ctx, targetModel, promptText)
 	if err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
@@ -117,12 +124,14 @@ func (a *LyriaAdapter) Compose(ctx context.Context, lyrics domain.LyricsDraft, m
 		return domain.MusicRecipe{}, fmt.Errorf("AI returned an empty string for the recipe")
 	}
 
+	// 5. JSON クリーニングとパース
 	jsonStr := cleanJSONResponse(rawRecipe)
 	var recipe domain.MusicRecipe
 	if err := json.Unmarshal([]byte(jsonStr), &recipe); err != nil {
 		return domain.MusicRecipe{}, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
 	}
 
+	// 6. 後続の処理のために情報を保持
 	recipe.Lyrics = &lyrics
 	return recipe, nil
 }

@@ -31,18 +31,20 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		ImageURL:   r.FormValue("image"),
 		CreatedAt:  time.Now().UTC(),
 		AIModels: domain.AIModels{
-			TextModel:  strings.TrimSpace(r.FormValue("lyrics_model")),
-			AudioModel: strings.TrimSpace(r.FormValue("compose_model")),
+			TextModel:   strings.TrimSpace(r.FormValue("lyrics_model")),
+			AudioModel:  strings.TrimSpace(r.FormValue("compose_model")),
+			ComposeMode: strings.TrimSpace(r.FormValue("compose_mode")),
 		},
 	}
 
+	// JobID が空の場合は自動生成
 	if task.JobID == "" {
 		task.JobID = fmt.Sprintf("%s-%s", time.Now().UTC().Format("20060102150405"), uuid.New().String()[:8])
 	}
 
 	// Cloud Tasks 等へのエンキュー実行
 	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
-		slog.Error("failed to enqueue task", "error", err)
+		slog.Error("failed to enqueue task", "job_id", task.JobID, "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
