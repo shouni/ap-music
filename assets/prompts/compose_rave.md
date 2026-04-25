@@ -27,7 +27,7 @@
   * **duration_seconds**: **30** 固定。
   * **prompt**: Lyria 3用の詳細な**英文プロンプト**。
     * **Direction**: 歌詞全体をどのような質感で歌わせ、どの楽器で火花を散らすか、緻密で独創的に記述。
-    * **Vocal/Phonetic**: 日本語歌唱の際は "Clear Japanese enunciation" を含め、主要な単語はローマ字のフォネティック表記（例: "Kizuna" -> "Kee-zoo-nah"）を添えて発音の平坦化を回避すること。
+    * **Vocal Direction**: 日本語歌唱の際は、AIの自然な発音を活かしつつ "Clear Japanese vocals with passionate enunciation" と指示し、熱量を重視すること。
 
 #### 3. 出力ルール（厳守）
 * **JSONのみを出力**: 解説、挨拶、Markdownのコードブロック外のテキストは一切不要。
