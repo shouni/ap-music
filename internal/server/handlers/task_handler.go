@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +26,23 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var seedPtr *int64
+	seedValStr := strings.TrimSpace(r.FormValue("seed"))
+
+	if seedValStr != "" {
+		// ユーザー指定がある場合
+		if val, err := strconv.ParseInt(seedValStr, 10, 64); err == nil {
+			seedPtr = &val
+		} else {
+			slog.Warn("Seed parse error, fallback to random", "input", seedValStr, "error", err)
+		}
+	}
+
+	if seedPtr == nil {
+		seedPtr = new(rand.Int64())
+		slog.Info("Explicitly generated seed for new task", "seed", *seedPtr)
+	}
+
 	task := domain.Task{
 		JobID:      r.FormValue("job_id"),
 		RequestURL: r.FormValue("url"),
@@ -34,6 +53,7 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 			TextModel:   strings.TrimSpace(r.FormValue("lyrics_model")),
 			AudioModel:  strings.TrimSpace(r.FormValue("compose_model")),
 			ComposeMode: strings.TrimSpace(r.FormValue("compose_mode")),
+			Seed:        seedPtr,
 		},
 	}
 

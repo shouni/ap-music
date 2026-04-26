@@ -6,8 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/shouni/go-gemini-client/gemini"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 	"google.golang.org/genai"
 
 	"ap-music/assets"
@@ -21,6 +24,7 @@ type LyriaAdapter struct {
 	promptGen         domain.PromptGenerator
 	defaultModel      string // 作詞・作曲(LLM)用デフォルト
 	defaultLyriaModel string // 音声生成(Lyria)用デフォルト
+	limiter           *rate.Limiter
 }
 
 // NewLyriaAdapter は、指定されたコンテキストと構成を使用して、新しい LyriaAdapter を初期化して返します。
@@ -41,11 +45,14 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 		return nil, fmt.Errorf("GeminiModel is required but not set")
 	}
 
+	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)
+
 	return &LyriaAdapter{
 		aiClient:          aiClient,
 		promptGen:         promptGen,
 		defaultModel:      cfg.GeminiModel,
 		defaultLyriaModel: cfg.LyriaModel,
+		limiter:           limiter,
 	}, nil
 }
 
@@ -65,7 +72,7 @@ func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText st
 	recipe.AIModels = task.AIModels
 
 	// Step 3: 音声生成
-	wav, err := a.GenerateAudio(ctx, recipe)
+	wav, err := a.GenerateFullAudio(ctx, recipe)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -227,6 +234,117 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 	// 6. 音声データの抽出
 	if resp == nil || len(resp.Audios) == 0 {
 		return nil, fmt.Errorf("no audio data (WAV) received from Lyria (model: %s)", targetModel)
+	}
+
+	return resp.Audios[0], nil
+}
+
+// GenerateFullAudio は recipe.Sections に基づいて並行して音声を生成し、最終的に結合します。
+func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
+	if recipe == nil || len(recipe.Sections) == 0 {
+		return nil, errors.New("recipe sections are empty")
+	}
+
+	wavParts := make([][]byte, len(recipe.Sections))
+	g, gCtx := errgroup.WithContext(ctx)
+
+	for i, sec := range recipe.Sections {
+		g.Go(func() error {
+			if err := a.limiter.Wait(gCtx); err != nil {
+				return err
+			}
+
+			data, err := a.generateAudioSection(gCtx, recipe, sec)
+			if err != nil {
+				return fmt.Errorf("section '%s' generation failed: %w", sec.Name, err)
+			}
+			wavParts[i] = data
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	combinedWav, err := CombineWavData(wavParts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to combine wav sections: %w", err)
+	}
+
+	return combinedWav, nil
+}
+
+// GenerateAudioSection は特定セクションのプロンプトを構築して生成を実行します。
+func (a *LyriaAdapter) generateAudioSection(ctx context.Context, recipe *domain.MusicRecipe, sec domain.MusicSection) ([]byte, error) {
+	if recipe == nil {
+		return nil, errors.New("recipe is nil")
+	}
+
+	// 1. セクションの存在確認とプロンプトのバリデーション
+	sectionName := sec.Name
+	duration := sec.Duration
+	sectionPrompt := sec.Prompt
+
+	if sectionPrompt == "" {
+		return nil, fmt.Errorf("section '%s' prompt is empty", sectionName)
+	}
+
+	// 2. データの抽出
+	var lyricsText string
+	if recipe.Lyrics != nil {
+		lyricsText = recipe.Lyrics.Lyrics
+	}
+
+	// 3. プロンプト構築（詳細指示を文末に配置して強調）
+	var pb strings.Builder
+	pb.WriteString(fmt.Sprintf("Current Section: [%s]. Duration: %d seconds.\n", sectionName, duration))
+
+	switch sectionName {
+	case "Verse":
+		pb.WriteString("Vocal Direction: Focus on singing the [Verse] section. Build tension. ")
+	case "Chorus":
+		pb.WriteString("Vocal Direction: High energy! Sing the [Chorus] and Hook powerfully. ")
+	case "Outro":
+		pb.WriteString("Vocal Direction: Emotional fade-out with [Outro] lyrics. ")
+	}
+
+	if lyricsText != "" {
+		pb.WriteString(fmt.Sprintf("\nFull Lyrics to reference:\n%s\n", lyricsText))
+	}
+
+	pb.WriteString(fmt.Sprintf(
+		"\n[Audio Generation Constraints]\n- Title: '%s'\n- Instruments: %s\n- Tempo: %d BPM\n- Music Detail: %s",
+		recipe.Title,
+		strings.Join(recipe.Instruments, ", "),
+		recipe.Tempo,
+		sectionPrompt,
+	))
+
+	// 4. API オプションの設定
+	opts := gemini.GenerateOptions{
+		ResponseMIMEType: "audio/wav",
+		Seed:             recipe.AIModels.Seed,
+		SafetySettings: []*genai.SafetySetting{
+			{Category: genai.HarmCategoryHarassment, Threshold: genai.HarmBlockThresholdBlockNone},
+			{Category: genai.HarmCategoryHateSpeech, Threshold: genai.HarmBlockThresholdBlockNone},
+			{Category: genai.HarmCategorySexuallyExplicit, Threshold: genai.HarmBlockThresholdBlockNone},
+			{Category: genai.HarmCategoryDangerousContent, Threshold: genai.HarmBlockThresholdBlockNone},
+		},
+	}
+
+	targetModel := a.defaultLyriaModel
+	if recipe.AudioModel != "" {
+		targetModel = recipe.AudioModel
+	}
+
+	// 5. Lyria API 実行
+	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, []*genai.Part{{Text: pb.String()}}, opts)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || len(resp.Audios) == 0 {
+		return nil, fmt.Errorf("no audio from Lyria for %s", sectionName)
 	}
 
 	return resp.Audios[0], nil

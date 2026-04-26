@@ -10,17 +10,24 @@
 * `prompt` には、アレンジ、質感、ダイナミクス、ボーカルの扱い、日本語発音の指示を含めること。
 
 #### 2. 設計ルール
-* `title`: 曲名。歌詞案の `title` を尊重しつつ、音楽作品として洗練させる。
-* `theme`: 音楽としてのコンセプト。
-* `mood`: **英語**で記述（例: "Energetic J-Pop with city pop elements"）。
-* `tempo`: BPM を整数で指定。
-* `instruments`: 3-6 個、**英語**で指定。
-* `sections`:
-    * `name`: "Main" 固定。
-    * `duration_seconds`: 30 固定。
-    * `prompt`: **英語**。Lyria 3 用の詳細な制作指示。
-        * 日本語歌唱の場合は `Clear Japanese female/male vocals with precise enunciation` 等を含める。
-        * 歌詞全体に対するエフェクトや、バッキングの構成を具体化する。
+* **title**: 曲名。歌詞案の `title` を尊重しつつ、キャッチーに洗練させる。
+* **theme**: 楽曲の核となるコンセプト。
+* **mood**: **英語**で記述（例: "High-Octane 90s Cyber-Rave"）。
+* **tempo**: BPMを整数で指定。
+* **instruments**: 3-6個、**英語**で指定。
+* **sections**: **以下の3つをこの順で必ず含めること。**
+    1.  **name**: `"Verse"`
+        * **duration_seconds**: **40**
+        * **prompt**: [Verse]歌詞を担当。導入からサビへのビルドアップを英語で詳細に指示。
+    2.  **name**: `"Chorus"`
+        * **duration_seconds**: **45**
+        * **prompt**: [Chorus]および[Hook]を担当。最もエネルギッシュな絶頂を英語で指示。
+    3.  **name**: `"Outro"`
+        * **duration_seconds**: **15**
+        * **prompt**: [Outro]を担当。デジタルな残響を伴う終止を英語で指示。
+* **Vocal Direction**: 日本語歌唱の際は、全セクションのプロンプトに `Clear Japanese vocals with passionate enunciation` を含め、セクションごとの熱量の差を記述すること。
+
+---
 
 #### 3. 出力ルール（厳守）
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。

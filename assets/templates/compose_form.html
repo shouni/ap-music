@@ -29,17 +29,22 @@
         </div>
 
         <div class="mb-4">
-            <h5 class="text-secondary border-bottom pb-2">3. AI Orchestration</h5>
+            <h5 class="text-secondary border-bottom pb-2">3. AI Orchestration & Consistency</h5>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label" for="lyrics_model">Lyricist (Text Model)</label>
-                    <input class="form-control" id="lyrics_model" name="lyrics_model" type="text" placeholder="e.g. gemini-3-flash">
-                    <div class="form-text">作詞を担当するAIモデル</div>
+                    <input class="form-control" id="lyrics_model" name="lyrics_model" type="text" placeholder="gemini-3-flash">
+                    <div class="form-text">作詞を担当するモデル</div>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label" for="compose_model">Composer (Audio Model)</label>
-                    <input class="form-control" id="compose_model" name="compose_model" type="text" placeholder="e.g. lyria-3-pro">
-                    <div class="form-text">作曲・生成を担当するAIモデル</div>
+                    <input class="form-control" id="compose_model" name="compose_model" type="text" placeholder="lyria-3">
+                    <div class="form-text">音声生成を担当するモデル</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label" for="seed">Generation Seed</label>
+                    <input class="form-control" id="seed" name="seed" type="number" step="1" placeholder="e.g. 12345">
+                    <div class="form-text">同じ音色を再現する場合に入力（空欄でランダム）</div>
                 </div>
             </div>
         </div>
