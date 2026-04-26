@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +25,16 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var seedPtr *int64
+	seedValStr := strings.TrimSpace(r.FormValue("seed"))
+	if seedValStr != "" {
+		if val, err := strconv.ParseInt(seedValStr, 10, 64); err == nil {
+			seedPtr = &val
+		} else {
+			slog.Warn("Seed parse error", "input", seedValStr, "error", err)
+		}
+	}
+
 	task := domain.Task{
 		JobID:      r.FormValue("job_id"),
 		RequestURL: r.FormValue("url"),
@@ -34,6 +45,7 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 			TextModel:   strings.TrimSpace(r.FormValue("lyrics_model")),
 			AudioModel:  strings.TrimSpace(r.FormValue("compose_model")),
 			ComposeMode: strings.TrimSpace(r.FormValue("compose_mode")),
+			Seed:        seedPtr,
 		},
 	}
 

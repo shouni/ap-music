@@ -10,6 +10,7 @@ type AIModels struct {
 	// ComposeMode は使用するプロンプトテンプレートのキー (assets/prompts)
 	// 例: "default", "heroic", "techno"
 	ComposeMode string `json:"compose_mode,omitempty"`
+	Seed        *int64 `json:"seed,omitempty"`
 }
 
 // Task は生成ジョブです。

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
+	"math/rand"
 	"strings"
 
 	"github.com/shouni/go-gemini-client/gemini"
@@ -232,40 +234,35 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 	return resp.Audios[0], nil
 }
 
-// GenerateFullAudio は Verse, Chorus, Outro の3セクションを順番に生成し、結合したバイナリを返します。
+// GenerateFullAudio は recipe.Sections に基づいて動的に音声を生成し、結合します。
 func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
-	type sectionSpec struct {
-		name     string
-		duration int
-	}
-
-	specs := []sectionSpec{
-		{"Verse", 40},
-		{"Chorus", 45},
-		{"Outro", 15},
+	if recipe == nil || len(recipe.Sections) == 0 {
+		return nil, errors.New("recipe sections are empty")
 	}
 
 	var fullAudio []byte
-	for _, spec := range specs {
-		data, err := a.GenerateAudioSection(ctx, recipe, spec.name, spec.duration)
+	for _, sec := range recipe.Sections {
+		data, err := a.GenerateAudioSection(ctx, recipe, sec.Name, sec.Duration)
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO::ここでは単純に結合（※音楽的なクロスフェードは別途検討）
-		fullAudio = append(fullAudio, data...)
+		// TODO::WAVヘッダを考慮した安全な結合
+		fullAudio, err = appendWavData(fullAudio, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to append wav data for section %s: %w", sec.Name, err)
+		}
 	}
-
 	return fullAudio, nil
 }
 
-// GenerateAudioSection は特定のセクション（Sub/Main/Ending）に特化したプロンプトで音声を生成します。
+// GenerateAudioSection は特定セクションのプロンプトを構築して生成を実行します。
 func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.MusicRecipe, sectionName string, duration int) ([]byte, error) {
 	if recipe == nil {
-		return nil, fmt.Errorf("recipe cannot be nil")
+		return nil, errors.New("recipe is nil")
 	}
 
-	// --- 1. データの抽出 (元のロジックを継承) ---
+	// 安全な歌詞の抽出
 	var lyricsText string
 	if recipe.Lyrics != nil {
 		lyricsText = recipe.Lyrics.Lyrics
@@ -279,60 +276,39 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 		}
 	}
 
-	// 万が一マッチするセクションがなかった場合のフォールバック
-	if sectionPrompt == "" && len(recipe.Sections) > 0 {
-		sectionPrompt = recipe.Sections[0].Prompt
-	}
-
-	// --- 2. strings.Builder を使用した明確なプロンプト構築 ---
 	var pb strings.Builder
 	pb.WriteString(fmt.Sprintf("Current Section: [%s]. Duration: %d seconds.\n", sectionName, duration))
 
-	// セクションごとに歌唱指示を出し分ける
 	switch sectionName {
 	case "Verse":
-		pb.WriteString("Vocal Direction: Focus on singing the [Verse] section of the lyrics. ")
+		pb.WriteString("Vocal Direction: Focus on singing the [Verse] section. Build tension. ")
 	case "Chorus":
-		pb.WriteString("Vocal Direction: This is the peak! Sing the [Chorus] and the Hook intensely. ")
+		pb.WriteString("Vocal Direction: High energy! Sing the [Chorus] and Hook powerfully. ")
 	case "Outro":
-		pb.WriteString("Vocal Direction: Sing the [Outro] part as the song fades out into digital echoes. ")
+		pb.WriteString("Vocal Direction: Emotional fade-out with [Outro] lyrics. ")
 	}
 
-	// 歌詞全体をコンテキストとして渡す
-	pb.WriteString(fmt.Sprintf("\nFull Lyrics to reference:\n%s\n", recipe.Lyrics.Lyrics))
-
-	// 歌詞の流し込み
 	if lyricsText != "" {
-		pb.WriteString(fmt.Sprintf("With the following lyrics:\n\n%s\n\n", lyricsText))
+		pb.WriteString(fmt.Sprintf("\nFull Lyrics to reference:\n%s\n", lyricsText))
 	}
 
-	// 詳細制約の統合
 	pb.WriteString(fmt.Sprintf(
-		"Additional constraints: Music Detail: %s. Title: '%s', Theme: '%s', Instruments: %s, Tempo: %d BPM.",
-		sectionPrompt,
-		recipe.Title,
-		recipe.Theme,
-		strings.Join(recipe.Instruments, ", "),
-		recipe.Tempo,
+		"\nConstraints: Detail: %s. Title: '%s', Instruments: %s, Tempo: %d BPM.",
+		sectionPrompt, recipe.Title, strings.Join(recipe.Instruments, ", "), recipe.Tempo,
 	))
 
-	fullPrompt := pb.String()
-
-	// --- 3. parts の組み立てとオプション設定 ---
-	parts := []*genai.Part{
-		{Text: fullPrompt},
+	var finalSeed int64
+	if recipe.AIModels.Seed != nil {
+		// ユーザー指定があればそれを使う
+		finalSeed = *recipe.AIModels.Seed
+	} else {
+		finalSeed = rand.Int63()
+		slog.Info("Generated random seed for this session", "seed", finalSeed)
+		recipe.AIModels.Seed = &finalSeed
 	}
-
-	// recipe.Lyrics.Seed など、ベースとなるシード値をここで使用します
-	seedValue := int64(12345) // 本来は recipe 内に保持している Seed を使用
-	// TODO: 本来は recipe 内に保持している Seed を使用
-	//if recipe.Lyrics != nil && recipe.Lyrics.Seed != 0 {
-	//	seedValue = recipe.Lyrics.Seed
-	//}
-
 	opts := gemini.GenerateOptions{
 		ResponseMIMEType: "audio/wav",
-		Seed:             &seedValue, // ここでポインタを渡してシードを固定！
+		Seed:             &finalSeed,
 		SafetySettings: []*genai.SafetySetting{
 			{Category: genai.HarmCategoryHarassment, Threshold: genai.HarmBlockThresholdBlockNone},
 			{Category: genai.HarmCategoryHateSpeech, Threshold: genai.HarmBlockThresholdBlockNone},
@@ -341,22 +317,35 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 		},
 	}
 
-	// --- 4. Lyria API 実行 ---
 	targetModel := a.defaultLyriaModel
 	if recipe.AudioModel != "" {
 		targetModel = recipe.AudioModel
 	}
 
-	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, parts, opts)
+	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, []*genai.Part{{Text: pb.String()}}, opts)
 	if err != nil {
-		return nil, fmt.Errorf("lyria generation failed for section %s: %w", sectionName, err)
+		return nil, err
 	}
-
 	if resp == nil || len(resp.Audios) == 0 {
-		return nil, fmt.Errorf("no audio data for section %s", sectionName)
+		return nil, fmt.Errorf("no audio from Lyria for %s", sectionName)
 	}
 
 	return resp.Audios[0], nil
+}
+
+// appendWavData はWAVヘッダを剥ぎ取ってデータ部分のみを連結します (簡易実装)
+func appendWavData(base, next []byte) ([]byte, error) {
+	if len(base) == 0 {
+		return next, nil
+	}
+	// 簡易的な実装: 2つ目以降のWAVからRIFFヘッダ(通常44byte)をスキップしてデータのみ結合
+	// 本来的には 'data' チャンクをパースして正確に結合すべきですが、
+	// Lyriaの出力フォーマットが固定であればオフセット指定で結合可能です。
+	const wavHeaderLen = 44
+	if len(next) <= wavHeaderLen {
+		return base, nil
+	}
+	return append(base, next[wavHeaderLen:]...), nil
 }
 
 // cleanJSONResponse は LLM が出力しがちな Markdown の装飾を除去します。
