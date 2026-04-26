@@ -22,12 +22,17 @@
 * **mood**: 楽曲の雰囲気（**英語**で記述。例: "Euphoric High-Energy Techno-Heroic"）
 * **tempo**: BPMを整数で指定（例: 145-165の高速域を推奨）。
 * **instruments**: 90sデジタル・レイヴを象徴する楽器を3-6個、**英語**で指定（Synthesizer, Drum Machine, Electric Guitar等）。
-* **sections**:
-  * **name**: "Main" 固定。
-  * **duration_seconds**: **30** 固定。
-  * **prompt**: Lyria 3用の詳細な**英文プロンプト**。
-    * **Direction**: 歌詞全体をどのような質感で歌わせ、どの楽器で火花を散らすか、緻密で独創的に記述。
-    * **Vocal Direction**: 日本語歌唱の際は、AIの自然な発音を活かしつつ "Clear Japanese vocals with passionate enunciation" と指示し、熱量を重視すること。
+* **sections**: **以下の3つをこの順で必ず含めること。**
+  1.  **name**: `"Verse"`
+    * **duration_seconds**: **40**
+    * **prompt**: [Verse]歌詞を担当。導入からサビへのビルドアップを英語で詳細に指示。
+  2.  **name**: `"Chorus"`
+    * **duration_seconds**: **45**
+    * **prompt**: [Chorus]および[Hook]を担当。最もエネルギッシュな絶頂を英語で指示。
+  3.  **name**: `"Outro"`
+    * **duration_seconds**: **15**
+    * **prompt**: [Outro]を担当。デジタルな残響を伴う終止を英語で指示。
+* **Vocal Direction**: 日本語歌唱の際は、全セクションのプロンプトに `Clear Japanese vocals with passionate enunciation` を含め、セクションごとの熱量の差を記述すること。
 
 #### 3. 出力ルール（厳守）
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
