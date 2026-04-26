@@ -109,13 +109,22 @@ func (a *LyriaAdapter) initComponents() {
 }
 
 func (a *LyriaAdapter) getLyricist() domain.Lyricist {
+	if a.lyricist == nil {
+		a.initComponents()
+	}
 	return a.lyricist
 }
 
 func (a *LyriaAdapter) getComposer() domain.Composer {
+	if a.composer == nil {
+		a.initComponents()
+	}
 	return a.composer
 }
 
 func (a *LyriaAdapter) getAudioGenerator() *lyriaAudioGenerator {
+	if a.audio == nil {
+		a.initComponents()
+	}
 	return a.audio
 }
