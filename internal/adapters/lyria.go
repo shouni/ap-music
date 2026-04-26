@@ -284,17 +284,10 @@ func (a *LyriaAdapter) generateAudioSection(ctx context.Context, recipe *domain.
 	// 1. セクションの存在確認とプロンプトのバリデーション
 	sectionName := sec.Name
 	duration := sec.Duration
-	var sectionPrompt string
-	found := false
-	for _, sec := range recipe.Sections {
-		if sec.Name == sectionName {
-			sectionPrompt = sec.Prompt
-			found = true
-			break
-		}
-	}
-	if !found {
-		return nil, fmt.Errorf("section '%s' not found in recipe", sectionName)
+	sectionPrompt := sec.Prompt
+
+	if sectionPrompt == "" {
+		return nil, fmt.Errorf("section '%s' prompt is empty", sectionName)
 	}
 
 	// 2. データの抽出
