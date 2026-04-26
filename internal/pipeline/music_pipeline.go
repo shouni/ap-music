@@ -23,6 +23,7 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 	notifReq := domain.NotificationRequest{
 		SourceURL:      task.RequestURL,
 		OutputCategory: task.AIModels.ComposeMode,
+		Seed:           task.AIModels.Seed,
 	}
 
 	// 2. エラートラップ用の defer 処理
