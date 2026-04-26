@@ -2,17 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
-
-	"github.com/google/uuid"
-
-	"ap-music/internal/domain"
 )
 
 // EnqueueTask はフォーム入力をジョブ化してキューに積みます。
@@ -26,41 +18,7 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var seedPtr *int64
-	seedValStr := strings.TrimSpace(r.FormValue("seed"))
-
-	if seedValStr != "" {
-		// ユーザー指定がある場合
-		if val, err := strconv.ParseInt(seedValStr, 10, 64); err == nil {
-			seedPtr = &val
-		} else {
-			slog.Warn("Seed parse error, fallback to random", "input", seedValStr, "error", err)
-		}
-	}
-
-	if seedPtr == nil {
-		seedPtr = new(rand.Int64())
-		slog.Info("Explicitly generated seed for new task", "seed", *seedPtr)
-	}
-
-	task := domain.Task{
-		JobID:      r.FormValue("job_id"),
-		RequestURL: r.FormValue("url"),
-		InputText:  r.FormValue("text"),
-		ImageURL:   r.FormValue("image"),
-		CreatedAt:  time.Now().UTC(),
-		AIModels: domain.AIModels{
-			TextModel:   strings.TrimSpace(r.FormValue("lyrics_model")),
-			AudioModel:  strings.TrimSpace(r.FormValue("compose_model")),
-			ComposeMode: strings.TrimSpace(r.FormValue("compose_mode")),
-			Seed:        seedPtr,
-		},
-	}
-
-	// JobID が空の場合は自動生成
-	if task.JobID == "" {
-		task.JobID = fmt.Sprintf("%s-%s", time.Now().UTC().Format("20060102150405"), uuid.New().String()[:8])
-	}
+	task := h.taskFactory.Build(r.Form)
 
 	// Cloud Tasks 等へのエンキュー実行
 	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
