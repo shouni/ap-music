@@ -302,12 +302,16 @@ func (a *LyriaAdapter) generateAudioSection(ctx context.Context, recipe *domain.
 
 	switch sectionName {
 	case "Verse":
-		pb.WriteString("Vocal Direction: Focus on singing the [Verse] section. Build tension. ")
+		pb.WriteString("Vocal Direction: Focus on singing the [Verse] section. Build tension for the next phase. ")
 	case "Chorus":
-		pb.WriteString("Vocal Direction: High energy! Sing the [Chorus] and Hook powerfully. ")
+		pb.WriteString("Vocal Direction: Max energy! Perform the [Chorus] and Hook with high-octane passion. ")
 	case "Outro":
-		pb.WriteString("Vocal Direction: Emotional fade-out with [Outro] lyrics. ")
+		pb.WriteString("Vocal Direction: Emotional digital fade-out for the [Outro]. Leave a cybernetic echo. ")
+	default:
+		pb.WriteString(fmt.Sprintf("Vocal Direction: Perform the [%s] section with clear Japanese vocals and appropriate energy for the track. ", sectionName))
 	}
+
+	pb.WriteString("Clear Japanese vocals with passionate enunciation. No silence.")
 
 	if lyricsText != "" {
 		pb.WriteString(fmt.Sprintf("\nFull Lyrics to reference:\n%s\n", lyricsText))
