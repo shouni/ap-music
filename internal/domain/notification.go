@@ -12,4 +12,7 @@ type NotificationRequest struct {
 
 	// OutputCategory は、出力先の種別です。(例: "manga-output", "character-design")
 	OutputCategory string `json:"output_category"`
+
+	// Seed は、生成に使用された（または生成によって決定された）乱数シード値です。
+	Seed *int64 `json:"seed,omitempty"`
 }

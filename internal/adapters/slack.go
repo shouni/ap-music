@@ -56,7 +56,6 @@ func (s *SlackAdapter) NotifyWithRequest(ctx context.Context, result *domain.Pub
 		return fmt.Errorf("publish result is nil")
 	}
 
-	// クライアントの有効性チェック
 	if s.webhookURL == "" || s.slackClient == nil {
 		slog.InfoContext(ctx, "Slack通知が無効化されているか、クライアントが未初期化のためスキップします。", "storage_uri", result.StorageURI)
 		return nil
@@ -92,6 +91,11 @@ func (s *SlackAdapter) NotifyError(ctx context.Context, errDetail error, req dom
 	if req.OutputCategory != "" {
 		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
 	}
+
+	if req.Seed != nil {
+		sb.WriteString(fmt.Sprintf("*Seed:* `%d` 🎲\n", *req.Seed))
+	}
+
 	if sb.Len() > 0 {
 		sb.WriteString("\n")
 	}
@@ -122,8 +126,11 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
 	}
 
+	if req.Seed != nil {
+		sb.WriteString(fmt.Sprintf("*Seed:* `%d` 🎲\n", *req.Seed))
+	}
+
 	// 音楽ファイルのリンク
-	// 形式: <署名付きURL|Storage URI>
 	if result.SignedURL != "" && result.StorageURI != "" {
 		sb.WriteString(fmt.Sprintf("*WAV File:* <%s|%s>\n", result.SignedURL, result.StorageURI))
 	} else if result.StorageURI != "" {
@@ -131,7 +138,6 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 	}
 
 	// レシピ JSON のリンク
-	// 形式: <署名付きURL|Recipe Storage URI>
 	if result.RecipeSignedURL != "" && result.RecipeStorageURI != "" {
 		sb.WriteString(fmt.Sprintf("*Recipe JSON:* <%s|%s>\n", result.RecipeSignedURL, result.RecipeStorageURI))
 	} else if result.RecipeStorageURI != "" {
