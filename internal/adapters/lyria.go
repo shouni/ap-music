@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
-	"math/rand"
 	"strings"
 
 	"github.com/shouni/go-gemini-client/gemini"
@@ -240,20 +238,21 @@ func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.Mus
 		return nil, errors.New("recipe sections are empty")
 	}
 
-	var fullAudio []byte
+	var wavParts [][]byte
 	for _, sec := range recipe.Sections {
 		data, err := a.GenerateAudioSection(ctx, recipe, sec.Name, sec.Duration)
 		if err != nil {
 			return nil, err
 		}
-
-		// TODO::WAVヘッダを考慮した安全な結合
-		fullAudio, err = appendWavData(fullAudio, data)
-		if err != nil {
-			return nil, fmt.Errorf("failed to append wav data for section %s: %w", sec.Name, err)
-		}
+		wavParts = append(wavParts, data)
 	}
-	return fullAudio, nil
+
+	combinedWav, err := CombineWavData(wavParts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to combine wav sections: %w", err)
+	}
+
+	return combinedWav, nil
 }
 
 // GenerateAudioSection は特定セクションのプロンプトを構築して生成を実行します。
@@ -293,22 +292,16 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 	}
 
 	pb.WriteString(fmt.Sprintf(
-		"\nConstraints: Detail: %s. Title: '%s', Instruments: %s, Tempo: %d BPM.",
-		sectionPrompt, recipe.Title, strings.Join(recipe.Instruments, ", "), recipe.Tempo,
+		"\n[Audio Generation Constraints]\n- Title: '%s'\n- Instruments: %s\n- Tempo: %d BPM\n- Music Detail: %s",
+		recipe.Title,
+		strings.Join(recipe.Instruments, ", "),
+		recipe.Tempo,
+		sectionPrompt,
 	))
 
-	var finalSeed int64
-	if recipe.AIModels.Seed != nil {
-		// ユーザー指定があればそれを使う
-		finalSeed = *recipe.AIModels.Seed
-	} else {
-		finalSeed = rand.Int63()
-		slog.Info("Generated random seed for this session", "seed", finalSeed)
-		recipe.AIModels.Seed = &finalSeed
-	}
 	opts := gemini.GenerateOptions{
 		ResponseMIMEType: "audio/wav",
-		Seed:             &finalSeed,
+		Seed:             recipe.AIModels.Seed,
 		SafetySettings: []*genai.SafetySetting{
 			{Category: genai.HarmCategoryHarassment, Threshold: genai.HarmBlockThresholdBlockNone},
 			{Category: genai.HarmCategoryHateSpeech, Threshold: genai.HarmBlockThresholdBlockNone},
@@ -331,21 +324,6 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 	}
 
 	return resp.Audios[0], nil
-}
-
-// appendWavData はWAVヘッダを剥ぎ取ってデータ部分のみを連結します (簡易実装)
-func appendWavData(base, next []byte) ([]byte, error) {
-	if len(base) == 0 {
-		return next, nil
-	}
-	// 簡易的な実装: 2つ目以降のWAVからRIFFヘッダ(通常44byte)をスキップしてデータのみ結合
-	// 本来的には 'data' チャンクをパースして正確に結合すべきですが、
-	// Lyriaの出力フォーマットが固定であればオフセット指定で結合可能です。
-	const wavHeaderLen = 44
-	if len(next) <= wavHeaderLen {
-		return base, nil
-	}
-	return append(base, next[wavHeaderLen:]...), nil
 }
 
 // cleanJSONResponse は LLM が出力しがちな Markdown の装飾を除去します。

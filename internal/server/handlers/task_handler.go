@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,12 +30,27 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 
 	var seedPtr *int64
 	seedValStr := strings.TrimSpace(r.FormValue("seed"))
+
 	if seedValStr != "" {
+		// ユーザー指定がある場合
 		if val, err := strconv.ParseInt(seedValStr, 10, 64); err == nil {
 			seedPtr = &val
 		} else {
-			slog.Warn("Seed parse error", "input", seedValStr, "error", err)
+			slog.Warn("Seed parse error, fallback to random", "input", seedValStr, "error", err)
 		}
+	}
+
+	if seedPtr == nil {
+		n, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+		var finalSeed int64
+		if err == nil {
+			finalSeed = n.Int64()
+		} else {
+			// 万が一のフォールバック
+			finalSeed = time.Now().UnixNano()
+		}
+		seedPtr = &finalSeed
+		slog.Info("Explicitly generated seed for new task", "seed", *seedPtr)
 	}
 
 	task := domain.Task{
