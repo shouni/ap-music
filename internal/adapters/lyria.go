@@ -170,7 +170,7 @@ func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, 
 	return &recipe, nil
 }
 
-// GenerateAudio は Lyria 3 モデルを使用して生成します。
+// GenerateAudio は Lyria 3 モデルを使用してデフォルトのMP3 形式で音声を生成します。
 func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
 	if recipe == nil {
 		return nil, fmt.Errorf("recipe cannot be nil")
