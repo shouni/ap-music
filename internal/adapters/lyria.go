@@ -6,8 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/shouni/go-gemini-client/gemini"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 	"google.golang.org/genai"
 
 	"ap-music/assets"
@@ -21,6 +24,7 @@ type LyriaAdapter struct {
 	promptGen         domain.PromptGenerator
 	defaultModel      string // 作詞・作曲(LLM)用デフォルト
 	defaultLyriaModel string // 音声生成(Lyria)用デフォルト
+	limiter           *rate.Limiter
 }
 
 // NewLyriaAdapter は、指定されたコンテキストと構成を使用して、新しい LyriaAdapter を初期化して返します。
@@ -41,11 +45,14 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 		return nil, fmt.Errorf("GeminiModel is required but not set")
 	}
 
+	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)
+
 	return &LyriaAdapter{
 		aiClient:          aiClient,
 		promptGen:         promptGen,
 		defaultModel:      cfg.GeminiModel,
 		defaultLyriaModel: cfg.LyriaModel,
+		limiter:           limiter,
 	}, nil
 }
 
@@ -65,7 +72,7 @@ func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText st
 	recipe.AIModels = task.AIModels
 
 	// Step 3: 音声生成
-	wav, err := a.GenerateAudio(ctx, recipe)
+	wav, err := a.GenerateFullAudio(ctx, recipe)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -232,21 +239,36 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 	return resp.Audios[0], nil
 }
 
-// GenerateFullAudio は recipe.Sections に基づいて動的に音声を生成し、結合します。
+// GenerateFullAudio は recipe.Sections に基づいて並行して音声を生成し、最終的に結合します。
 func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
 	if recipe == nil || len(recipe.Sections) == 0 {
 		return nil, errors.New("recipe sections are empty")
 	}
 
-	var wavParts [][]byte
-	for _, sec := range recipe.Sections {
-		data, err := a.GenerateAudioSection(ctx, recipe, sec.Name, sec.Duration)
-		if err != nil {
-			return nil, err
-		}
-		wavParts = append(wavParts, data)
+	wavParts := make([][]byte, len(recipe.Sections))
+	g, gCtx := errgroup.WithContext(ctx)
+
+	for i, sec := range recipe.Sections {
+		g.Go(func() error {
+			if err := a.limiter.Wait(gCtx); err != nil {
+				return err
+			}
+
+			data, err := a.GenerateAudioSection(gCtx, recipe, sec.Name, sec.Duration)
+			if err != nil {
+				return fmt.Errorf("section '%s' generation failed: %w", sec.Name, err)
+			}
+			wavParts[i] = data
+			return nil
+		})
 	}
 
+	// 全ての並行処理が完了するのを待機
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	// 完成したバイト列のスライスを、前述の CombineWavData で結合
 	combinedWav, err := CombineWavData(wavParts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to combine wav sections: %w", err)
@@ -261,20 +283,27 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 		return nil, errors.New("recipe is nil")
 	}
 
-	// 安全な歌詞の抽出
+	// 1. セクションの存在確認とプロンプトのバリデーション
+	var sectionPrompt string
+	found := false
+	for _, sec := range recipe.Sections {
+		if sec.Name == sectionName {
+			sectionPrompt = sec.Prompt
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("section '%s' not found in recipe", sectionName)
+	}
+
+	// 2. データの抽出
 	var lyricsText string
 	if recipe.Lyrics != nil {
 		lyricsText = recipe.Lyrics.Lyrics
 	}
 
-	var sectionPrompt string
-	for _, sec := range recipe.Sections {
-		if sec.Name == sectionName {
-			sectionPrompt = sec.Prompt
-			break
-		}
-	}
-
+	// 3. プロンプト構築（詳細指示を文末に配置して強調）
 	var pb strings.Builder
 	pb.WriteString(fmt.Sprintf("Current Section: [%s]. Duration: %d seconds.\n", sectionName, duration))
 
@@ -299,6 +328,7 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 		sectionPrompt,
 	))
 
+	// 4. API オプションの設定
 	opts := gemini.GenerateOptions{
 		ResponseMIMEType: "audio/wav",
 		Seed:             recipe.AIModels.Seed,
@@ -315,6 +345,7 @@ func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.
 		targetModel = recipe.AudioModel
 	}
 
+	// 5. Lyria API 実行
 	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, []*genai.Part{{Text: pb.String()}}, opts)
 	if err != nil {
 		return nil, err

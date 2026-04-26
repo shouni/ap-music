@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math"
-	"math/big"
+	"math/rand/v2"
 	"net/http"
 	"strconv"
 	"strings"
@@ -41,15 +39,7 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if seedPtr == nil {
-		n, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
-		var finalSeed int64
-		if err == nil {
-			finalSeed = n.Int64()
-		} else {
-			// 万が一のフォールバック
-			finalSeed = time.Now().UnixNano()
-		}
-		seedPtr = &finalSeed
+		seedPtr = new(rand.Int64())
 		slog.Info("Explicitly generated seed for new task", "seed", *seedPtr)
 	}
 
