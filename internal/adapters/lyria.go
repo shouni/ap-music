@@ -72,7 +72,7 @@ func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText st
 	recipe.AIModels = task.AIModels
 
 	// Step 3: 音声生成
-	wav, err := a.GenerateFullAudio(ctx, recipe)
+	wav, err := a.GenerateAudio(ctx, recipe)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -170,49 +170,39 @@ func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, 
 	return &recipe, nil
 }
 
-// GenerateAudio は Lyria 3 モデルを使用して WAV バイナリを生成します。
+// GenerateAudio は Lyria 3 モデルを使用して生成します。
 func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
 	if recipe == nil {
 		return nil, fmt.Errorf("recipe cannot be nil")
 	}
-	// 1. データの抽出
-	var lyricsText string
-	if recipe.Lyrics != nil {
-		lyricsText = recipe.Lyrics.Lyrics
-	}
 
-	var sectionPrompt string
-	if len(recipe.Sections) > 0 {
-		sectionPrompt = recipe.Sections[0].Prompt
-	}
-
-	// 2. strings.Builder を使用した明確なプロンプト構築
 	var pb strings.Builder
-	pb.WriteString(fmt.Sprintf("Create a %s song.\n\n", recipe.Mood))
+	// 1. 全体的なスタイルの定義
+	pb.WriteString(fmt.Sprintf("Task: Generate a full high-fidelity song titled '%s'.\n", recipe.Title))
+	pb.WriteString(fmt.Sprintf("Style & Mood: %s\n", recipe.Mood))
+	pb.WriteString(fmt.Sprintf("Tempo: %d BPM. Instruments: %s.\n\n", recipe.Tempo, strings.Join(recipe.Instruments, ", ")))
 
-	if lyricsText != "" {
-		pb.WriteString(fmt.Sprintf("With the following lyrics:\n\n%s\n\n", lyricsText))
+	// 2. 歌詞の注入
+	if recipe.Lyrics != nil && recipe.Lyrics.Lyrics != "" {
+		pb.WriteString("Lyrics (Perform with clear Japanese vocals):\n")
+		pb.WriteString(recipe.Lyrics.Lyrics)
+		pb.WriteString("\n\n")
 	}
 
-	pb.WriteString(fmt.Sprintf(
-		"Additional constraints: Music Detail: %s. Title: '%s', Theme: '%s', Instruments: %s, Tempo: %d BPM.",
-		sectionPrompt,
-		recipe.Title,
-		recipe.Theme,
-		strings.Join(recipe.Instruments, ", "),
-		recipe.Tempo,
-	))
-
-	fullPrompt := pb.String()
-
-	// 3. parts の組み立て
-	parts := []*genai.Part{
-		{Text: fullPrompt},
+	// 3. セクション構造の明示 (Lyriaに構成を理解させる)
+	if len(recipe.Sections) > 0 {
+		pb.WriteString("Song Structure & Directions:\n")
+		for _, sec := range recipe.Sections {
+			pb.WriteString(fmt.Sprintf("- [%s] (%d sec): %s\n", sec.Name, sec.Duration, sec.Prompt))
+		}
+		pb.WriteString("\n")
 	}
 
-	// 4. 生成オプションの設定
+	pb.WriteString("Constraint: Ensure a smooth transition between sections. No silence between parts.")
+
+	// 4. API オプション
 	opts := gemini.GenerateOptions{
-		ResponseMIMEType: "audio/wav",
+		Seed: recipe.AIModels.Seed,
 		SafetySettings: []*genai.SafetySetting{
 			{Category: genai.HarmCategoryHarassment, Threshold: genai.HarmBlockThresholdBlockNone},
 			{Category: genai.HarmCategoryHateSpeech, Threshold: genai.HarmBlockThresholdBlockNone},
@@ -221,19 +211,24 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 		},
 	}
 
-	// 5. Lyria API を実行
+	// 5. 実行
 	targetModel := a.defaultLyriaModel
 	if recipe.AudioModel != "" {
 		targetModel = recipe.AudioModel
 	}
-	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, parts, opts)
+
+	// レート制限の待機
+	if err := a.limiter.Wait(ctx); err != nil {
+		return nil, err
+	}
+
+	resp, err := a.aiClient.GenerateWithParts(ctx, targetModel, []*genai.Part{{Text: pb.String()}}, opts)
 	if err != nil {
 		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", targetModel, err)
 	}
 
-	// 6. 音声データの抽出
 	if resp == nil || len(resp.Audios) == 0 {
-		return nil, fmt.Errorf("no audio data (WAV) received from Lyria (model: %s)", targetModel)
+		return nil, fmt.Errorf("no audio data received from Lyria")
 	}
 
 	return resp.Audios[0], nil
