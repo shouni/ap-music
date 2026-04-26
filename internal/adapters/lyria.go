@@ -308,7 +308,7 @@ func (a *LyriaAdapter) generateAudioSection(ctx context.Context, recipe *domain.
 	case "Outro":
 		pb.WriteString("Vocal Direction: Emotional digital fade-out for the [Outro]. Leave a cybernetic echo. ")
 	default:
-		pb.WriteString(fmt.Sprintf("Vocal Direction: Perform the [%s] section with clear Japanese vocals and appropriate energy for a techno track. ", sectionName))
+		pb.WriteString(fmt.Sprintf("Vocal Direction: Perform the [%s] section with clear Japanese vocals and appropriate energy for the track. ", sectionName))
 	}
 
 	pb.WriteString("Clear Japanese vocals with passionate enunciation. No silence.")
