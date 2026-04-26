@@ -177,28 +177,46 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 	}
 
 	var pb strings.Builder
-	// 1. 全体的なスタイルの定義
+	// 1. 全体的なメタデータとスタイルの定義
 	pb.WriteString(fmt.Sprintf("Task: Generate a full high-fidelity song titled '%s'.\n", recipe.Title))
 	pb.WriteString(fmt.Sprintf("Style & Mood: %s\n", recipe.Mood))
 	pb.WriteString(fmt.Sprintf("Tempo: %d BPM. Instruments: %s.\n\n", recipe.Tempo, strings.Join(recipe.Instruments, ", ")))
 
-	// 2. 歌詞の注入
+	// 2. 歌詞の注入（一括生成でも日本語ボーカルであることを強く指示）
 	if recipe.Lyrics != nil && recipe.Lyrics.Lyrics != "" {
-		pb.WriteString("Lyrics (Perform with clear Japanese vocals):\n")
+		pb.WriteString("Lyrics (Perform with clear Japanese vocals and passionate enunciation):\n")
 		pb.WriteString(recipe.Lyrics.Lyrics)
 		pb.WriteString("\n\n")
 	}
 
-	// 3. セクション構造の明示 (Lyriaに構成を理解させる)
+	// 3. セクション構造と詳細な歌唱指導
 	if len(recipe.Sections) > 0 {
-		pb.WriteString("Song Structure & Directions:\n")
+		pb.WriteString("Detailed Song Structure & Multi-Stage Vocal Directions:\n")
 		for _, sec := range recipe.Sections {
-			pb.WriteString(fmt.Sprintf("- [%s] (%d sec): %s\n", sec.Name, sec.Duration, sec.Prompt))
+			var direction string
+			switch sec.Name {
+			case "Verse":
+				direction = "Vocal Strategy: Focus on singing the [Verse] section. Start narratively and build tension for the next phase."
+			case "Chorus":
+				direction = "Vocal Strategy: Max energy! Perform the [Chorus] and Hook with high-octane passion. Keep the heat throughout this long climax."
+			case "Outro":
+				direction = "Vocal Strategy: Emotional digital fade-out for the [Outro]. Let the Japanese vocals dissolve into a cybernetic echo."
+			default:
+				direction = fmt.Sprintf("Vocal Strategy: Adapt your energy to sustain this %d-second section with consistent Japanese vocal quality.", sec.Duration)
+			}
+
+			// セクション名、秒数、戦略、LLM詳細プロンプトを統合して1行に
+			pb.WriteString(fmt.Sprintf("- [%s] (%d sec): %s %s\n", sec.Name, sec.Duration, direction, sec.Prompt))
 		}
 		pb.WriteString("\n")
 	}
 
-	pb.WriteString("Constraint: Ensure a smooth transition between sections. No silence between parts.")
+	// 4. 最後に制約事項を配置して強調（強調の美学：180秒完走用）
+	pb.WriteString("[Final Executive Constraints]\n")
+	pb.WriteString("- Total Duration: Exactly 180 seconds. Do not end early.\n")
+	pb.WriteString("- Seamless Flow: Ensure each long section evolves naturally into the next without any energy drops.\n")
+	pb.WriteString("- Zero Silence: Maintain a continuous, high-fidelity sonic wall. No gaps or unintentional pauses.\n")
+	pb.WriteString("- Vocal Purity: Clear, passionate Japanese vocals throughout. Absolute priority on lyrical clarity.")
 
 	// 4. API オプション
 	opts := gemini.GenerateOptions{
