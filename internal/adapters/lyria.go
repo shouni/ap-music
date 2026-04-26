@@ -254,7 +254,7 @@ func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.Mus
 				return err
 			}
 
-			data, err := a.GenerateAudioSection(gCtx, recipe, sec.Name, sec.Duration)
+			data, err := a.generateAudioSection(gCtx, recipe, sec)
 			if err != nil {
 				return fmt.Errorf("section '%s' generation failed: %w", sec.Name, err)
 			}
@@ -263,12 +263,10 @@ func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.Mus
 		})
 	}
 
-	// 全ての並行処理が完了するのを待機
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	// 完成したバイト列のスライスを、前述の CombineWavData で結合
 	combinedWav, err := CombineWavData(wavParts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to combine wav sections: %w", err)
@@ -278,12 +276,14 @@ func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.Mus
 }
 
 // GenerateAudioSection は特定セクションのプロンプトを構築して生成を実行します。
-func (a *LyriaAdapter) GenerateAudioSection(ctx context.Context, recipe *domain.MusicRecipe, sectionName string, duration int) ([]byte, error) {
+func (a *LyriaAdapter) generateAudioSection(ctx context.Context, recipe *domain.MusicRecipe, sec domain.MusicSection) ([]byte, error) {
 	if recipe == nil {
 		return nil, errors.New("recipe is nil")
 	}
 
 	// 1. セクションの存在確認とプロンプトのバリデーション
+	sectionName := sec.Name
+	duration := sec.Duration
 	var sectionPrompt string
 	found := false
 	for _, sec := range recipe.Sections {
