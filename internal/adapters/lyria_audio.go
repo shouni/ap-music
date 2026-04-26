@@ -57,7 +57,6 @@ func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *dom
 	group, groupCtx := errgroup.WithContext(ctx)
 
 	for i, sec := range recipe.Sections {
-		i, sec := i, sec
 		group.Go(func() error {
 			if err := g.limiter.Wait(groupCtx); err != nil {
 				return err
