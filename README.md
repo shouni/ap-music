@@ -31,7 +31,7 @@
 Lyria 3 Pro のポテンシャルを極限まで引き出し、生成される楽曲の「質感」と「構成」を厳密に制御（Control）します。
 * **Seed Determinism**: 楽曲の乱数シードを厳密に管理。同一の `MusicRecipe` に対し、再現可能な生成結果を保証。
 * **Stylistic Prompting**: 90年代のデジタルサウンド（Supersaw, 16-bit Arpeggio等）を言語的に定義し、AIに音楽的文脈を強制注入。
-* **Phonetic Direction**: 母音強調と英語音素表記（Phonetic Spelling）を指示に組み込み、グローバルモデルから「熱き日本語の魂」を呼び起こす。
+* **Vocal Articulation**: セクションごとの熱量指定と「passionate enunciation」の強制注入により、グローバルモデルから「熱き日本語の魂」を呼び起こす。
 
 ### 🛡 Production-Ready Concurrency Control
 APIの物理的制約を超え、決して「止まらない、壊れない」パイプラインを標準装備しています。
