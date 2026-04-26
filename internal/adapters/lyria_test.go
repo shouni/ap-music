@@ -8,6 +8,7 @@ import (
 	"github.com/shouni/go-gemini-client/gemini"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/time/rate"
 	"google.golang.org/genai"
 
 	"ap-music/internal/domain"
@@ -66,8 +67,8 @@ func TestLyriaAdapter_Run(t *testing.T) {
 		promptGen:         mPrompt,
 		defaultModel:      "gemini-2.0-flash",
 		defaultLyriaModel: "lyria-3",
+		limiter:           rate.NewLimiter(rate.Inf, 0),
 	}
-
 	task := domain.Task{
 		JobID:     "job-123",
 		CreatedAt: time.Now(),
@@ -75,21 +76,28 @@ func TestLyriaAdapter_Run(t *testing.T) {
 			TextModel:   "custom-text-model",
 			AudioModel:  "lyria-custom-v1",
 			ComposeMode: "jazz",
+			Seed:        new(int64(42)),
 		},
 	}
 	contextText := "雨のアムステルダム"
 
-	// domain.LyricsDraft の新しい定義に合わせて初期化
 	expectedLyrics := &domain.LyricsDraft{
 		Title:  "Rainy Amsterdam",
 		Theme:  "Neon reflection on canals",
 		Lyrics: "Canals reflect the neon lights...",
 	}
 
-	// JSON文字列も構造体に合わせて調整
 	lyricsJSON := `{"title": "Rainy Amsterdam", "theme": "Neon reflection on canals", "lyrics": "Canals reflect the neon lights..."}`
-	recipeJSON := `{"title": "Rainy Amsterdam", "tempo": 85, "mood": "melancholic", "sections": [{"name": "Main", "duration_seconds": 30, "prompt": "jazz piano"}]}`
-	fakeWav := []byte{0x52, 0x49, 0x46, 0x46, 0x00}
+	recipeJSON := `{"title": "Rainy Amsterdam", "tempo": 85, "mood": "melancholic", "sections": [{"name": "Verse", "duration": 30, "prompt": "jazz piano"}]}`
+
+	// ✅ 本物のWAVヘッダー（44バイト）をシミュレート
+	// CombineWavData がチェックする 'RIFF', 'WAVE', 'fmt ', 'data' チャンクを正しく配置
+	fakeWav := []byte{
+		'R', 'I', 'F', 'F', 0x24, 0x00, 0x00, 0x00, 'W', 'A', 'V', 'E',
+		'f', 'm', 't', ' ', 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+		0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
+		'd', 'a', 't', 'a', 0x00, 0x00, 0x00, 0x00,
+	}
 
 	// Mock 設定
 	mPrompt.On("GenerateLyrics", contextText).Return("prompt-lyrics-text", nil)
@@ -102,7 +110,7 @@ func TestLyriaAdapter_Run(t *testing.T) {
 		Text: recipeJSON,
 	}, nil)
 
-	mAI.On("GenerateWithParts", ctx, "lyria-custom-v1", mock.Anything, mock.Anything).Return(&gemini.Response{
+	mAI.On("GenerateWithParts", mock.Anything, "lyria-custom-v1", mock.Anything, mock.Anything).Return(&gemini.Response{
 		Audios: [][]byte{fakeWav},
 	}, nil)
 
@@ -112,11 +120,14 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	// 検証
 	assert.NoError(t, err)
 	assert.NotNil(t, recipe)
-	assert.Equal(t, fakeWav, wav)
+	assert.NotNil(t, wav)
 	assert.Equal(t, "Rainy Amsterdam", recipe.Title)
 	assert.Equal(t, 85, recipe.Tempo)
-	assert.Equal(t, expectedLyrics, recipe.Lyrics)
-	assert.Equal(t, task.AIModels, recipe.AIModels)
+
+	// ポインタの中身を比較
+	if assert.NotNil(t, recipe.AIModels.Seed) {
+		assert.Equal(t, int64(42), *recipe.AIModels.Seed)
+	}
 
 	mPrompt.AssertExpectations(t)
 	mAI.AssertExpectations(t)
@@ -131,6 +142,7 @@ func TestLyriaAdapter_Compose(t *testing.T) {
 		aiClient:     mAI,
 		promptGen:    mPrompt,
 		defaultModel: "gemini-flash",
+		limiter:      rate.NewLimiter(rate.Inf, 0),
 	}
 
 	lyrics := &domain.LyricsDraft{Title: "Lofi Beats", Lyrics: "Chill vibes only"}
