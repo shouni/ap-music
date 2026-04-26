@@ -25,9 +25,6 @@
     3.  **name**: `"Outro"`
         * **duration_seconds**: **15**
         * **prompt**: [Outro]を担当。デジタルな残響を伴う終止を英語で指示。
-* **Vocal Direction**: 日本語歌唱の際は、全セクションのプロンプトに `Clear Japanese vocals with passionate enunciation` を含め、セクションごとの熱量の差を記述すること。
-
----
 
 #### 3. 出力ルール（厳守）
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。

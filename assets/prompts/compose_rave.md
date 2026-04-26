@@ -24,15 +24,14 @@
 * **instruments**: 90sデジタル・レイヴを象徴する楽器を3-6個、**英語**で指定（Synthesizer, Drum Machine, Electric Guitar等）。
 * **sections**: **以下の3つをこの順で必ず含めること。**
   1.  **name**: `"Verse"`
-    * **duration_seconds**: **40**
-    * **prompt**: [Verse]歌詞を担当。導入からサビへのビルドアップを英語で詳細に指示。
+       * **duration_seconds**: **40**
+       * **prompt**: [Verse]歌詞を担当。導入からサビへのビルドアップを英語で詳細に指示。
   2.  **name**: `"Chorus"`
-    * **duration_seconds**: **45**
-    * **prompt**: [Chorus]および[Hook]を担当。最もエネルギッシュな絶頂を英語で指示。
+       * **duration_seconds**: **45**
+       * **prompt**: [Chorus]および[Hook]を担当。最もエネルギッシュな絶頂を英語で指示。
   3.  **name**: `"Outro"`
-    * **duration_seconds**: **15**
-    * **prompt**: [Outro]を担当。デジタルな残響を伴う終止を英語で指示。
-* **Vocal Direction**: 日本語歌唱の際は、全セクションのプロンプトに `Clear Japanese vocals with passionate enunciation` を含め、セクションごとの熱量の差を記述すること。
+       * **duration_seconds**: **15**
+       * **prompt**: [Outro]を担当。デジタルな残響を伴う終止を英語で指示。
 
 #### 3. 出力ルール（厳守）
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
