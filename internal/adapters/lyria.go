@@ -40,10 +40,8 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 		return nil, fmt.Errorf("GeminiModel is required but not set")
 	}
 
-	// 共通の制限器
 	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)
 
-	// アダプターを構成する
 	return &LyriaAdapter{
 		aiClient:          aiClient,
 		promptGen:         promptGen,
