@@ -40,16 +40,33 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 		return nil, fmt.Errorf("GeminiModel is required but not set")
 	}
 
-	adapter := &LyriaAdapter{
+	// 共通の制限器
+	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)
+
+	// アダプターを構成する
+	return &LyriaAdapter{
 		aiClient:          aiClient,
 		promptGen:         promptGen,
 		defaultModel:      cfg.GeminiModel,
 		defaultLyriaModel: cfg.LyriaModel,
-		limiter:           rate.NewLimiter(rate.Every(10*time.Second), 1),
-	}
-	adapter.initComponents()
-
-	return adapter, nil
+		limiter:           limiter,
+		lyricist: &lyriaLyricist{
+			aiClient:     aiClient,
+			promptGen:    promptGen,
+			defaultModel: cfg.GeminiModel,
+		},
+		composer: &lyriaComposer{
+			aiClient:     aiClient,
+			promptGen:    promptGen,
+			defaultModel: cfg.GeminiModel,
+		},
+		audio: &lyriaAudioGenerator{
+			aiClient:          aiClient,
+			defaultLyriaModel: cfg.LyriaModel,
+			limiter:           limiter,
+			promptBuilder:     lyriaAudioPromptBuilder{},
+		},
+	}, nil
 }
 
 // Run は音楽生成のコアプロセス（作詞〜音声生成）を一括で行います。
@@ -87,23 +104,4 @@ func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRe
 
 func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
 	return a.audio.GenerateFullAudio(ctx, recipe)
-}
-
-func (a *LyriaAdapter) initComponents() {
-	a.lyricist = &lyriaLyricist{
-		aiClient:     a.aiClient,
-		promptGen:    a.promptGen,
-		defaultModel: a.defaultModel,
-	}
-	a.composer = &lyriaComposer{
-		aiClient:     a.aiClient,
-		promptGen:    a.promptGen,
-		defaultModel: a.defaultModel,
-	}
-	a.audio = &lyriaAudioGenerator{
-		aiClient:          a.aiClient,
-		defaultLyriaModel: a.defaultLyriaModel,
-		limiter:           a.limiter,
-		promptBuilder:     lyriaAudioPromptBuilder{},
-	}
 }
