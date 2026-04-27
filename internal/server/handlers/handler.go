@@ -18,10 +18,11 @@ import (
 const titleSuffix = " - AP Music"
 
 type Handler struct {
-	templateCache map[string]*template.Template
-	taskEnqueuer  *tasks.Enqueuer[domain.Task]
-	composeModes  []string
-	taskFactory   *taskFactory
+	templateCache         map[string]*template.Template
+	taskEnqueuer          *tasks.Enqueuer[domain.Task]
+	composeModes          []string
+	taskFactory           *taskFactory
+	crossOriginProtection *http.CrossOriginProtection
 }
 
 // Home はトップ画面を表示します。
@@ -100,10 +101,11 @@ func NewHandler(
 	sort.Strings(modes) // 表示順序を固定するためにソートを追加
 
 	return &Handler{
-		templateCache: cache,
-		taskEnqueuer:  taskEnqueuer,
-		composeModes:  modes,
-		taskFactory:   newTaskFactory(),
+		templateCache:         cache,
+		taskEnqueuer:          taskEnqueuer,
+		composeModes:          modes,
+		taskFactory:           newTaskFactory(),
+		crossOriginProtection: http.NewCrossOriginProtection(),
 	}, nil
 }
 

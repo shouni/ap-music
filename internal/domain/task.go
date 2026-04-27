@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 type AIModels struct {
 	// TextModel は歌詞生成およびレシピ構築（LLM）に使用するモデル
@@ -22,6 +26,17 @@ type Task struct {
 	Metadata   map[string]string `json:"metadata,omitempty"`
 	CreatedAt  time.Time         `json:"created_at"`
 	AIModels
+}
+
+// ValidateSubmission は、ジョブ投入前に最低限必要な入力が揃っていることを検証します。
+func (t Task) ValidateSubmission() error {
+	if strings.TrimSpace(t.RequestURL) == "" &&
+		strings.TrimSpace(t.InputText) == "" &&
+		strings.TrimSpace(t.ImageURL) == "" {
+		return fmt.Errorf("at least one input is required: url, text, or image")
+	}
+
+	return nil
 }
 
 // PublishResult は生成結果です。
