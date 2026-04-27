@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/shouni/go-remote-io/remoteio"
@@ -17,18 +18,20 @@ import (
 type PublisherAdapter struct {
 	writer     remoteio.Writer
 	signer     remoteio.URLSigner
+	cleaner    domain.StorageCleaner
 	Bucket     string
 	Expiration time.Duration
 }
 
 // NewPublisherAdapter は成果物保存のためのアダプターを生成します。
-func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remoteio.URLSigner) (*PublisherAdapter, error) {
+func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remoteio.URLSigner, cleaner domain.StorageCleaner) (*PublisherAdapter, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("config is required")
 	}
 	return &PublisherAdapter{
 		writer:     writer,
 		signer:     signer,
+		cleaner:    cleaner,
 		Bucket:     cfg.GCSBucket,
 		Expiration: config.SignedURLExpiration,
 	}, nil
@@ -58,22 +61,26 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 	// 2. レシピJSONの生成
 	recipeData, err := json.Marshal(recipe)
 	if err != nil {
+		a.cleanupOnFailure(ctx, storageURI)
 		return nil, fmt.Errorf("failed to marshal recipe json: %w", err)
 	}
 
 	// 3. レシピJSONの書き込み
 	recipeReader := bytes.NewReader(recipeData)
 	if err := a.writer.Write(ctx, recipeStorageURI, recipeReader, "application/json"); err != nil {
+		a.cleanupOnFailure(ctx, recipeStorageURI, storageURI)
 		return nil, fmt.Errorf("failed to write recipe to storage (audio file %s was already written): %w", storageURI, err)
 	}
 
 	// 4. 各種署名付きURLの生成
 	signedURL, err := a.generateSignedResultURL(ctx, storageURI)
 	if err != nil {
+		a.cleanupOnFailure(ctx, recipeStorageURI, storageURI)
 		return nil, fmt.Errorf("failed to generate audio signed URL: %w", err)
 	}
 	recipeSignedURL, err := a.generateSignedResultURL(ctx, recipeStorageURI)
 	if err != nil {
+		a.cleanupOnFailure(ctx, recipeStorageURI, storageURI)
 		return nil, fmt.Errorf("failed to generate recipe signed URL: %w", err)
 	}
 
@@ -89,4 +96,19 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 // generateSignedResultURL は StorageURI から署名付きURLを作るヘルパーです。
 func (a *PublisherAdapter) generateSignedResultURL(ctx context.Context, storageURI string) (string, error) {
 	return a.signer.GenerateSignedURL(ctx, storageURI, "GET", a.Expiration)
+}
+
+func (a *PublisherAdapter) cleanupOnFailure(ctx context.Context, uris ...string) {
+	if a.cleaner == nil {
+		return
+	}
+
+	for _, uri := range uris {
+		if uri == "" {
+			continue
+		}
+		if err := a.cleaner.Delete(ctx, uri); err != nil {
+			slog.WarnContext(ctx, "failed to cleanup partial artifact", "uri", uri, "error", err)
+		}
+	}
 }

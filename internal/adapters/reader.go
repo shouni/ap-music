@@ -46,6 +46,10 @@ func NewReaderAdapter(storage remoteio.ReadWriteFactory) (*ReaderAdapter, error)
 
 // Collect は、コンテンツを取得します。
 func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, error) {
+	if err := task.ValidateSubmission(); err != nil {
+		return "", err
+	}
+
 	var parts []string
 
 	requestURL := strings.TrimSpace(task.RequestURL)
@@ -68,10 +72,6 @@ func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, 
 	imageURL := strings.TrimSpace(task.ImageURL)
 	if imageURL != "" {
 		parts = append(parts, fmt.Sprintf("[Image URL]\n%s", imageURL))
-	}
-
-	if len(parts) == 0 {
-		return "", fmt.Errorf("at least one input is required: url, text, or image")
 	}
 
 	return strings.Join(parts, "\n\n"), nil

@@ -70,6 +70,6 @@ func createAuthHandler(cfg *config.Config) (*auth.Handler, error) {
 		IsSecureCookie:    cfg.IsSecureServiceURL(),
 		AllowedEmails:     cfg.AllowedEmails,
 		AllowedDomains:    cfg.AllowedDomains,
-		TaskAudienceURL:   cfg.ServiceURL,
+		TaskAudienceURL:   cfg.TaskAudienceURL,
 	})
 }

@@ -17,8 +17,16 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
 	}
+	if err := h.crossOriginProtection.Check(r); err != nil {
+		http.Error(w, "cross-origin request forbidden", http.StatusForbidden)
+		return
+	}
 
 	task := h.taskFactory.Build(r.Form)
+	if err := task.ValidateSubmission(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Cloud Tasks 等へのエンキュー実行
 	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
