@@ -62,12 +62,29 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	mAI := new(MockGeminiClient)
 	mPrompt := new(MockPromptGen)
 
+	// 全てのコンポーネントを明示的に初期化する
 	adapter := &LyriaAdapter{
 		aiClient:          mAI,
 		promptGen:         mPrompt,
-		defaultModel:      "gemini-2.0-flash",
+		defaultModel:      "gemini-flash",
 		defaultLyriaModel: "lyria-3",
 		limiter:           rate.NewLimiter(rate.Inf, 0),
+		lyricist: &lyriaLyricist{
+			aiClient:     mAI,
+			promptGen:    mPrompt,
+			defaultModel: "gemini-flash",
+		},
+		composer: &lyriaComposer{
+			aiClient:     mAI,
+			promptGen:    mPrompt,
+			defaultModel: "gemini-flash",
+		},
+		audio: &lyriaAudioGenerator{
+			aiClient:          mAI,
+			defaultLyriaModel: "lyria-3",
+			limiter:           rate.NewLimiter(rate.Inf, 0),
+			promptBuilder:     lyriaAudioPromptBuilder{},
+		},
 	}
 	task := domain.Task{
 		JobID:     "job-123",
@@ -143,6 +160,11 @@ func TestLyriaAdapter_Compose(t *testing.T) {
 		promptGen:    mPrompt,
 		defaultModel: "gemini-flash",
 		limiter:      rate.NewLimiter(rate.Inf, 0),
+		composer: &lyriaComposer{
+			aiClient:     mAI,
+			promptGen:    mPrompt,
+			defaultModel: "gemini-flash",
+		},
 	}
 
 	lyrics := &domain.LyricsDraft{Title: "Lofi Beats", Lyrics: "Chill vibes only"}

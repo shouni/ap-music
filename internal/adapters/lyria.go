@@ -40,16 +40,31 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 		return nil, fmt.Errorf("GeminiModel is required but not set")
 	}
 
-	adapter := &LyriaAdapter{
+	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)
+
+	return &LyriaAdapter{
 		aiClient:          aiClient,
 		promptGen:         promptGen,
 		defaultModel:      cfg.GeminiModel,
 		defaultLyriaModel: cfg.LyriaModel,
-		limiter:           rate.NewLimiter(rate.Every(10*time.Second), 1),
-	}
-	adapter.initComponents()
-
-	return adapter, nil
+		limiter:           limiter,
+		lyricist: &lyriaLyricist{
+			aiClient:     aiClient,
+			promptGen:    promptGen,
+			defaultModel: cfg.GeminiModel,
+		},
+		composer: &lyriaComposer{
+			aiClient:     aiClient,
+			promptGen:    promptGen,
+			defaultModel: cfg.GeminiModel,
+		},
+		audio: &lyriaAudioGenerator{
+			aiClient:          aiClient,
+			defaultLyriaModel: cfg.LyriaModel,
+			limiter:           limiter,
+			promptBuilder:     lyriaAudioPromptBuilder{},
+		},
+	}, nil
 }
 
 // Run は音楽生成のコアプロセス（作詞〜音声生成）を一括で行います。
@@ -74,57 +89,17 @@ func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText st
 }
 
 func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model string) (*domain.LyricsDraft, error) {
-	return a.getLyricist().GenerateLyrics(ctx, contextText, model)
+	return a.lyricist.GenerateLyrics(ctx, contextText, model)
 }
 
 func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, model, mode string) (*domain.MusicRecipe, error) {
-	return a.getComposer().Compose(ctx, lyrics, model, mode)
+	return a.composer.Compose(ctx, lyrics, model, mode)
 }
 
 func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
-	return a.getAudioGenerator().GenerateAudio(ctx, recipe)
+	return a.audio.GenerateAudio(ctx, recipe)
 }
 
 func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
-	return a.getAudioGenerator().GenerateFullAudio(ctx, recipe)
-}
-
-func (a *LyriaAdapter) initComponents() {
-	a.lyricist = &lyriaLyricist{
-		aiClient:     a.aiClient,
-		promptGen:    a.promptGen,
-		defaultModel: a.defaultModel,
-	}
-	a.composer = &lyriaComposer{
-		aiClient:     a.aiClient,
-		promptGen:    a.promptGen,
-		defaultModel: a.defaultModel,
-	}
-	a.audio = &lyriaAudioGenerator{
-		aiClient:          a.aiClient,
-		defaultLyriaModel: a.defaultLyriaModel,
-		limiter:           a.limiter,
-		promptBuilder:     lyriaAudioPromptBuilder{},
-	}
-}
-
-func (a *LyriaAdapter) getLyricist() domain.Lyricist {
-	if a.lyricist == nil {
-		a.initComponents()
-	}
-	return a.lyricist
-}
-
-func (a *LyriaAdapter) getComposer() domain.Composer {
-	if a.composer == nil {
-		a.initComponents()
-	}
-	return a.composer
-}
-
-func (a *LyriaAdapter) getAudioGenerator() *lyriaAudioGenerator {
-	if a.audio == nil {
-		a.initComponents()
-	}
-	return a.audio
+	return a.audio.GenerateFullAudio(ctx, recipe)
 }
