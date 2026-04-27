@@ -1,13 +1,11 @@
 # 🎼 AP Music(Provisional)
 
 [![Language](https://img.shields.io/badge/Language-Go-blue)](https://golang.org/)
+[![Platform](https://img.shields.io/badge/Platform-Cloud%20Run-blue?logo=google-cloud)](https://cloud.google.com/run)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/shouni/ap-music)](https://golang.org/)
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/shouni/ap-music)](https://github.com/shouni/ap-music/tags)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status](https://img.shields.io/badge/Status-Work--in--Progress-orange)](#)
-
-> [!WARNING]
-> **現在このプロジェクトは開発中（WIP）です。**
+[![Status](https://img.shields.io/badge/Status-Completed-brightgreen)](#)
 
 ## 🚀 概要 (About) - 音楽生成のWebオーケストレーター
 
