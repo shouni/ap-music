@@ -74,19 +74,19 @@ func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText st
 }
 
 func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model string) (*domain.LyricsDraft, error) {
-	return a.getLyricist().GenerateLyrics(ctx, contextText, model)
+	return a.lyricist.GenerateLyrics(ctx, contextText, model)
 }
 
 func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, model, mode string) (*domain.MusicRecipe, error) {
-	return a.getComposer().Compose(ctx, lyrics, model, mode)
+	return a.composer.Compose(ctx, lyrics, model, mode)
 }
 
 func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
-	return a.getAudioGenerator().GenerateAudio(ctx, recipe)
+	return a.audio.GenerateAudio(ctx, recipe)
 }
 
 func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
-	return a.getAudioGenerator().GenerateFullAudio(ctx, recipe)
+	return a.audio.GenerateFullAudio(ctx, recipe)
 }
 
 func (a *LyriaAdapter) initComponents() {
@@ -106,25 +106,4 @@ func (a *LyriaAdapter) initComponents() {
 		limiter:           a.limiter,
 		promptBuilder:     lyriaAudioPromptBuilder{},
 	}
-}
-
-func (a *LyriaAdapter) getLyricist() domain.Lyricist {
-	if a.lyricist == nil {
-		a.initComponents()
-	}
-	return a.lyricist
-}
-
-func (a *LyriaAdapter) getComposer() domain.Composer {
-	if a.composer == nil {
-		a.initComponents()
-	}
-	return a.composer
-}
-
-func (a *LyriaAdapter) getAudioGenerator() *lyriaAudioGenerator {
-	if a.audio == nil {
-		a.initComponents()
-	}
-	return a.audio
 }

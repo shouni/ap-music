@@ -69,6 +69,7 @@ func TestLyriaAdapter_Run(t *testing.T) {
 		defaultLyriaModel: "lyria-3",
 		limiter:           rate.NewLimiter(rate.Inf, 0),
 	}
+	adapter.initComponents()
 	task := domain.Task{
 		JobID:     "job-123",
 		CreatedAt: time.Now(),
@@ -144,6 +145,7 @@ func TestLyriaAdapter_Compose(t *testing.T) {
 		defaultModel: "gemini-flash",
 		limiter:      rate.NewLimiter(rate.Inf, 0),
 	}
+	adapter.initComponents()
 
 	lyrics := &domain.LyricsDraft{Title: "Lofi Beats", Lyrics: "Chill vibes only"}
 	mode := "lofi"
