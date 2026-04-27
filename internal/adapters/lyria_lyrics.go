@@ -12,7 +12,7 @@ import (
 )
 
 type lyriaLyricist struct {
-	aiClient     gemini.Generator
+	aiClient     gemini.ContentGenerator
 	promptGen    domain.PromptGenerator
 	defaultModel string
 }

@@ -16,9 +16,9 @@ import (
 
 type lyriaAudioGenerator struct {
 	aiClient          gemini.Generator
+	promptBuilder     lyriaAudioPromptBuilder
 	defaultLyriaModel string
 	limiter           *rate.Limiter
-	promptBuilder     lyriaAudioPromptBuilder
 }
 
 type lyriaAudioPromptBuilder struct{}

@@ -15,12 +15,6 @@ import (
 
 // LyriaAdapter は、歌詞生成・作曲・音声生成を束ねるファサードです。
 type LyriaAdapter struct {
-	aiClient          gemini.Generator
-	promptGen         domain.PromptGenerator
-	defaultModel      string
-	defaultLyriaModel string
-	limiter           *rate.Limiter
-
 	lyricist domain.Lyricist
 	composer domain.Composer
 	audio    *lyriaAudioGenerator
@@ -43,11 +37,6 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)
 
 	return &LyriaAdapter{
-		aiClient:          aiClient,
-		promptGen:         promptGen,
-		defaultModel:      cfg.GeminiModel,
-		defaultLyriaModel: cfg.LyriaModel,
-		limiter:           limiter,
 		lyricist: &lyriaLyricist{
 			aiClient:     aiClient,
 			promptGen:    promptGen,
