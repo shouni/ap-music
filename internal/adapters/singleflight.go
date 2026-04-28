@@ -32,7 +32,6 @@ func singleflightSeedKey(seed *int64) string {
 }
 
 func doSingleflight[T any](ctx context.Context, group *singleflight.Group, key string, fn func(execCtx context.Context) (T, error)) (T, error) {
-	// Go 1.21+ を想定。それ以前の場合は context.Background() などを検討してください。
 	execCtx := context.WithoutCancel(ctx)
 	ch := group.DoChan(key, func() (any, error) {
 		return fn(execCtx)
