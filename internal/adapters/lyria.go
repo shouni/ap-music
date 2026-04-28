@@ -26,10 +26,10 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 		return nil, errors.New("GeminiAPIKey is required for LyriaAdapter")
 	}
 	if cfg.GeminiModel == "" {
-		return nil, fmt.Errorf("GeminiModel is required but not set")
+		return nil, errors.New("GeminiModel is required but not set")
 	}
 	if cfg.LyriaModel == "" {
-		return nil, fmt.Errorf("LyriaModel is required but not set")
+		return nil, errors.New("LyriaModel is required but not set")
 	}
 
 	aiClient, err := gemini.NewClient(ctx, gemini.Config{APIKey: cfg.GeminiAPIKey})
