@@ -35,8 +35,8 @@ func (g *lyriaLyricist) GenerateLyrics(ctx context.Context, contextText, model s
 	}
 
 	key := singleflightKey("lyrics", targetModel, promptText)
-	lyrics, err := doSingleflight(ctx, &g.group, key, func() (*domain.LyricsDraft, error) {
-		resp, err := g.aiClient.GenerateContent(ctx, targetModel, promptText)
+	lyrics, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) (*domain.LyricsDraft, error) {
+		resp, err := g.aiClient.GenerateContent(execCtx, targetModel, promptText)
 		if err != nil {
 			return nil, fmt.Errorf("lyrics generation failed (model: %s): %w", targetModel, err)
 		}

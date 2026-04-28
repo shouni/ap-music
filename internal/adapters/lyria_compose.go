@@ -41,8 +41,8 @@ func (g *lyriaComposer) Compose(ctx context.Context, lyrics *domain.LyricsDraft,
 	}
 
 	key := singleflightKey("compose", targetModel, promptText)
-	recipe, err := doSingleflight(ctx, &g.group, key, func() (*domain.MusicRecipe, error) {
-		resp, err := g.aiClient.GenerateContent(ctx, targetModel, promptText)
+	recipe, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) (*domain.MusicRecipe, error) {
+		resp, err := g.aiClient.GenerateContent(execCtx, targetModel, promptText)
 		if err != nil {
 			return nil, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
 		}

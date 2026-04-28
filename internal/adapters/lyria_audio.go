@@ -37,13 +37,13 @@ func (g *lyriaAudioGenerator) GenerateAudio(ctx context.Context, recipe *domain.
 	promptText := g.promptBuilder.BuildFullSong(recipe)
 	responseMIMEType := ""
 	key := singleflightKey("audio-full", targetModel, promptText, singleflightSeedKey(recipe.AIModels.Seed), responseMIMEType)
-	audio, err := doSingleflight(ctx, &g.group, key, func() ([]byte, error) {
-		if err := g.limiter.Wait(ctx); err != nil {
+	audio, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) ([]byte, error) {
+		if err := g.limiter.Wait(execCtx); err != nil {
 			return nil, err
 		}
 
 		resp, err := g.aiClient.GenerateWithParts(
-			ctx,
+			execCtx,
 			targetModel,
 			[]*genai.Part{{Text: promptText}},
 			buildAudioGenerateOptions(recipe.AIModels.Seed, responseMIMEType),
@@ -113,13 +113,13 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 	promptText := g.promptBuilder.BuildSection(recipe, sec)
 	responseMIMEType := "audio/wav"
 	key := singleflightKey("audio-section", targetModel, promptText, singleflightSeedKey(recipe.AIModels.Seed), responseMIMEType)
-	audio, err := doSingleflight(ctx, &g.group, key, func() ([]byte, error) {
-		if err := g.limiter.Wait(ctx); err != nil {
+	audio, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) ([]byte, error) {
+		if err := g.limiter.Wait(execCtx); err != nil {
 			return nil, err
 		}
 
 		resp, err := g.aiClient.GenerateWithParts(
-			ctx,
+			execCtx,
 			targetModel,
 			[]*genai.Part{{Text: promptText}},
 			buildAudioGenerateOptions(recipe.AIModels.Seed, responseMIMEType),

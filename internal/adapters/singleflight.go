@@ -31,9 +31,11 @@ func singleflightSeedKey(seed *int64) string {
 	return strconv.FormatInt(*seed, 10)
 }
 
-func doSingleflight[T any](ctx context.Context, group *singleflight.Group, key string, fn func() (T, error)) (T, error) {
+func doSingleflight[T any](ctx context.Context, group *singleflight.Group, key string, fn func(execCtx context.Context) (T, error)) (T, error) {
+	// Go 1.21+ を想定。それ以前の場合は context.Background() などを検討してください。
+	execCtx := context.WithoutCancel(ctx)
 	ch := group.DoChan(key, func() (any, error) {
-		return fn()
+		return fn(execCtx)
 	})
 
 	select {
@@ -72,7 +74,12 @@ func cloneMusicRecipe(src *domain.MusicRecipe) *domain.MusicRecipe {
 
 	dst := *src
 	dst.Instruments = append([]string(nil), src.Instruments...)
-	dst.Sections = append([]domain.MusicSection(nil), src.Sections...)
+	if src.Sections != nil {
+		dst.Sections = make([]domain.MusicSection, len(src.Sections))
+		for i, sec := range src.Sections {
+			dst.Sections[i] = sec
+		}
+	}
 	dst.Lyrics = cloneLyricsDraft(src.Lyrics)
 	if src.AIModels.Seed != nil {
 		seed := *src.AIModels.Seed
