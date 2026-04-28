@@ -26,9 +26,9 @@ func singleflightKey(namespace string, parts ...string) string {
 
 func singleflightSeedKey(seed *int64) string {
 	if seed == nil {
-		return "<nil>"
+		return "seed:nil"
 	}
-	return strconv.FormatInt(*seed, 10)
+	return "seed:" + strconv.FormatInt(*seed, 10)
 }
 
 func doSingleflight[T any](ctx context.Context, group *singleflight.Group, key string, fn func(execCtx context.Context) (T, error)) (T, error) {
@@ -81,8 +81,7 @@ func cloneMusicRecipe(src *domain.MusicRecipe) *domain.MusicRecipe {
 	}
 	dst.Lyrics = cloneLyricsDraft(src.Lyrics)
 	if src.AIModels.Seed != nil {
-		seed := *src.AIModels.Seed
-		dst.AIModels.Seed = &seed
+		dst.AIModels.Seed = new(*src.AIModels.Seed)
 	}
 	return &dst
 }
