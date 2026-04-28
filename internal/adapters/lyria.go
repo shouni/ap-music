@@ -17,7 +17,7 @@ import (
 type LyriaAdapter struct {
 	lyricist domain.Lyricist
 	composer domain.Composer
-	audio    *lyriaAudioGenerator
+	audio    domain.AudioGenerator
 }
 
 // NewLyriaAdapter は、指定されたコンテキストと構成を使用して、新しい LyriaAdapter を初期化して返します。
@@ -25,13 +25,16 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, promptGen domain.P
 	if cfg.GeminiAPIKey == "" {
 		return nil, errors.New("GeminiAPIKey is required for LyriaAdapter")
 	}
+	if cfg.GeminiModel == "" {
+		return nil, fmt.Errorf("GeminiModel is required but not set")
+	}
+	if cfg.LyriaModel == "" {
+		return nil, fmt.Errorf("LyriaModel is required but not set")
+	}
 
 	aiClient, err := gemini.NewClient(ctx, gemini.Config{APIKey: cfg.GeminiAPIKey})
 	if err != nil {
 		return nil, fmt.Errorf("Gemini API クライアントの初期化に失敗しました: %w", err)
-	}
-	if cfg.GeminiModel == "" {
-		return nil, fmt.Errorf("GeminiModel is required but not set")
 	}
 
 	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)

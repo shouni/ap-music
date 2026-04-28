@@ -31,4 +31,5 @@ type Composer interface {
 // AudioGenerator は MusicRecipe から音声バイナリを生成します。
 type AudioGenerator interface {
 	GenerateAudio(ctx context.Context, recipe *MusicRecipe) ([]byte, error)
+	GenerateFullAudio(ctx context.Context, recipe *MusicRecipe) ([]byte, error)
 }
