@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/shouni/go-gemini-client/gemini"
+	"golang.org/x/sync/singleflight"
 
 	"ap-music/assets"
 	"ap-music/internal/domain"
@@ -16,6 +17,7 @@ type lyriaComposer struct {
 	aiClient     gemini.ContentGenerator
 	promptGen    domain.PromptGenerator
 	defaultModel string
+	group        singleflight.Group
 }
 
 func (g *lyriaComposer) Compose(ctx context.Context, lyrics *domain.LyricsDraft, model, mode string) (*domain.MusicRecipe, error) {
@@ -38,25 +40,33 @@ func (g *lyriaComposer) Compose(ctx context.Context, lyrics *domain.LyricsDraft,
 		targetModel = model
 	}
 
-	resp, err := g.aiClient.GenerateContent(ctx, targetModel, promptText)
+	key := singleflightKey("compose", targetModel, promptText)
+	recipe, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) (*domain.MusicRecipe, error) {
+		resp, err := g.aiClient.GenerateContent(execCtx, targetModel, promptText)
+		if err != nil {
+			return nil, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
+		}
+		if resp == nil {
+			return nil, fmt.Errorf("AI response is nil")
+		}
+
+		rawRecipe := strings.TrimSpace(resp.Text)
+		if rawRecipe == "" {
+			return nil, fmt.Errorf("AI returned an empty string for the recipe")
+		}
+
+		jsonStr := cleanJSONResponse(rawRecipe)
+		var recipe domain.MusicRecipe
+		if err := json.Unmarshal([]byte(jsonStr), &recipe); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
+		}
+
+		recipe.Lyrics = lyrics
+		return &recipe, nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("AI generation failed (model: %s): %w", targetModel, err)
-	}
-	if resp == nil {
-		return nil, fmt.Errorf("AI response is nil")
+		return nil, err
 	}
 
-	rawRecipe := strings.TrimSpace(resp.Text)
-	if rawRecipe == "" {
-		return nil, fmt.Errorf("AI returned an empty string for the recipe")
-	}
-
-	jsonStr := cleanJSONResponse(rawRecipe)
-	var recipe domain.MusicRecipe
-	if err := json.Unmarshal([]byte(jsonStr), &recipe); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal recipe json: %w (raw: %s)", err, jsonStr)
-	}
-
-	recipe.Lyrics = lyrics
-	return &recipe, nil
+	return cloneMusicRecipe(recipe), nil
 }

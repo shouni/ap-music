@@ -62,7 +62,9 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	mAI := new(MockGeminiClient)
 	mPrompt := new(MockPromptGen)
 
-	// 全てのコンポーネントを明示的に初期化する
+	// シード値のヘルパー
+	seedVal := int64(42)
+
 	adapter := &LyriaAdapter{
 		lyricist: &lyriaLyricist{
 			aiClient:     mAI,
@@ -88,7 +90,7 @@ func TestLyriaAdapter_Run(t *testing.T) {
 			TextModel:   "custom-text-model",
 			AudioModel:  "lyria-custom-v1",
 			ComposeMode: "jazz",
-			Seed:        new(int64(42)),
+			Seed:        &seedVal,
 		},
 	}
 	contextText := "雨のアムステルダム"
@@ -102,8 +104,6 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	lyricsJSON := `{"title": "Rainy Amsterdam", "theme": "Neon reflection on canals", "lyrics": "Canals reflect the neon lights..."}`
 	recipeJSON := `{"title": "Rainy Amsterdam", "tempo": 85, "mood": "melancholic", "sections": [{"name": "Verse", "duration": 30, "prompt": "jazz piano"}]}`
 
-	// ✅ 本物のWAVヘッダー（44バイト）をシミュレート
-	// CombineWavData がチェックする 'RIFF', 'WAVE', 'fmt ', 'data' チャンクを正しく配置
 	fakeWav := []byte{
 		'R', 'I', 'F', 'F', 0x24, 0x00, 0x00, 0x00, 'W', 'A', 'V', 'E',
 		'f', 'm', 't', ' ', 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
@@ -113,12 +113,12 @@ func TestLyriaAdapter_Run(t *testing.T) {
 
 	// Mock 設定
 	mPrompt.On("GenerateLyrics", contextText).Return("prompt-lyrics-text", nil)
-	mAI.On("GenerateContent", ctx, "custom-text-model", "prompt-lyrics-text").Return(&gemini.Response{
+	mAI.On("GenerateContent", mock.Anything, "custom-text-model", "prompt-lyrics-text").Return(&gemini.Response{
 		Text: "```json\n" + lyricsJSON + "\n```",
 	}, nil)
 
 	mPrompt.On("GenerateRecipe", "jazz", expectedLyrics).Return("prompt-recipe-text", nil)
-	mAI.On("GenerateContent", ctx, "custom-text-model", "prompt-recipe-text").Return(&gemini.Response{
+	mAI.On("GenerateContent", mock.Anything, "custom-text-model", "prompt-recipe-text").Return(&gemini.Response{
 		Text: recipeJSON,
 	}, nil)
 
@@ -136,7 +136,6 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	assert.Equal(t, "Rainy Amsterdam", recipe.Title)
 	assert.Equal(t, 85, recipe.Tempo)
 
-	// ポインタの中身を比較
 	if assert.NotNil(t, recipe.AIModels.Seed) {
 		assert.Equal(t, int64(42), *recipe.AIModels.Seed)
 	}
@@ -164,7 +163,7 @@ func TestLyriaAdapter_Compose(t *testing.T) {
 	rawJSON := `{"title": "Lofi Chill", "tempo": 70, "mood": "relaxed"}`
 
 	mPrompt.On("GenerateRecipe", mode, lyrics).Return(expectedPrompt, nil)
-	mAI.On("GenerateContent", ctx, "gemini-flash", expectedPrompt).Return(&gemini.Response{
+	mAI.On("GenerateContent", mock.Anything, "gemini-flash", expectedPrompt).Return(&gemini.Response{
 		Text: rawJSON,
 	}, nil)
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/shouni/go-gemini-client/gemini"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
 	"google.golang.org/genai"
 
@@ -19,6 +20,7 @@ type lyriaAudioGenerator struct {
 	promptBuilder     lyriaAudioPromptBuilder
 	defaultLyriaModel string
 	limiter           *rate.Limiter
+	group             singleflight.Group
 }
 
 // GenerateAudio は MusicRecipe 全体を 1 回の Lyria 呼び出しで音声化します。
@@ -32,19 +34,34 @@ func (g *lyriaAudioGenerator) GenerateAudio(ctx context.Context, recipe *domain.
 		targetModel = recipe.AudioModel
 	}
 
-	if err := g.limiter.Wait(ctx); err != nil {
+	promptText := g.promptBuilder.BuildFullSong(recipe)
+	responseMIMEType := ""
+	key := singleflightKey("audio-full", targetModel, promptText, singleflightSeedKey(recipe.AIModels.Seed), responseMIMEType)
+	audio, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) ([]byte, error) {
+		if err := g.limiter.Wait(execCtx); err != nil {
+			return nil, err
+		}
+
+		resp, err := g.aiClient.GenerateWithParts(
+			execCtx,
+			targetModel,
+			[]*genai.Part{{Text: promptText}},
+			buildAudioGenerateOptions(recipe.AIModels.Seed, responseMIMEType),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("lyria generation failed (model: %s): %w", targetModel, err)
+		}
+		if resp == nil || len(resp.Audios) == 0 {
+			return nil, fmt.Errorf("no audio data received from Lyria")
+		}
+
+		return resp.Audios[0], nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	resp, err := g.aiClient.GenerateWithParts(ctx, targetModel, []*genai.Part{{Text: g.promptBuilder.BuildFullSong(recipe)}}, buildAudioGenerateOptions(recipe.AIModels.Seed, ""))
-	if err != nil {
-		return nil, fmt.Errorf("lyria generation failed (model: %s): %w", targetModel, err)
-	}
-	if resp == nil || len(resp.Audios) == 0 {
-		return nil, fmt.Errorf("no audio data received from Lyria")
-	}
-
-	return resp.Audios[0], nil
+	return cloneBytes(audio), nil
 }
 
 // GenerateFullAudio は MusicRecipe の各セクションを個別に生成し、1 つの WAV に結合します。
@@ -58,10 +75,6 @@ func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *dom
 
 	for i, sec := range recipe.Sections {
 		group.Go(func() error {
-			if err := g.limiter.Wait(groupCtx); err != nil {
-				return err
-			}
-
 			data, err := g.generateAudioSection(groupCtx, recipe, sec)
 			if err != nil {
 				return fmt.Errorf("section '%s' generation failed: %w", sec.Name, err)
@@ -97,20 +110,34 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 		targetModel = recipe.AudioModel
 	}
 
-	resp, err := g.aiClient.GenerateWithParts(
-		ctx,
-		targetModel,
-		[]*genai.Part{{Text: g.promptBuilder.BuildSection(recipe, sec)}},
-		buildAudioGenerateOptions(recipe.AIModels.Seed, "audio/wav"),
-	)
+	promptText := g.promptBuilder.BuildSection(recipe, sec)
+	responseMIMEType := "audio/wav"
+	key := singleflightKey("audio-section", targetModel, promptText, singleflightSeedKey(recipe.AIModels.Seed), responseMIMEType)
+	audio, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) ([]byte, error) {
+		if err := g.limiter.Wait(execCtx); err != nil {
+			return nil, err
+		}
+
+		resp, err := g.aiClient.GenerateWithParts(
+			execCtx,
+			targetModel,
+			[]*genai.Part{{Text: promptText}},
+			buildAudioGenerateOptions(recipe.AIModels.Seed, responseMIMEType),
+		)
+		if err != nil {
+			return nil, err
+		}
+		if resp == nil || len(resp.Audios) == 0 {
+			return nil, fmt.Errorf("no audio from Lyria for %s", sec.Name)
+		}
+
+		return resp.Audios[0], nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	if resp == nil || len(resp.Audios) == 0 {
-		return nil, fmt.Errorf("no audio from Lyria for %s", sec.Name)
-	}
 
-	return resp.Audios[0], nil
+	return cloneBytes(audio), nil
 }
 
 // buildAudioGenerateOptions は Lyria 音声生成で共通して使う生成オプションを組み立てます。
