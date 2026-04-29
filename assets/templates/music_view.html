@@ -138,6 +138,15 @@
         btn.innerHTML = originalText;
         btn.classList.replace('btn-success', 'btn-outline-primary');
       }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      btn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Error';
+      btn.classList.replace('btn-outline-primary', 'btn-danger');
+
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.replace('btn-danger', 'btn-outline-primary');
+      }, 2000);
     });
   }
 </script>
