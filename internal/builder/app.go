@@ -58,6 +58,11 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, err
 	}
 
+	aiClient, err := adapters.NewVertexAIAdapter(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize AI adapter: %w", err)
+	}
+
 	// 3. Prompt Generator
 	promptGen, err := adapters.NewPromptAdapter()
 	if err != nil {
@@ -65,7 +70,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	// 4. Music Runner
-	runner, err := adapters.NewLyriaAdapter(ctx, cfg, promptGen)
+	runner, err := adapters.NewLyriaAdapter(ctx, cfg, aiClient, promptGen)
 	if err != nil {
 		return nil, err
 	}

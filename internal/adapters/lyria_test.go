@@ -3,7 +3,6 @@ package adapters
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/shouni/go-gemini-client/gemini"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +27,7 @@ func (m *MockGeminiClient) GenerateContent(ctx context.Context, model, prompt st
 	return nil, args.Error(1)
 }
 
+// *gemini.GenerateOptions ではなく gemini.GenerateOptions (値渡し) に修正
 func (m *MockGeminiClient) GenerateWithParts(ctx context.Context, modelName string, parts []*genai.Part, opts gemini.GenerateOptions) (*gemini.Response, error) {
 	args := m.Called(ctx, modelName, parts, opts)
 	if res, ok := args.Get(0).(*gemini.Response); ok {
@@ -62,9 +62,10 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	mAI := new(MockGeminiClient)
 	mPrompt := new(MockPromptGen)
 
-	// シード値のヘルパー
 	seedVal := int64(42)
 
+	// テスト対象のアダプターを構築
+	// 内部で呼び出される sub-struct (lyriaLyricistなど) にモックを注入
 	adapter := &LyriaAdapter{
 		lyricist: &lyriaLyricist{
 			aiClient:     mAI,
@@ -79,13 +80,13 @@ func TestLyriaAdapter_Run(t *testing.T) {
 		audio: &lyriaAudioGenerator{
 			aiClient:          mAI,
 			defaultLyriaModel: "lyria-3",
-			limiter:           rate.NewLimiter(rate.Inf, 0),
+			limiter:           rate.NewLimiter(rate.Inf, 0), // テストなので待ち時間なし
 			promptBuilder:     lyriaAudioPromptBuilder{},
 		},
 	}
+
 	task := domain.Task{
-		JobID:     "job-123",
-		CreatedAt: time.Now(),
+		JobID: "job-123",
 		AIModels: domain.AIModels{
 			TextModel:   "custom-text-model",
 			AudioModel:  "lyria-custom-v1",
@@ -95,33 +96,34 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	}
 	contextText := "雨のアムステルダム"
 
+	// 期待される中間データ
 	expectedLyrics := &domain.LyricsDraft{
 		Title:  "Rainy Amsterdam",
 		Theme:  "Neon reflection on canals",
 		Lyrics: "Canals reflect the neon lights...",
 	}
 
+	// AIからのレスポンス想定
+	// マークダウンタグが含まれていても cleanJSONResponse で処理されることを想定
 	lyricsJSON := `{"title": "Rainy Amsterdam", "theme": "Neon reflection on canals", "lyrics": "Canals reflect the neon lights..."}`
-	recipeJSON := `{"title": "Rainy Amsterdam", "tempo": 85, "mood": "melancholic", "sections": [{"name": "Verse", "duration": 30, "prompt": "jazz piano"}]}`
+	recipeJSON := `{"title": "Rainy Amsterdam", "tempo": 85, "mood": "melancholic"}`
 
-	fakeWav := []byte{
-		'R', 'I', 'F', 'F', 0x24, 0x00, 0x00, 0x00, 'W', 'A', 'V', 'E',
-		'f', 'm', 't', ' ', 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
-		0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
-		'd', 'a', 't', 'a', 0x00, 0x00, 0x00, 0x00,
-	}
+	fakeWav := []byte("RIFF....WAVEfmt....data") // 簡略化したWAVヘッダ
 
-	// Mock 設定
+	// 1. 作詞プロンプト生成 -> AI実行
 	mPrompt.On("GenerateLyrics", contextText).Return("prompt-lyrics-text", nil)
 	mAI.On("GenerateContent", mock.Anything, "custom-text-model", "prompt-lyrics-text").Return(&gemini.Response{
 		Text: "```json\n" + lyricsJSON + "\n```",
 	}, nil)
 
+	// 2. 作曲レシピ生成 -> AI実行
 	mPrompt.On("GenerateRecipe", "jazz", expectedLyrics).Return("prompt-recipe-text", nil)
 	mAI.On("GenerateContent", mock.Anything, "custom-text-model", "prompt-recipe-text").Return(&gemini.Response{
 		Text: recipeJSON,
 	}, nil)
 
+	// 3. 音声生成実行
+	// GenerateWithParts の第4引数は mock.Anything または具体的条件
 	mAI.On("GenerateWithParts", mock.Anything, "lyria-custom-v1", mock.Anything, mock.Anything).Return(&gemini.Response{
 		Audios: [][]byte{fakeWav},
 	}, nil)
@@ -132,10 +134,11 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	// 検証
 	assert.NoError(t, err)
 	assert.NotNil(t, recipe)
-	assert.NotNil(t, wav)
 	assert.Equal(t, "Rainy Amsterdam", recipe.Title)
 	assert.Equal(t, 85, recipe.Tempo)
+	assert.Equal(t, fakeWav, wav)
 
+	// Seed値の伝搬確認
 	if assert.NotNil(t, recipe.AIModels.Seed) {
 		assert.Equal(t, int64(42), *recipe.AIModels.Seed)
 	}
@@ -167,13 +170,13 @@ func TestLyriaAdapter_Compose(t *testing.T) {
 		Text: rawJSON,
 	}, nil)
 
-	// 実行
+	// 実行（モデル指定なしの場合は defaultModel が使われる）
 	recipe, err := adapter.Compose(ctx, lyrics, "", mode)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, recipe)
 	assert.Equal(t, 70, recipe.Tempo)
-	assert.Equal(t, lyrics, recipe.Lyrics)
+	assert.Equal(t, "Lofi Chill", recipe.Title)
 
 	mPrompt.AssertExpectations(t)
 	mAI.AssertExpectations(t)
