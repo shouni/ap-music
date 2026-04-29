@@ -12,6 +12,7 @@ import (
 	"ap-music/internal/adapters"
 	"ap-music/internal/app"
 	"ap-music/internal/config"
+	"ap-music/internal/repository"
 )
 
 // BuildContainer は外部サービスとの接続を確立し、依存関係を組み立てた app.Container を返します。
@@ -96,6 +97,9 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, fmt.Errorf("failed to initialize music pipeline: %w", err)
 	}
 
+	// 6. Repositories (Data Access)
+	musicRepo := repository.NewGCSMusicRepository(cfg, rio.Reader)
+
 	appCtx := &app.Container{
 		Config:       cfg,
 		RemoteIO:     rio,
@@ -103,6 +107,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		Pipeline:     pipeline,
 		HTTPClient:   httpClient,
 		Notifier:     slack,
+		MusicRepo:    musicRepo,
 	}
 
 	return appCtx, nil
