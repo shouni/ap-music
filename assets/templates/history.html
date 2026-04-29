@@ -9,9 +9,9 @@
 
     <div class="list-group shadow-sm mt-3">
         {{range .Data}}
-        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
+        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 position-relative">
             <div class="flex-grow-1">
-                <a href="/web/history/{{.JobID}}" class="text-decoration-none text-dark d-block mb-1">
+                <a href="/web/history/{{.JobID}}" class="text-decoration-none text-dark d-block mb-1 stretched-link">
                     <h5 class="mb-0 fw-bold">{{.Title}}</h5>
                 </a>
                 <div class="text-muted small">
@@ -21,7 +21,7 @@
                 </div>
             </div>
 
-            <div class="ms-3 d-flex align-items-center gap-2">
+            <div class="ms-3 d-flex align-items-center gap-2 position-relative" style="z-index: 2;">
                 <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none"></audio>
 
                 <button class="btn btn-outline-primary btn-lg rounded-circle shadow-sm audio-toggle-btn"
@@ -38,10 +38,6 @@
             </div>
         </div>
         {{else}}
-        <div class="alert alert-light border text-center py-5">
-            <i class="bi bi-music-note-list display-4 text-muted mb-3 d-block"></i>
-            <p class="mb-0">履歴がまだありません。新しい楽曲を創造しましょう！</p>
-        </div>
         {{end}}
     </div>
 </div>

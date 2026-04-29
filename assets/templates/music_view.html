@@ -96,7 +96,7 @@
               {{if .Data.Recipe.Lyrics}}
               <div class="p-3 border rounded bg-white shadow-sm mt-2" style="white-space: pre-wrap; font-family: 'Noto Sans JP', sans-serif; line-height: 1.8;">{{.Data.Recipe.Lyrics.Lyrics}}</div>
               {{else}}
-              <div class="p-3 border rounded bg-light text-muted font-italic mt-2">インストゥルメンタル楽曲です。</div>
+              <div class="p-3 border rounded bg-light text-muted fst-italic mt-2">インストゥルメンタル楽曲です。</div>
               {{end}}
             </div>
           </div>
@@ -137,7 +137,7 @@
         btn.classList.replace('btn-success', 'btn-outline-primary');
       }, 2000);
     }).catch(err => {
-      console.error('コピーに失敗したのだ:', err);
+      console.error('JSONのクリップボードへのコピーに失敗しました:', err);
     });
   }
 </script>
