@@ -1,0 +1,100 @@
+{{define "content"}}
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">{{.Data.Recipe.Title}}</h3>
+      <span class="badge bg-info">Lyria 3 Generation</span>
+    </div>
+
+    <div class="card-body">
+      <div class="text-center mb-4 p-3 border rounded bg-light sticky-top" style="top: 1rem; z-index: 1020;">
+        <audio controls src="/web/audio?id={{.Data.ID}}" class="w-100">
+          ブラウザが音声再生に対応していません。
+        </audio>
+      </div>
+
+      <ul class="nav nav-tabs mb-3" id="musicTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">楽曲詳細</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="json-tab" data-bs-toggle="tab" data-bs-target="#json" type="button" role="tab">入力用 JSON</button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="musicTabContent">
+        <div class="tab-pane fade show active" id="details" role="tabpanel">
+          <div class="row">
+            <div class="col-md-6">
+              <h5>🎵 楽曲構成</h5>
+              <table class="table table-sm table-hover">
+                <tbody>
+                <tr><th>テーマ</th><td>{{.Data.Recipe.Theme}}</td></tr>
+                <tr><th>ムード</th><td>{{.Data.Recipe.Mood}}</td></tr>
+                <tr><th>テンポ</th><td>{{.Data.Recipe.Tempo}} BPM</td></tr>
+                <tr>
+                  <th>楽器</th>
+                  <td>
+                    {{range .Data.Recipe.Instruments}}
+                    <span class="badge bg-secondary me-1">{{.}}</span>
+                    {{else}}
+                    <span class="text-muted">指定なし</span>
+                    {{end}}
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+
+              <h6 class="mt-4">📋 セクション構成</h6>
+              <ul class="list-group border rounded">
+                {{range .Data.Recipe.Sections}}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <strong>{{.Name}}</strong>
+                  <span class="badge bg-primary rounded-pill">{{.Duration}}s</span>
+                </li>
+                {{end}}
+              </ul>
+            </div>
+
+            <div class="col-md-6">
+              <h5>📝 歌詞</h5>
+              {{if .Data.Recipe.Lyrics}}
+              <div class="p-3 border rounded bg-white shadow-sm" style="white-space: pre-wrap; font-family: 'Noto Sans JP', sans-serif; line-height: 1.8;">{{.Data.Recipe.Lyrics.Lyrics}}</div>
+              {{else}}
+              <div class="p-3 border rounded bg-light text-muted italic">インストゥルメンタル楽曲です。</div>
+              {{end}}
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="json" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5>API Input / Debug JSON</h5>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyJSON()">Copy to Clipboard</button>
+          </div>
+          <div class="position-relative">
+            <pre id="json-raw" class="bg-dark text-success p-3 rounded" style="max-height: 600px; overflow-y: auto;"><code>{{.Data.RecipeJSON}}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer text-end bg-transparent border-top-0">
+      <a href="/web/history" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left"></i> 履歴一覧へ戻る
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function copyJSON() {
+    const jsonText = document.getElementById('json-raw').innerText;
+    navigator.clipboard.writeText(jsonText).then(() => {
+      alert('JSONをクリップボードにコピーしたのだ！');
+    }).catch(err => {
+      console.error('コピーに失敗したのだ:', err);
+    });
+  }
+</script>
+{{end}}

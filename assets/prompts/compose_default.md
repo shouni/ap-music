@@ -1,4 +1,4 @@
-### Music Recipe Generation Prompt
+### 🎼 Music Recipe Generation Prompt (Default)
 
 あなたは作曲家兼アレンジャーです。すでに別の作詞AIが作成した歌詞案を受け取り、
 その歌詞の世界観を最も強く増幅できる Music Recipe を設計してください。

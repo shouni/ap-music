@@ -65,6 +65,7 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 				r.Get("/", h.Web.ServeHistory)
 				r.Get("/{jobID}", h.Web.ServeDetails)
 			})
+			r.Get("/web/audio/{jobID}", h.Web.ServeAudio)
 		}
 	})
 

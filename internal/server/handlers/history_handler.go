@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
-	"ap-music/internal/config"
 	"ap-music/internal/domain"
 )
 
@@ -34,16 +34,15 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "レシピが見つからないのだ", http.StatusNotFound)
 		return
 	}
-	audioURL, err := h.generateAudioSignedURL(r.Context(), jobID)
-	if err != nil {
-		http.Error(w, "音声ファイルのURL生成に失敗しました", http.StatusInternalServerError)
-		return
-	}
+
+	audioURL := fmt.Sprintf("/web/audio/%s", jobID)
 
 	data := struct {
+		ID       string
 		Recipe   *domain.MusicRecipe
 		AudioURL string
 	}{
+		ID:       jobID,
 		Recipe:   recipe,
 		AudioURL: audioURL,
 	}
@@ -51,19 +50,36 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "music_view.html", recipe.Title, data)
 }
 
-// generateAudioSignedURL は、フラットなファイル名規則（timestamp-id.wav）に基づいて署名付きURLを生成します。
-func (h *Handler) generateAudioSignedURL(ctx context.Context, jobID string) (string, error) {
-	fileName := fmt.Sprintf("%s.wav", jobID)
-	gcsURL := h.cfg.GetGCSObjectURL(fileName)
-	signedURL, err := h.remoteIO.Signer.GenerateSignedURL(
-		ctx,
-		gcsURL,
-		http.MethodGet,
-		config.SignedURLExpiration,
-	)
-	if err != nil {
-		return "", fmt.Errorf("音声ファイルの署名に失敗したのだ: %w", err)
+// ServeAudio は、指定されたリクエストに基づいて生成または取得された音声ファイルをクライアントに返します。
+// HTTP レスポンスとして音声データ（WAV等）を書き込みます。
+func (h *Handler) ServeAudio(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	jobID := chi.URLParam(r, "jobID")
+	if jobID == "" {
+		http.Error(w, "JobID is required", http.StatusBadRequest)
+		return
 	}
 
-	return signedURL, nil
+	fileName := fmt.Sprintf("%s.wav", jobID)
+	gcsURL := h.cfg.GetGCSObjectURL(fileName)
+	reader, err := h.remoteIO.Reader.Open(ctx, gcsURL)
+	if err != nil {
+		slog.Error("Failed to open GCS object",
+			"url", gcsURL,
+			"jobID", jobID,
+			"error", err,
+		)
+		http.Error(w, "Audio file not found", http.StatusNotFound)
+		return
+	}
+	defer reader.Close()
+
+	w.Header().Set("Content-Type", "audio/wav")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+
+	if _, err := io.Copy(w, reader); err != nil {
+		slog.Error("Stream transfer error", "jobID", jobID, "error", err)
+		// ヘッダー送信後のエラーは http.Error では返せないためログのみ
+		return
+	}
 }
