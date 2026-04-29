@@ -46,8 +46,7 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "music_view.html", recipe.Title, data)
 }
 
-// generateAudioSignedURL は、フラットなファイル名規則（timestamp-id.wav）に基づいて
-// 署名付きURLを生成するのだ。
+// generateAudioSignedURL は、フラットなファイル名規則（timestamp-id.wav）に基づいて署名付きURLを生成します。
 func (h *Handler) generateAudioSignedURL(ctx context.Context, jobID string) (string, error) {
 	fileName := fmt.Sprintf("%s.wav", jobID)
 	gcsURL := h.cfg.GetGCSObjectURL(fileName)

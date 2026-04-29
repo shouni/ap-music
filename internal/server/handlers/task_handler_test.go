@@ -11,7 +11,7 @@ import (
 func TestHomeRendersComposeForm(t *testing.T) {
 	t.Parallel()
 
-	h, err := NewHandler(nil, nil, nil)
+	h, err := NewHandler(nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
@@ -34,7 +34,7 @@ func TestHomeRendersComposeForm(t *testing.T) {
 func TestEnqueueTaskRejectsCrossOriginRequest(t *testing.T) {
 	t.Parallel()
 
-	h, err := NewHandler(nil, nil, nil)
+	h, err := NewHandler(nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
@@ -57,7 +57,7 @@ func TestEnqueueTaskRejectsCrossOriginRequest(t *testing.T) {
 func TestEnqueueTaskRejectsEmptySubmission(t *testing.T) {
 	t.Parallel()
 
-	h, err := NewHandler(nil, nil, nil)
+	h, err := NewHandler(nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}

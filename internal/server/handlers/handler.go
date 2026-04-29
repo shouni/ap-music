@@ -52,6 +52,7 @@ func NewHandler(
 	cfg *config.Config,
 	taskEnqueuer *tasks.Enqueuer[domain.Task],
 	remoteIO *app.RemoteIO,
+	musicRepo domain.MusicRepository,
 ) (*Handler, error) {
 	cache := make(map[string]*template.Template)
 
@@ -115,6 +116,7 @@ func NewHandler(
 		taskFactory:           newTaskFactory(),
 		crossOriginProtection: http.NewCrossOriginProtection(),
 		remoteIO:              remoteIO,
+		musicRepo:             musicRepo,
 	}, nil
 }
 
