@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -68,6 +69,12 @@ func (h *Handler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 	jobID := chi.URLParam(r, "jobID")
 	if jobID == "" {
 		http.Error(w, "JobID is required", http.StatusBadRequest)
+		return
+	}
+
+	// バリデーションの追加 (例: 英数字とハイフンのみを許可)
+	if !regexp.MustCompile(`^[a-zA-Z0-9\-]+$`).MatchString(jobID) {
+		http.Error(w, "Invalid JobID format", http.StatusBadRequest)
 		return
 	}
 

@@ -22,9 +22,10 @@
             <div class="ms-3 d-flex align-items-center gap-2">
                 <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none"></audio>
 
-                <button class="btn btn-outline-primary btn-lg rounded-circle shadow-sm"
+                <button class="btn btn-outline-primary btn-lg rounded-circle shadow-sm audio-toggle-btn"
                         id="btn-{{.JobID}}"
-                        onclick="toggleAudio('{{.JobID}}')"
+                        data-job-id="{{.JobID}}"
+                        onclick="toggleAudio(this.dataset.jobId)"
                         style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
                     <i class="bi bi-play-fill" id="icon-{{.JobID}}"></i>
                 </button>
