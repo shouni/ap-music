@@ -64,7 +64,8 @@ func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]dom
 
 // GetRecipe は、特定の JSON ファイルを読み込んで構造体にパースします。
 func (r *MusicRepository) GetRecipe(ctx context.Context, jobID string) (*domain.MusicRecipe, error) {
-	objectPath := fmt.Sprintf("%s.json", jobID)
+	safeJobID := path.Base(jobID)
+	objectPath := fmt.Sprintf("%s.json", safeJobID)
 	gcsURI := r.cfg.GetGCSObjectURL(objectPath)
 	rc, err := r.reader.Open(ctx, gcsURI)
 	if err != nil {

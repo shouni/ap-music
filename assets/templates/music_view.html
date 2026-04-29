@@ -91,9 +91,9 @@
   function copyJSON() {
     const jsonText = document.getElementById('json-raw').innerText;
     navigator.clipboard.writeText(jsonText).then(() => {
-      alert('JSONをクリップボードにコピーしたのだ！');
+      alert('JSONをクリップボードにコピーしました。');
     }).catch(err => {
-      console.error('コピーに失敗したのだ:', err);
+      console.error('コピーに失敗しました:', err);
     });
   }
 </script>

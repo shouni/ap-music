@@ -13,11 +13,13 @@ import (
 	"ap-music/internal/domain"
 )
 
+// jobIDRegex は JobID のバリデーション用正規表現です。
+// 英数字とハイフンのみを許可し、パストラバーサル等を防ぎます。
+var jobIDRegex = regexp.MustCompile(`^[a-zA-Z0-9\-]+$`)
+
 // ServeHistory は楽曲生成履歴の一覧画面を表示するのだ。
 func (h *Handler) ServeHistory(w http.ResponseWriter, r *http.Request) {
-	// 1. 本来はセッションからuserIDを取得します
-	// userID := h.getUserIDFromSession(r)
-	// TODO: 認証機能実装後、セッションまたはリクエストコンテキストからuserIDを取得するように修正する
+	// TODO: 認証機能実装後、セッションから userID を取得するように修正する
 	userID := "me"
 	histories, err := h.musicRepo.ListHistory(r.Context(), userID)
 	if err != nil {
@@ -31,6 +33,13 @@ func (h *Handler) ServeHistory(w http.ResponseWriter, r *http.Request) {
 // ServeDetails は特定の楽曲の詳細画面を表示するのだ。
 func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 	jobID := chi.URLParam(r, "jobID")
+
+	// バリデーション：セキュリティとパスの安全性を確保
+	if !jobIDRegex.MatchString(jobID) {
+		http.Error(w, "Invalid JobID format", http.StatusBadRequest)
+		return
+	}
+
 	recipe, err := h.musicRepo.GetRecipe(r.Context(), jobID)
 	if err != nil {
 		http.Error(w, "レシピが見つからないのだ", http.StatusNotFound)
@@ -41,13 +50,11 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 	recipeJSON, err := json.MarshalIndent(recipe, "", "  ")
 	if err != nil {
 		slog.ErrorContext(r.Context(), "JSONの整形に失敗したのだ", "jobID", jobID, "error", err)
-		// JSONの表示に失敗しても画面自体は出したいので、空文字にするかエラーハンドリングを検討
 		recipeJSON = []byte("{}")
 	}
 
 	audioURL := fmt.Sprintf("/web/audio/%s", jobID)
 
-	// 匿名構造体に RecipeJSON フィールドを追加
 	data := struct {
 		ID         string
 		Recipe     *domain.MusicRecipe
@@ -67,22 +74,18 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	jobID := chi.URLParam(r, "jobID")
-	if jobID == "" {
-		http.Error(w, "JobID is required", http.StatusBadRequest)
-		return
-	}
 
-	// バリデーションの追加 (例: 英数字とハイフンのみを許可)
-	if !regexp.MustCompile(`^[a-zA-Z0-9\-]+$`).MatchString(jobID) {
+	// バリデーション：共通の正規表現を使用
+	if !jobIDRegex.MatchString(jobID) {
 		http.Error(w, "Invalid JobID format", http.StatusBadRequest)
 		return
 	}
 
-	// ファイル名の組み立て（以前のルールと統一）
+	// ファイル名の組み立て
 	fileName := fmt.Sprintf("%s.wav", jobID)
 	gcsURL := h.cfg.GetGCSObjectURL(fileName)
 
-	// 署名付きURLの生成
+	// 署名付きURLの生成（直接GCSから配信させてサーバー負荷を軽減）
 	signedURL, err := h.remoteIO.Signer.GenerateSignedURL(
 		ctx,
 		gcsURL,
@@ -94,5 +97,7 @@ func (h *Handler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Audio access error", http.StatusInternalServerError)
 		return
 	}
+
+	// クライアントを直接 GCS へ飛ばす
 	http.Redirect(w, r, signedURL, http.StatusFound)
 }
