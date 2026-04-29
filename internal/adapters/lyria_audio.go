@@ -20,6 +20,7 @@ type lyriaAudioGenerator struct {
 	promptBuilder     lyriaAudioPromptBuilder
 	defaultLyriaModel string
 	limiter           *rate.Limiter
+	maxConcurrency    int
 	group             singleflight.Group
 }
 
@@ -72,6 +73,7 @@ func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *dom
 
 	wavParts := make([][]byte, len(recipe.Sections))
 	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(g.maxConcurrency)
 
 	for i, sec := range recipe.Sections {
 		group.Go(func() error {
