@@ -60,7 +60,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 
 	aiClient, err := adapters.NewVertexAIAdapter(ctx, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize prompt adapter: %w", err)
+		return nil, fmt.Errorf("failed to initialize AI adapter: %w", err)
 	}
 
 	// 3. Prompt Generator
