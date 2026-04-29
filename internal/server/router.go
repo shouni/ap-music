@@ -61,6 +61,11 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 		if h.Web != nil {
 			r.Get("/", h.Web.Home)
 			r.Post("/web/compose", h.Web.EnqueueTask)
+			r.Route("/web/history", func(r chi.Router) {
+				r.Get("/", h.Web.ServeHistory)
+				r.Get("/{jobID}", h.Web.ServeDetails)
+			})
+			r.Get("/web/audio/{jobID}", h.Web.ServeAudio)
 		}
 	})
 

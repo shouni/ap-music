@@ -30,3 +30,10 @@ type MusicSection struct {
 	Duration int    `json:"duration_seconds"`
 	Prompt   string `json:"prompt"`
 }
+
+// MusicHistory は一覧画面の表示
+type MusicHistory struct {
+	JobID     string `json:"job_id"`
+	Title     string `json:"title"`
+	CreatedAt string `json:"created_at"`
+}

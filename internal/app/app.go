@@ -23,12 +23,14 @@ type Container struct {
 	// External Adapters
 	HTTPClient httpkit.Requester
 	Notifier   domain.Notifier
+	// Data Access
+	MusicRepo domain.MusicRepository
 }
 
 // RemoteIO は外部ストレージ操作に関するコンポーネントをまとめます。
 type RemoteIO struct {
 	Factory remoteio.IOFactory
-	Reader  remoteio.Reader
+	Reader  remoteio.InputReader
 	Writer  remoteio.Writer
 	Signer  remoteio.URLSigner
 }

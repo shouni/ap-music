@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/shouni/go-remote-io/remoteio"
 	"github.com/shouni/go-utils/envutil"
 	"github.com/shouni/go-utils/text"
 	"github.com/shouni/netarmor/securenet"
@@ -69,4 +70,9 @@ func (c *Config) ValidateEssentialConfig() error {
 	}
 
 	return nil
+}
+
+// GetGCSObjectURL は、指定されたパスから完全なGCSオブジェクトURL ("gs://...") を組み立てます。
+func (c *Config) GetGCSObjectURL(path string) string {
+	return remoteio.BuildGCSURI(c.GCSBucket, path)
 }
