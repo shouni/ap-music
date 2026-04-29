@@ -21,9 +21,6 @@ type LyriaAdapter struct {
 
 // NewLyriaAdapter は、指定されたコンテキストと構成を使用して、新しい LyriaAdapter を初期化して返します。
 func NewLyriaAdapter(ctx context.Context, cfg *config.Config, aiClient gemini.Generator, promptGen domain.PromptGenerator) (*LyriaAdapter, error) {
-	if cfg.GeminiAPIKey == "" {
-		return nil, errors.New("GeminiAPIKey is required for LyriaAdapter")
-	}
 	if cfg.GeminiModel == "" {
 		return nil, errors.New("GeminiModel is required but not set")
 	}
@@ -46,9 +43,9 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, aiClient gemini.Ge
 		},
 		audio: &lyriaAudioGenerator{
 			aiClient:          aiClient,
+			promptBuilder:     lyriaAudioPromptBuilder{},
 			defaultLyriaModel: cfg.LyriaModel,
 			limiter:           limiter,
-			promptBuilder:     lyriaAudioPromptBuilder{},
 		},
 	}, nil
 }
