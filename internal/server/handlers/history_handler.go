@@ -15,7 +15,8 @@ import (
 func (h *Handler) ServeHistory(w http.ResponseWriter, r *http.Request) {
 	// 1. 本来はセッションからuserIDを取得します
 	// userID := h.getUserIDFromSession(r)
-	userID := "me" // 一人運用なら固定でもOKです
+	// TODO: 認証機能実装後、セッションまたはリクエストコンテキストからuserIDを取得するように修正する
+	userID := "me"
 	histories, err := h.musicRepo.ListHistory(r.Context(), userID)
 	if err != nil {
 		http.Error(w, "履歴の取得に失敗したのだ", http.StatusInternalServerError)
@@ -33,7 +34,11 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "レシピが見つからないのだ", http.StatusNotFound)
 		return
 	}
-	audioURL, _ := h.generateAudioSignedURL(r.Context(), jobID)
+	audioURL, err := h.generateAudioSignedURL(r.Context(), jobID)
+	if err != nil {
+		http.Error(w, "音声ファイルのURL生成に失敗しました", http.StatusInternalServerError)
+		return
+	}
 
 	data := struct {
 		Recipe   *domain.MusicRecipe
