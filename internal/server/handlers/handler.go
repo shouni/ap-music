@@ -12,17 +12,22 @@ import (
 	"github.com/shouni/gcp-kit/tasks"
 
 	"ap-music/assets"
+	"ap-music/internal/app"
+	"ap-music/internal/config"
 	"ap-music/internal/domain"
 )
 
 const titleSuffix = " - AP Music"
 
 type Handler struct {
+	cfg                   *config.Config
 	templateCache         map[string]*template.Template
 	taskEnqueuer          *tasks.Enqueuer[domain.Task]
 	composeModes          []string
 	taskFactory           *taskFactory
+	remoteIO              *app.RemoteIO
 	crossOriginProtection *http.CrossOriginProtection
+	musicRepo             domain.MusicRepository
 }
 
 // Home はトップ画面を表示します。
@@ -44,7 +49,9 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 // NewHandler は指定された構成に基づいて新しいハンドラーを初期化します。
 // テンプレートをコンパイルし、レイアウトファイルが存在することを確認します。
 func NewHandler(
+	cfg *config.Config,
 	taskEnqueuer *tasks.Enqueuer[domain.Task],
+	remoteIO *app.RemoteIO,
 ) (*Handler, error) {
 	cache := make(map[string]*template.Template)
 
@@ -101,11 +108,13 @@ func NewHandler(
 	sort.Strings(modes) // 表示順序を固定するためにソートを追加
 
 	return &Handler{
+		cfg:                   cfg,
 		templateCache:         cache,
 		taskEnqueuer:          taskEnqueuer,
 		composeModes:          modes,
 		taskFactory:           newTaskFactory(),
 		crossOriginProtection: http.NewCrossOriginProtection(),
+		remoteIO:              remoteIO,
 	}, nil
 }
 
