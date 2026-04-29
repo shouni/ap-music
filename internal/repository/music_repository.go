@@ -29,10 +29,10 @@ func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader) *Mus
 
 // ListHistory は、GCSのファイル一覧を取得して MusicHistory のリストを作成します。
 func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]domain.MusicHistory, error) {
-	gcsPrefix := r.cfg.GCSBucket
+	gcsURI := r.cfg.GetGCSObjectURL("")
 	var histories []domain.MusicHistory
 
-	err := r.reader.List(ctx, gcsPrefix, func(gcsPath string) error {
+	err := r.reader.List(ctx, gcsURI, func(gcsPath string) error {
 		if !strings.HasSuffix(gcsPath, ".json") {
 			return nil
 		}
