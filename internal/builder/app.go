@@ -58,7 +58,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, err
 	}
 
-	aiClient, err := adapters.NewVertexAIAdapter(ctx, cfg)
+	aiClient, err := adapters.NewGeminiAIAdapter(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize AI adapter: %w", err)
 	}
