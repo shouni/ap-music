@@ -57,7 +57,10 @@
             if (el.id !== 'audio-' + jobID) {
                 el.pause();
                 const otherID = el.id.replace('audio-', '');
-                document.getElementById('icon-' + otherID).className = 'bi bi-play-fill';
+                const otherIcon = document.getElementById('icon-' + otherID);
+                if (otherIcon) {
+                    otherIcon.className = 'bi bi-play-fill';
+                }
             }
         });
 

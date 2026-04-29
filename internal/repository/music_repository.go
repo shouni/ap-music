@@ -29,27 +29,18 @@ func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader) *Mus
 
 // ListHistory は、GCSのファイル一覧を取得して MusicHistory のリストを作成します。
 func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]domain.MusicHistory, error) {
-	// 本来は userID ごとのディレクトリ分けなどを検討しますが、
-	// 今回は config から取得した GCSPrefix 全体を対象にします。
-	gcsPrefix := r.cfg.GCSBucket // もしくは特定のフォルダパス
-
+	gcsPrefix := r.cfg.GCSBucket
 	var histories []domain.MusicHistory
 
-	// 1. バケット内のファイルをリストアップするのだ
 	err := r.reader.List(ctx, gcsPrefix, func(gcsPath string) error {
-		// 2. ".json" で終わるファイルを探すのだ
 		if !strings.HasSuffix(gcsPath, ".json") {
 			return nil
 		}
-
-		// ファイル名（パスの末尾）を取得
 		fileName := path.Base(gcsPath)
-		// 拡張子 .json を除いたものを JobID とみなす
 		jobID := strings.TrimSuffix(fileName, ".json")
-
-		// 3. ファイル名から MusicHistory 構造体を組み立てるのだ
-		// ※ 本来は JSON の中身を少し覗いて Title などを取得するのが理想的ですが、
-		//    パフォーマンスを優先してまずはファイル名から ID を抽出します。
+		if jobID == "" {
+			return nil
+		}
 		histories = append(histories, domain.MusicHistory{
 			JobID: jobID,
 			// Title などは別途 GetRecipe で取得するか、
