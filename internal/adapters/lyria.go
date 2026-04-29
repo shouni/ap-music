@@ -3,7 +3,6 @@ package adapters
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/shouni/go-gemini-client/gemini"
 	"golang.org/x/time/rate"
@@ -28,7 +27,7 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, aiClient gemini.Ge
 		return nil, errors.New("LyriaModel is required but not set")
 	}
 
-	limiter := rate.NewLimiter(rate.Every(10*time.Second), 1)
+	limiter := rate.NewLimiter(rate.Every(cfg.RateInterval), 1)
 
 	return &LyriaAdapter{
 		lyricist: &lyriaLyricist{
@@ -44,8 +43,9 @@ func NewLyriaAdapter(ctx context.Context, cfg *config.Config, aiClient gemini.Ge
 		audio: &lyriaAudioGenerator{
 			aiClient:          aiClient,
 			promptBuilder:     lyriaAudioPromptBuilder{},
-			defaultLyriaModel: cfg.LyriaModel,
 			limiter:           limiter,
+			maxConcurrency:    cfg.MaxConcurrency,
+			defaultLyriaModel: cfg.LyriaModel,
 		},
 	}, nil
 }

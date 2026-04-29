@@ -10,8 +10,10 @@ const (
 	DefaultLyriaModel    = "lyria-3-pro-preview"
 	DefaultShutdownGrace = 15 * time.Second
 
-	DefaultHTTPTimeout  = 60 * time.Second
-	SignedURLExpiration = 30 * time.Minute
+	DefaultHTTPTimeout     = 60 * time.Second
+	SignedURLExpiration    = 30 * time.Minute
+	DefaultMaxConcurrency  = 5
+	DefaultRateIntervalSec = 10
 )
 
 // Config はアプリ設定です。
@@ -28,6 +30,8 @@ type Config struct {
 	GeminiAPIKey        string
 	GeminiModel         string
 	LyriaModel          string
+	MaxConcurrency      int
+	RateInterval        time.Duration
 	ShutdownTimeout     time.Duration
 
 	// OAuth & Session Settings
@@ -48,6 +52,7 @@ func LoadConfig() *Config {
 	serviceURL := getEnv("SERVICE_URL", "http://localhost:8080")
 	allowedEmails := getEnv("ALLOWED_EMAILS", "")
 	allowedDomains := getEnv("ALLOWED_DOMAINS", "")
+	intervalSec := getEnvAsInt("RATE_INTERVAL_SEC", DefaultRateIntervalSec)
 
 	cfg := Config{
 		ServiceURL:          serviceURL,
@@ -72,6 +77,10 @@ func LoadConfig() *Config {
 
 		AllowedEmails:  parseCommaSeparatedList(allowedEmails),
 		AllowedDomains: parseCommaSeparatedList(allowedDomains),
+
+		// Generation Settings
+		MaxConcurrency: getEnvAsInt("MAX_CONCURRENCY", DefaultMaxConcurrency),
+		RateInterval:   time.Duration(intervalSec) * time.Second,
 	}
 
 	return &cfg
