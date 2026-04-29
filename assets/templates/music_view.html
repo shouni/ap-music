@@ -105,7 +105,7 @@
         <div class="tab-pane fade" id="json" role="tabpanel">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="text-secondary mb-0">API Input / Debug JSON</h5>
-            <button class="btn btn-sm btn-outline-primary" onclick="copyJSON()">
+            <button class="btn btn-sm btn-outline-primary" onclick="copyJSON(event)">
               <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
             </button>
           </div>
@@ -125,19 +125,19 @@
 </div>
 
 <script>
-  function copyJSON() {
+  function copyJSON(event) {
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+
     const jsonText = document.getElementById('json-raw').innerText;
     navigator.clipboard.writeText(jsonText).then(() => {
-      const btn = event.currentTarget;
-      const originalText = btn.innerHTML;
       btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied!';
       btn.classList.replace('btn-outline-primary', 'btn-success');
+
       setTimeout(() => {
         btn.innerHTML = originalText;
         btn.classList.replace('btn-success', 'btn-outline-primary');
       }, 2000);
-    }).catch(err => {
-      console.error('JSONのクリップボードへのコピーに失敗しました:', err);
     });
   }
 </script>
