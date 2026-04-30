@@ -7,11 +7,6 @@ type Publisher interface {
 	Publish(ctx context.Context, task Task, recipe *MusicRecipe, audioData []byte) (*PublishResult, error)
 }
 
-// StorageCleaner は、書き込み途中で残った成果物を削除するための抽象です。
-type StorageCleaner interface {
-	Delete(ctx context.Context, uri string) error
-}
-
 // Notifier は完了通知を抽象化します。
 type Notifier interface {
 	Notify(ctx context.Context, result *PublishResult) error

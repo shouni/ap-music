@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	gcsstorage "cloud.google.com/go/storage"
 	"github.com/shouni/go-http-kit/httpkit"
 	"github.com/shouni/go-remote-io/remoteio/gcs"
 
@@ -34,12 +33,6 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, fmt.Errorf("failed to create GCS factory: %w", err)
 	}
 	resources = append(resources, storage)
-
-	cleanupClient, err := gcsstorage.NewClient(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create GCS cleanup client: %w", err)
-	}
-	resources = append(resources, cleanupClient)
 
 	rio, err := buildRemoteIO(storage)
 	if err != nil {
