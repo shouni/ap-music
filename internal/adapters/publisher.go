@@ -14,6 +14,8 @@ import (
 	"ap-music/internal/domain"
 )
 
+const recipeJSONContentType = "application/json; charset=utf-8"
+
 // PublisherAdapter は成果物保存を行うアダプターです。
 type PublisherAdapter struct {
 	writer     remoteio.Writer
@@ -67,7 +69,7 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 
 	// 3. レシピJSONの書き込み
 	recipeReader := bytes.NewReader(recipeData)
-	if err := a.writer.Write(ctx, recipeStorageURI, recipeReader, "application/json"); err != nil {
+	if err := a.writer.Write(ctx, recipeStorageURI, recipeReader, recipeJSONContentType); err != nil {
 		a.cleanupOnFailure(ctx, recipeStorageURI, storageURI)
 		return nil, fmt.Errorf("failed to write recipe to storage (audio file %s was already written): %w", storageURI, err)
 	}

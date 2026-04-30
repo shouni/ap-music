@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -47,10 +49,10 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// テンプレートの JSON タブに表示するための整形済み JSON を作成
-	recipeJSON, err := json.MarshalIndent(recipe, "", "  ")
+	recipeJSON, err := formatRecipeJSONForDisplay(recipe)
 	if err != nil {
 		slog.ErrorContext(r.Context(), "JSONの整形に失敗したのだ", "jobID", jobID, "error", err)
-		recipeJSON = []byte("{}")
+		recipeJSON = "{}"
 	}
 
 	audioURL := fmt.Sprintf("/web/audio/%s", jobID)
@@ -63,11 +65,22 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 	}{
 		ID:         jobID,
 		Recipe:     recipe,
-		RecipeJSON: string(recipeJSON),
+		RecipeJSON: recipeJSON,
 		AudioURL:   audioURL,
 	}
 
 	h.render(w, http.StatusOK, "music_view.html", recipe.Title, data)
+}
+
+func formatRecipeJSONForDisplay(recipe *domain.MusicRecipe) (string, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(recipe); err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(buf.String(), "\n"), nil
 }
 
 // ServeAudio は、GCSの署名付きURLへリダイレクトさせることで音声を配信します。

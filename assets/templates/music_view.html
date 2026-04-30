@@ -159,7 +159,7 @@
   function copyJSON(event) {
     const btn = event.currentTarget;
     const originalText = btn.innerHTML;
-    const jsonText = document.getElementById('json-raw').innerText;
+    const jsonText = document.getElementById('json-raw').textContent;
     navigator.clipboard.writeText(jsonText).then(() => {
       btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied!';
       btn.classList.replace('btn-outline-primary', 'btn-success');
