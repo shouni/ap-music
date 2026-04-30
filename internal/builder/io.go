@@ -18,7 +18,7 @@ func buildRemoteIO(storage remoteio.IOFactory) (*app.RemoteIO, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create input reader: %w", err)
 	}
-	w, err := storage.Writer()
+	w, err := storage.OutputWriter()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create output writer: %w", err)
 	}

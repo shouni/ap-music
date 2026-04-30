@@ -12,16 +12,25 @@ import (
 
 	"ap-music/internal/config"
 	"ap-music/internal/domain"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
+// stubWriter は remoteio.OutputWriter をシミュレートします
 type stubWriter struct {
 	writes       []string
+	deletes      []string
 	dataByURI    map[string][]byte
 	contentTypes map[string]string
 	failOn       map[string]error
 }
 
 func (w *stubWriter) Write(_ context.Context, uri string, contentReader io.Reader, contentType string) error {
+	if err, ok := w.failOn[uri]; ok {
+		return err
+	}
+
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, contentReader); err != nil {
 		return err
@@ -33,21 +42,28 @@ func (w *stubWriter) Write(_ context.Context, uri string, contentReader io.Reade
 	if w.contentTypes == nil {
 		w.contentTypes = make(map[string]string)
 	}
-	w.dataByURI[uri] = append([]byte(nil), buf.Bytes()...)
+	w.dataByURI[uri] = buf.Bytes()
 	w.contentTypes[uri] = contentType
-	if err, ok := w.failOn[uri]; ok {
-		return err
+	return nil
+}
+
+func (w *stubWriter) Delete(_ context.Context, uri string) error {
+	w.deletes = append(w.deletes, uri)
+	return nil
+}
+
+// testURLSigner は remoteio.URLSigner をシミュレートします
+type testURLSigner struct {
+	calls  []string
+	failOn map[string]error
+}
+
+func (s *testURLSigner) GenerateSignedURL(_ context.Context, uri string, _ string, _ time.Duration) (string, error) {
+	if err, ok := s.failOn[uri]; ok {
+		return "", err
 	}
-	return nil
-}
-
-type stubCleaner struct {
-	deletes []string
-}
-
-func (c *stubCleaner) Delete(_ context.Context, uri string) error {
-	c.deletes = append(c.deletes, uri)
-	return nil
+	s.calls = append(s.calls, uri)
+	return "https://signed.example/" + uri, nil
 }
 
 func TestPublisherPublishCleansUpOnRecipeWriteFailure(t *testing.T) {
@@ -57,25 +73,21 @@ func TestPublisherPublishCleansUpOnRecipeWriteFailure(t *testing.T) {
 	audioURI := "gs://bucket/job-1.wav"
 	recipeURI := "gs://bucket/job-1.json"
 
+	// レシピの書き込みで失敗するように設定
 	writer := &stubWriter{failOn: map[string]error{
 		recipeURI: errors.New("recipe write failed"),
 	}}
 	signer := &testURLSigner{}
-	cleaner := &stubCleaner{}
 
-	publisher, err := NewPublisherAdapter(cfg, writer, signer, cleaner)
-	if err != nil {
-		t.Fatalf("NewPublisherAdapter() error = %v", err)
-	}
+	publisher, err := NewPublisherAdapter(cfg, writer, signer)
+	require.NoError(t, err)
 
 	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-1"}, &domain.MusicRecipe{Title: "x"}, []byte("wav"))
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
+	assert.Error(t, err)
 
-	if len(cleaner.deletes) != 2 || cleaner.deletes[0] != recipeURI || cleaner.deletes[1] != audioURI {
-		t.Fatalf("unexpected cleanup order: %#v", cleaner.deletes)
-	}
+	// クリーンアップが呼ばれたことを確認 (recipeURI, audioURI の順)
+	expectedDeletes := []string{recipeURI, audioURI}
+	assert.Equal(t, expectedDeletes, writer.deletes)
 }
 
 func TestPublisherPublishCleansUpOnSignedURLFailure(t *testing.T) {
@@ -86,24 +98,20 @@ func TestPublisherPublishCleansUpOnSignedURLFailure(t *testing.T) {
 	recipeURI := "gs://bucket/job-2.json"
 
 	writer := &stubWriter{}
+	// 署名URL生成で失敗するように設定
 	signer := &testURLSigner{failOn: map[string]error{
 		audioURI: errors.New("sign failed"),
 	}}
-	cleaner := &stubCleaner{}
 
-	publisher, err := NewPublisherAdapter(cfg, writer, signer, cleaner)
-	if err != nil {
-		t.Fatalf("NewPublisherAdapter() error = %v", err)
-	}
+	publisher, err := NewPublisherAdapter(cfg, writer, signer)
+	require.NoError(t, err)
 
 	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-2"}, &domain.MusicRecipe{Title: "x"}, []byte("wav"))
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
+	assert.Error(t, err)
 
-	if len(cleaner.deletes) != 2 || cleaner.deletes[0] != recipeURI || cleaner.deletes[1] != audioURI {
-		t.Fatalf("unexpected cleanup order: %#v", cleaner.deletes)
-	}
+	// クリーンアップが呼ばれたことを確認
+	expectedDeletes := []string{recipeURI, audioURI}
+	assert.Equal(t, expectedDeletes, writer.deletes)
 }
 
 func TestPublisherPublishWritesRecipeJSONAsUTF8(t *testing.T) {
@@ -114,50 +122,24 @@ func TestPublisherPublishWritesRecipeJSONAsUTF8(t *testing.T) {
 
 	writer := &stubWriter{}
 	signer := &testURLSigner{}
-	cleaner := &stubCleaner{}
 
-	publisher, err := NewPublisherAdapter(cfg, writer, signer, cleaner)
-	if err != nil {
-		t.Fatalf("NewPublisherAdapter() error = %v", err)
-	}
+	publisher, err := NewPublisherAdapter(cfg, writer, signer)
+	require.NoError(t, err)
 
 	recipe := &domain.MusicRecipe{
 		Title: "朝焼けのレシピ",
 		Theme: "日本語ボーカル",
-		Mood:  "明るい",
-		Sections: []domain.MusicSection{
-			{Name: "サビ", Duration: 30, Prompt: "透明感のある歌声"},
-		},
 	}
 	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-utf8"}, recipe, []byte("wav"))
-	if err != nil {
-		t.Fatalf("Publish() error = %v", err)
-	}
+	require.NoError(t, err)
 
 	recipeData := writer.dataByURI[recipeURI]
-	if writer.contentTypes[recipeURI] != recipeJSONContentType {
-		t.Fatalf("recipe content type = %q, want %q", writer.contentTypes[recipeURI], recipeJSONContentType)
-	}
-	if !utf8.Valid(recipeData) {
-		t.Fatalf("recipe json is not valid UTF-8: %q", recipeData)
-	}
-	if !json.Valid(recipeData) {
-		t.Fatalf("recipe json is invalid: %s", recipeData)
-	}
-	if !bytes.Contains(recipeData, []byte("朝焼けのレシピ")) {
-		t.Fatalf("recipe json does not contain raw UTF-8 title: %s", recipeData)
-	}
-}
 
-type testURLSigner struct {
-	calls  []string
-	failOn map[string]error
-}
-
-func (s *testURLSigner) GenerateSignedURL(_ context.Context, uri string, _ string, _ time.Duration) (string, error) {
-	s.calls = append(s.calls, uri)
-	if err, ok := s.failOn[uri]; ok {
-		return "", err
-	}
-	return "https://signed.example/" + uri, nil
+	// Content-Type の確認
+	assert.Equal(t, recipeJSONContentType, writer.contentTypes[recipeURI])
+	// JSONの妥当性とUTF-8の確認
+	assert.True(t, utf8.Valid(recipeData))
+	assert.True(t, json.Valid(recipeData))
+	// エスケープされずに日本語が含まれているか（json.Marshalのデフォルト挙動に依存するが、ここではデータの存在を確認）
+	assert.Contains(t, string(recipeData), "朝焼けのレシピ")
 }

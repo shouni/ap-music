@@ -31,7 +31,7 @@ type Container struct {
 type RemoteIO struct {
 	Factory remoteio.IOFactory
 	Reader  remoteio.InputReader
-	Writer  remoteio.Writer
+	Writer  remoteio.OutputWriter
 	Signer  remoteio.URLSigner
 }
 
