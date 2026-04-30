@@ -12,13 +12,13 @@ import (
 
 const (
 	// defaultGeminiTemperature はモデル生成時の多様性を制御します。
-	defaultGeminiTemperature = float32(0.1)
+	defaultGeminiTemperature = float32(0.7)
 	// defaultInitialDelay はリトライ時の初期待ち時間です。
 	defaultInitialDelay = 60 * time.Second
 	// defaultVertexLocationID はVertex AI のデフォルトロケーション
 	defaultVertexLocationID = "global"
 	// defaultVertexTemperature は生成パラメータ
-	defaultVertexTemperature = float32(0.1)
+	defaultVertexTemperature = float32(0.7)
 	// defaultVertexInitialDelay はリトライ遅延
 	defaultVertexInitialDelay = 60 * time.Second
 )
