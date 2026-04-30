@@ -19,7 +19,16 @@ type LyriaAdapter struct {
 }
 
 // NewLyriaAdapter は、指定されたコンテキストと構成を使用して、新しい LyriaAdapter を初期化して返します。
-func NewLyriaAdapter(ctx context.Context, cfg *config.Config, aiClient gemini.Generator, promptGen domain.PromptGenerator) (*LyriaAdapter, error) {
+func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen domain.PromptGenerator) (*LyriaAdapter, error) {
+	if cfg == nil {
+		return nil, errors.New("config is required")
+	}
+	if aiClient == nil {
+		return nil, errors.New("aiClient is required")
+	}
+	if promptGen == nil {
+		return nil, errors.New("promptGen is required")
+	}
 	if cfg.GeminiModel == "" {
 		return nil, errors.New("GeminiModel is required but not set")
 	}
