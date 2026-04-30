@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"strings"
 
 	"github.com/shouni/go-http-kit/httpkit"
@@ -21,13 +22,14 @@ const (
 // SlackAdapter は、Slack APIと連携し、Webhookを介してメッセージを投稿するためのアダプタを表します。
 type SlackAdapter struct {
 	webhookURL  string
+	serviceURL  string
 	slackClient *slack.Client
 }
 
 // NewSlackAdapter は新しいアダプターインスタンスを作成します。
-func NewSlackAdapter(httpClient httpkit.Requester, webhookURL string) (*SlackAdapter, error) {
+func NewSlackAdapter(httpClient httpkit.Requester, webhookURL, serviceURL string) (*SlackAdapter, error) {
 	if webhookURL == "" {
-		return &SlackAdapter{}, nil
+		return &SlackAdapter{serviceURL: serviceURL}, nil
 	}
 
 	if httpClient == nil {
@@ -41,6 +43,7 @@ func NewSlackAdapter(httpClient httpkit.Requester, webhookURL string) (*SlackAda
 
 	return &SlackAdapter{
 		webhookURL:  webhookURL,
+		serviceURL:  serviceURL,
 		slackClient: client,
 	}, nil
 }
@@ -130,6 +133,10 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 		sb.WriteString(fmt.Sprintf("*Seed:* `%d` 🎲\n", *req.Seed))
 	}
 
+	if historyURL := s.historyDetailURL(result.JobID); historyURL != "" {
+		sb.WriteString(fmt.Sprintf("*History Detail:* <%s|%s>\n", historyURL, result.JobID))
+	}
+
 	// 音楽ファイルのリンク
 	if result.SignedURL != "" && result.StorageURI != "" {
 		sb.WriteString(fmt.Sprintf("*WAV File:* <%s|%s>\n", result.SignedURL, result.StorageURI))
@@ -149,4 +156,17 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 	}
 
 	return sb.String()
+}
+
+func (s *SlackAdapter) historyDetailURL(jobID string) string {
+	if s.serviceURL == "" || jobID == "" {
+		return ""
+	}
+
+	historyURL, err := url.JoinPath(s.serviceURL, "/web/history", jobID)
+	if err != nil {
+		return ""
+	}
+
+	return historyURL
 }

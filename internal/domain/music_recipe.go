@@ -18,7 +18,6 @@ type MusicRecipe struct {
 	Mood        string         `json:"mood"`
 	Tempo       int            `json:"tempo"`
 	Instruments []string       `json:"instruments"`
-	Seed        int64          `json:"seed,omitempty"`
 	Sections    []MusicSection `json:"sections"`
 	Lyrics      *LyricsDraft   `json:"lyrics,omitempty"`
 	AIModels
