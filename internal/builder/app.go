@@ -71,7 +71,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	// 4. Music Runner
-	runner, err := adapters.NewLyriaAdapter(ctx, cfg, aiClient, promptGen)
+	runner, err := adapters.NewLyriaAdapter(cfg, aiClient, promptGen)
 	if err != nil {
 		return nil, err
 	}

@@ -62,8 +62,6 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	mAI := new(MockGeminiClient)
 	mPrompt := new(MockPromptGen)
 
-	seedVal := int64(42)
-
 	// テスト対象のアダプターを構築
 	// 内部で呼び出される sub-struct (lyriaLyricistなど) にモックを注入
 	adapter := &LyriaAdapter{
@@ -91,7 +89,7 @@ func TestLyriaAdapter_Run(t *testing.T) {
 			TextModel:   "custom-text-model",
 			AudioModel:  "lyria-custom-v1",
 			ComposeMode: "jazz",
-			Seed:        &seedVal,
+			Seed:        new(int64(42)),
 		},
 	}
 	contextText := "雨のアムステルダム"
