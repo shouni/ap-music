@@ -209,7 +209,7 @@ sequenceDiagram
     Web->>GCS: Recipe JSON 一覧・取得
     GCS-->>Web: MusicHistory / MusicRecipe
     Browser->>Web: GET /web/audio/{jobID}
-    Web->>GCS: WAV Signed URL 発行
+   Web->>Web: WAV Signed URL 生成 (署名計算)
     Web-->>Browser: 302 Redirect to Signed URL
 ```
 
@@ -263,7 +263,7 @@ sequenceDiagram
 
 | 環境変数 | 必須 | 説明 |
 | --- | :---: | --- |
-| `PORT` | 任意 | HTTP サーバーの待受ポート。既定値: `8080` |
+| `PORT` | 任意 | HTTP サーバーの待受ポート。既定値: `8080`（Cloud Run環境では自動注入） |
 | `SERVICE_URL` | 必須 | アプリの公開 URL。本番では HTTPS 必須 |
 | `GCP_PROJECT_ID` | 必須 | GCP プロジェクト ID |
 | `GCP_LOCATION_ID` | 必須 | 使用リージョン |
