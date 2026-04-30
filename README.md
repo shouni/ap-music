@@ -1,4 +1,4 @@
-# 🎼 AP Music(Provisional)
+# 🎼 AP Music
 
 [![Language](https://img.shields.io/badge/Language-Go-blue)](https://golang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Cloud%20Run-blue?logo=google-cloud)](https://cloud.google.com/run)
