@@ -29,6 +29,12 @@ func NewPublisherAdapter(cfg *config.Config, writer remoteio.OutputWriter, signe
 	if cfg == nil {
 		return nil, fmt.Errorf("config is required")
 	}
+	if writer == nil {
+		return nil, fmt.Errorf("writer is required")
+	}
+	if signer == nil {
+		return nil, fmt.Errorf("signer is required")
+	}
 	return &PublisherAdapter{
 		writer:     writer,
 		signer:     signer,
