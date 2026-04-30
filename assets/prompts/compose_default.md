@@ -20,11 +20,11 @@
         * **duration_seconds**: **70**
         * **prompt**: `[Extended Verse & Narrative Build-up] Focus on the first half of the lyrics. Start with a mysterious atmospheric intro. Over 70 seconds, evolve the sound from a minimal beat to a rich, complex electronic arrangement. Progressively increase energy and tension, ensuring the Japanese vocals lead the narrative toward the first grand peak.`
     2.  **name**: `"Chorus"`
-        * **duration_seconds**: **80**
-        * **prompt**: `[Ultimate Chorus & Anthem] The core 80-second climax. Perform the full chorus and hook with maximum emotional intensity and power. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the Japanese vocals to shine as a powerful anthem.`
+        * **duration_seconds**: **90**
+        * **prompt**: `[Ultimate Chorus & Anthem] The core 90-second climax. Perform the full chorus and hook with maximum emotional intensity and power. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the Japanese vocals to shine as a powerful anthem.`
     3.  **name**: `"Outro"`
-        * **duration_seconds**: **30**
-        * **prompt**: `[Extended Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Gradually transition from the high-energy chorus into a sprawling digital soundscape. Use 30 seconds to create a sophisticated fade-out with layered echoes, glitch textures, and a resonant, lingering atmosphere.`
+        * **duration_seconds**: **20**
+        * **prompt**: `[Extended Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Gradually transition from the high-energy chorus into a sprawling digital soundscape. Use 20 seconds to create a sophisticated fade-out with layered echoes, glitch textures, and a resonant, lingering atmosphere.`
 
 #### 3. 出力ルール（厳守）
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
