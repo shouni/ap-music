@@ -18,22 +18,20 @@ const recipeJSONContentType = "application/json; charset=utf-8"
 
 // PublisherAdapter は成果物保存を行うアダプターです。
 type PublisherAdapter struct {
-	writer     remoteio.Writer
+	writer     remoteio.OutputWriter
 	signer     remoteio.URLSigner
-	cleaner    domain.StorageCleaner
 	Bucket     string
 	Expiration time.Duration
 }
 
 // NewPublisherAdapter は成果物保存のためのアダプターを生成します。
-func NewPublisherAdapter(cfg *config.Config, writer remoteio.Writer, signer remoteio.URLSigner, cleaner domain.StorageCleaner) (*PublisherAdapter, error) {
+func NewPublisherAdapter(cfg *config.Config, writer remoteio.OutputWriter, signer remoteio.URLSigner) (*PublisherAdapter, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("config is required")
 	}
 	return &PublisherAdapter{
 		writer:     writer,
 		signer:     signer,
-		cleaner:    cleaner,
 		Bucket:     cfg.GCSBucket,
 		Expiration: config.SignedURLExpiration,
 	}, nil
@@ -100,8 +98,9 @@ func (a *PublisherAdapter) generateSignedResultURL(ctx context.Context, storageU
 	return a.signer.GenerateSignedURL(ctx, storageURI, "GET", a.Expiration)
 }
 
+// cleanupOnFailure は失敗時にアーティファクトをクリーンアップするヘルパーです。
 func (a *PublisherAdapter) cleanupOnFailure(ctx context.Context, uris ...string) {
-	if a.cleaner == nil {
+	if a.writer == nil {
 		return
 	}
 
@@ -109,7 +108,7 @@ func (a *PublisherAdapter) cleanupOnFailure(ctx context.Context, uris ...string)
 		if uri == "" {
 			continue
 		}
-		if err := a.cleaner.Delete(ctx, uri); err != nil {
+		if err := a.writer.Delete(ctx, uri); err != nil {
 			slog.WarnContext(ctx, "failed to cleanup partial artifact", "uri", uri, "error", err)
 		}
 	}

@@ -85,7 +85,6 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		cfg,
 		rio.Writer,
 		rio.Signer,
-		adapters.NewStorageCleaner(cleanupClient),
 	)
 	if err != nil {
 		return nil, err
