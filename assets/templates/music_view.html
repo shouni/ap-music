@@ -13,15 +13,16 @@
     height: 40px;
   }
 
-  /* 2. モダンなタブUI：未選択時もしっかり見えるようにしたのだ */
+  /* 2. モダンなタブUI */
   .nav-tabs {
     border-bottom: 2px solid #dee2e6;
     gap: 0.5rem;
   }
   .nav-tabs .nav-link {
-    color: #6c757d;
-    border: none !important;
-    background-color: #f1f3f4 !important; /* 未選択を少し濃くして「ボタン」として認識させるのだ */
+    /* 非アクティブ時の設定 */
+    color: #495057 !important;
+    border: 1px solid #dee2e6 !important;
+    background-color: #e9ecef !important;
     font-weight: 500;
     padding: 0.75rem 1.5rem;
     position: relative;
@@ -29,12 +30,15 @@
     border-radius: 8px 8px 0 0 !important;
   }
   .nav-tabs .nav-link:hover:not(.active) {
-    color: #0d6efd;
-    background-color: #e9ecef !important;
+    color: #0d6efd !important;
+    background-color: #dee2e6 !important;
+    border-color: #ced4da !important;
   }
   .nav-tabs .nav-link.active {
+    /* アクティブ時の設定 */
     color: #0d6efd !important;
     background-color: #ffffff !important;
+    border-color: #dee2e6 #dee2e6 #fff !important; /* 下線以外を枠線で囲む */
     font-weight: bold;
   }
   .nav-tabs .nav-link.active::after {
