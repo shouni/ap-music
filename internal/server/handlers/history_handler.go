@@ -129,7 +129,7 @@ func (h *Handler) DeleteHistory(w http.ResponseWriter, r *http.Request) {
 	// リポジトリ経由で GCS 上の JSON と音声ファイルを削除
 	if err := h.musicRepo.DeleteHistory(ctx, jobID); err != nil {
 		slog.ErrorContext(ctx, "履歴の削除に失敗したのだ", "jobID", jobID, "error", err)
-		http.Error(w, "削除処理に失敗したのだ", http.StatusInternalServerError)
+		http.Error(w, "Failed to delete history", http.StatusInternalServerError)
 		return
 	}
 

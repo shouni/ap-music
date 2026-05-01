@@ -98,26 +98,19 @@ func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error
 	jsonPath := fmt.Sprintf("%s.json", safeJobID)
 	jsonURI := r.cfg.GetGCSObjectURL(jsonPath)
 	if err := r.writer.Delete(ctx, jsonURI); err != nil {
-		// JSONの削除失敗は呼び出し側に伝えるべきエラーとして蓄積する
-		errs = append(errs, fmt.Errorf("レシピJSONの削除に失敗したのだ (%s): %w", jsonURI, err))
+		errs = append(errs, fmt.Errorf("failed to delete recipe JSON (%s): %w", jsonURI, err))
 	}
 
 	// 2. オーディオファイルの削除 (JSONの成否に関わらず実行する)
 	audioPath := fmt.Sprintf("%s.wav", safeJobID)
 	audioURI := r.cfg.GetGCSObjectURL(audioPath)
 	if err := r.writer.Delete(ctx, audioURI); err != nil {
-		// オーディオファイルがない場合等は警告ログに留め、処理自体は継続する
-		slog.WarnContext(ctx, "オーディオファイルの削除をスキップまたは失敗したのだ",
+		slog.WarnContext(ctx, "skipped or failed to delete audio file",
 			"jobID", safeJobID,
 			"uri", audioURI,
 			"error", err,
 		)
 	}
 
-	// 蓄積されたエラーがあれば結合して返す
-	if len(errs) > 0 {
-		return errors.Join(errs...)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
