@@ -53,25 +53,32 @@
     </div>
 </div>
 
+<!-- ページ全体で使えるようにCSRFトークンを埋め込み -->
+<input type="hidden" id="csrf_token" value="{{.CSRFToken}}">
+
 <script>
     /**
      * 指定されたジョブIDの履歴を削除します。
      */
     async function deleteHistory(jobID, event) {
-        // stretched-link による詳細画面への遷移を防止
         if (event) event.stopPropagation();
 
         if (!confirm('この楽曲履歴を削除するのだ？（元には戻せないのだ！）')) {
             return;
         }
 
+        // 埋め込まれたCSRFトークンを取得
+        const csrfToken = document.getElementById('csrf_token').value;
+
         try {
             const response = await fetch(`/web/history/${jobID}`, {
                 method: 'DELETE',
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                }
             });
 
             if (response.ok) {
-                // ページをリロードせずに、DOM要素をフェードアウトさせて削除
                 const item = document.getElementById('btn-' + jobID).closest('.list-group-item');
                 item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 item.style.opacity = '0';
@@ -79,7 +86,6 @@
 
                 setTimeout(() => {
                     item.remove();
-                    // 履歴がゼロになったか確認し、必要ならリロード
                     if (document.querySelectorAll('.list-group-item').length === 0) {
                         window.location.reload();
                     }
@@ -98,12 +104,11 @@
      * オーディオの再生・一時停止を切り替え
      */
     function toggleAudio(jobID, event) {
-        if (event) event.stopPropagation(); // 遷移防止
+        if (event) event.stopPropagation();
 
         const audio = document.getElementById('audio-' + jobID);
         const icon = document.getElementById('icon-' + jobID);
 
-        // 他の全てのオーディオを停止（同時再生を防止）
         document.querySelectorAll('audio').forEach(el => {
             if (el.id !== 'audio-' + jobID) {
                 el.pause();
@@ -127,7 +132,6 @@
             icon.className = 'bi bi-play-fill';
         }
 
-        // 再生終了時にアイコンを戻す
         audio.onended = () => {
             icon.className = 'bi bi-play-fill';
         };

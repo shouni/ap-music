@@ -26,7 +26,7 @@ func (r *stubMusicRepository) GetRecipe(context.Context, string) (*domain.MusicR
 	return r.recipe, nil
 }
 
-// DeleteHistory を追加して MusicRepository インターフェースを充足させる
+// DeleteHistory を実装して MusicRepository インターフェースを充足させます
 func (r *stubMusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
 	return nil
 }
@@ -45,8 +45,10 @@ func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 			Lyrics: "きみの声が\n朝に溶ける",
 		},
 	}
-	// インターフェースを満たしているため、NewHandler に渡せるようになる
-	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{recipe: recipe})
+
+	// NewHandler の引数に合わせて nil や stub を渡します
+	// 引数順: cfg, taskEnqueuer, remoteIO, musicRepo, authHandler
+	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{recipe: recipe}, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
@@ -134,7 +136,8 @@ func TestDeleteHistory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h, _ := NewHandler(nil, nil, nil, &stubMusicRepository{})
+			// NewHandler の引数に合わせた初期化
+			h, _ := NewHandler(nil, nil, nil, &stubMusicRepository{}, nil)
 
 			req := httptest.NewRequest(http.MethodDelete, "/web/history/"+tt.jobID, nil)
 			routeCtx := chi.NewRouteContext()

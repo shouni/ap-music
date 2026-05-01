@@ -29,7 +29,7 @@ func (h *Handler) ServeHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.render(w, http.StatusOK, "history.html", "History", histories)
+	h.render(w, r, http.StatusOK, "history.html", "History", histories)
 }
 
 // ServeDetails は特定の楽曲の詳細画面を表示するのだ。
@@ -69,7 +69,7 @@ func (h *Handler) ServeDetails(w http.ResponseWriter, r *http.Request) {
 		AudioURL:   audioURL,
 	}
 
-	h.render(w, http.StatusOK, "music_view.html", recipe.Title, data)
+	h.render(w, r, http.StatusOK, "music_view.html", recipe.Title, data)
 }
 
 func formatRecipeJSONForDisplay(recipe *domain.MusicRecipe) (string, error) {
