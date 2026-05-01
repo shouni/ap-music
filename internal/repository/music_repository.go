@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"path"
 	"sort"
 	"strings"
@@ -90,18 +92,31 @@ func (r *MusicRepository) GetRecipe(ctx context.Context, jobID string) (*domain.
 // DeleteHistory は、指定されたジョブIDに関連するJSONファイルとオーディオファイルを削除します。
 func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
 	safeJobID := path.Base(jobID)
+	var errs []error
+
+	// 1. レシピ JSON ファイルの削除
 	jsonPath := fmt.Sprintf("%s.json", safeJobID)
 	jsonURI := r.cfg.GetGCSObjectURL(jsonPath)
-
 	if err := r.writer.Delete(ctx, jsonURI); err != nil {
-		return fmt.Errorf("レシピJSONの削除に失敗したのだ (%s): %w", jsonURI, err)
+		// JSONの削除失敗は呼び出し側に伝えるべきエラーとして蓄積する
+		errs = append(errs, fmt.Errorf("レシピJSONの削除に失敗したのだ (%s): %w", jsonURI, err))
 	}
+
+	// 2. オーディオファイルの削除 (JSONの成否に関わらず実行する)
 	audioPath := fmt.Sprintf("%s.wav", safeJobID)
 	audioURI := r.cfg.GetGCSObjectURL(audioPath)
-
 	if err := r.writer.Delete(ctx, audioURI); err != nil {
-		// オーディオファイルがない場合でもエラーにせずログに留めるなどの判断が必要です
-		fmt.Printf("Warning: オーディオファイルの削除をスキップまたは失敗しました: %v\n", err)
+		// オーディオファイルがない場合等は警告ログに留め、処理自体は継続する
+		slog.WarnContext(ctx, "オーディオファイルの削除をスキップまたは失敗したのだ",
+			"jobID", safeJobID,
+			"uri", audioURI,
+			"error", err,
+		)
+	}
+
+	// 蓄積されたエラーがあれば結合して返す
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	return nil
