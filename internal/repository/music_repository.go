@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"path"
 	"sort"
 	"strings"
@@ -17,13 +19,15 @@ import (
 type MusicRepository struct {
 	cfg    *config.Config
 	reader remoteio.InputReader
+	writer remoteio.OutputWriter
 }
 
 // NewGCSMusicRepository はリポジトリを初期化するのだ。
-func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader) *MusicRepository {
+func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter) *MusicRepository {
 	return &MusicRepository{
 		cfg:    cfg,
 		reader: reader,
+		writer: writer,
 	}
 }
 
@@ -83,4 +87,30 @@ func (r *MusicRepository) GetRecipe(ctx context.Context, jobID string) (*domain.
 	}
 
 	return &recipe, nil
+}
+
+// DeleteHistory は、指定されたジョブIDに関連するJSONファイルとオーディオファイルを削除します。
+func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
+	safeJobID := path.Base(jobID)
+	var errs []error
+
+	// 1. レシピ JSON ファイルの削除
+	jsonPath := fmt.Sprintf("%s.json", safeJobID)
+	jsonURI := r.cfg.GetGCSObjectURL(jsonPath)
+	if err := r.writer.Delete(ctx, jsonURI); err != nil {
+		errs = append(errs, fmt.Errorf("failed to delete recipe JSON (%s): %w", jsonURI, err))
+	}
+
+	// 2. オーディオファイルの削除 (JSONの成否に関わらず実行する)
+	audioPath := fmt.Sprintf("%s.wav", safeJobID)
+	audioURI := r.cfg.GetGCSObjectURL(audioPath)
+	if err := r.writer.Delete(ctx, audioURI); err != nil {
+		slog.WarnContext(ctx, "skipped or failed to delete audio file",
+			"jobID", safeJobID,
+			"uri", audioURI,
+			"error", err,
+		)
+	}
+
+	return errors.Join(errs...)
 }

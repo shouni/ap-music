@@ -90,7 +90,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	// 6. Repositories (Data Access)
-	musicRepo := repository.NewGCSMusicRepository(cfg, rio.Reader)
+	musicRepo := repository.NewGCSMusicRepository(cfg, rio.Reader, rio.Writer)
 
 	appCtx := &app.Container{
 		Config:       cfg,

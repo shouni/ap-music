@@ -114,3 +114,25 @@ func (h *Handler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 	// クライアントを直接 GCS へ飛ばす
 	http.Redirect(w, r, signedURL, http.StatusFound)
 }
+
+// DeleteHistory は、指定されたジョブIDの履歴とファイルを削除します。
+func (h *Handler) DeleteHistory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	jobID := chi.URLParam(r, "jobID")
+
+	// バリデーション：既存の正規表現を使用してパスの安全性を確保
+	if !jobIDRegex.MatchString(jobID) {
+		http.Error(w, "Invalid JobID format", http.StatusBadRequest)
+		return
+	}
+
+	// リポジトリ経由で GCS 上の JSON と音声ファイルを削除
+	if err := h.musicRepo.DeleteHistory(ctx, jobID); err != nil {
+		slog.ErrorContext(ctx, "履歴の削除に失敗したのだ", "jobID", jobID, "error", err)
+		http.Error(w, "Failed to delete history", http.StatusInternalServerError)
+		return
+	}
+
+	// 削除成功時は 204 No Content を返す（Fetch API での呼び出しを想定）
+	w.WriteHeader(http.StatusNoContent)
+}

@@ -64,6 +64,7 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 			r.Route("/web/history", func(r chi.Router) {
 				r.Get("/", h.Web.ServeHistory)
 				r.Get("/{jobID}", h.Web.ServeDetails)
+				r.Delete("/{jobID}", h.Web.DeleteHistory)
 			})
 			r.Get("/web/audio/{jobID}", h.Web.ServeAudio)
 		}
