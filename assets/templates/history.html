@@ -136,6 +136,7 @@
      * オーディオの再生・一時停止を切り替え
      */
     let playlistActive = false;
+    let playlistPaused = false;
     let playlistIndex = -1;
 
     function getAudioElements() {
@@ -168,14 +169,14 @@
         }
     }
 
-    function setPlaylistButton(playing) {
+    function setPlaylistButton() {
         const icon = document.getElementById('playlist-toggle-icon');
         const label = document.getElementById('playlist-toggle-label');
         if (icon) {
-            icon.className = playing ? 'bi bi-pause-fill' : 'bi bi-play-fill';
+            icon.className = playlistActive ? 'bi bi-pause-fill' : 'bi bi-play-fill';
         }
         if (label) {
-            label.textContent = playing ? '一時停止' : '一括再生';
+            label.textContent = playlistActive ? '一時停止' : (playlistPaused ? '再開' : '一括再生');
         }
     }
 
@@ -206,12 +207,13 @@
         audio.play().then(() => {
             setAudioIcon(jobID, true);
             setPlayingItem(jobID);
-            setPlaylistButton(playlistActive);
+            setPlaylistButton();
         }).catch(err => {
             console.error("再生に失敗しました:", err);
             playlistActive = false;
+            playlistPaused = false;
             setPlayingItem(null);
-            setPlaylistButton(false);
+            setPlaylistButton();
             alert("楽曲ファイルを読み込めませんでした。");
         });
     }
@@ -222,8 +224,9 @@
 
         if (playlistIndex >= audios.length) {
             playlistActive = false;
+            playlistPaused = false;
             playlistIndex = -1;
-            setPlaylistButton(false);
+            setPlaylistButton();
             return;
         }
 
@@ -238,18 +241,28 @@
 
         if (playlistActive) {
             playlistActive = false;
+            playlistPaused = true;
             audios.forEach(audio => {
                 audio.pause();
                 setAudioIcon(getJobID(audio), false);
             });
             setPlayingItem(null);
-            setPlaylistButton(false);
+            setPlaylistButton();
+            return;
+        }
+
+        if (playlistPaused && playlistIndex >= 0 && playlistIndex < audios.length) {
+            playlistActive = true;
+            playlistPaused = false;
+            setPlaylistButton();
+            playAudio(getJobID(audios[playlistIndex]), true);
             return;
         }
 
         playlistActive = true;
+        playlistPaused = false;
         playlistIndex = -1;
-        setPlaylistButton(true);
+        setPlaylistButton();
         playNextPlaylistAudio();
     }
 
@@ -261,8 +274,9 @@
 
         // 個別再生が開始されたため、一括再生（プレイリスト）モードは解除する
         playlistActive = false;
+        playlistPaused = false;
         playlistIndex = -1;
-        setPlaylistButton(false);
+        setPlaylistButton();
 
         const audio = document.getElementById('audio-' + jobID);
         if (!audio) return;
