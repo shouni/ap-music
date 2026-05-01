@@ -66,6 +66,14 @@ func TestServeHistoryRendersDeleteControls(t *testing.T) {
 	body := rec.Body.String()
 	for _, want := range []string{
 		`onclick="deleteHistory('job-list-1', event)"`,
+		`onclick="togglePlaylist(event)"`,
+		`id="playlist-toggle-btn"`,
+		`一括再生`,
+		`id="history-item-job-list-1"`,
+		`.history-playing`,
+		`function setPlayingItem(jobID)`,
+		`data-job-id="job-list-1"`,
+		`function playNextPlaylistAudio()`,
 		"`/web/history/${jobID}`",
 		`'X-CSRF-Token': csrfToken`,
 		`id="csrf_token"`,
