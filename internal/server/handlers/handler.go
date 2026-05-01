@@ -127,7 +127,7 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, status int, pag
 	}{
 		Title:     title + titleSuffix,
 		Data:      data,
-		CSRFToken: h.auth.GetCSRFTokenFromSession(r),
+		CSRFToken: h.csrfTokenFromSession(r),
 	}
 
 	var buf bytes.Buffer
@@ -142,4 +142,12 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, status int, pag
 	if _, err := buf.WriteTo(w); err != nil {
 		slog.Error("レスポンスの書き込みに失敗しました", "error", err)
 	}
+}
+
+// csrfTokenFromSession は、は現在のセッションから CSRF トークンを抽出します
+func (h *Handler) csrfTokenFromSession(r *http.Request) string {
+	if h.auth == nil {
+		return ""
+	}
+	return h.auth.GetCSRFTokenFromSession(r)
 }

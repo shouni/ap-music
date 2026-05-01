@@ -15,11 +15,13 @@ import (
 )
 
 type stubMusicRepository struct {
-	recipe *domain.MusicRecipe
+	histories    []domain.MusicHistory
+	recipe       *domain.MusicRecipe
+	deletedJobID string
 }
 
 func (r *stubMusicRepository) ListHistory(context.Context, string) ([]domain.MusicHistory, error) {
-	return nil, nil
+	return r.histories, nil
 }
 
 func (r *stubMusicRepository) GetRecipe(context.Context, string) (*domain.MusicRecipe, error) {
@@ -28,7 +30,42 @@ func (r *stubMusicRepository) GetRecipe(context.Context, string) (*domain.MusicR
 
 // DeleteHistory を実装して MusicRepository インターフェースを充足させます
 func (r *stubMusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
+	r.deletedJobID = jobID
 	return nil
+}
+
+func TestServeHistoryRendersDeleteControls(t *testing.T) {
+	t.Parallel()
+
+	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{
+		histories: []domain.MusicHistory{
+			{JobID: "job-list-1", Title: "一覧の曲", CreatedAt: "2026-05-01"},
+		},
+	}, nil)
+	if err != nil {
+		t.Fatalf("NewHandler() error = %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/web/history/", nil)
+	rec := httptest.NewRecorder()
+
+	h.ServeHistory(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+	for _, want := range []string{
+		`onclick="deleteHistory('job-list-1', event)"`,
+		"`/web/history/${jobID}`",
+		`'X-CSRF-Token': csrfToken`,
+		`id="csrf_token"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("response body does not contain %q", want)
+		}
+	}
 }
 
 func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
@@ -72,6 +109,16 @@ func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 	body := rec.Body.String()
 	if !strings.Contains(body, "朝焼け") || !strings.Contains(body, "高揚感のある歌声") {
 		t.Fatalf("response body does not contain expected Japanese text: %s", body)
+	}
+	for _, want := range []string{
+		`onclick="deleteHistory('job-utf8')"`,
+		"`/web/history/${jobID}`",
+		`'X-CSRF-Token': csrfToken`,
+		`id="csrf_token"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("response body does not contain %q", want)
+		}
 	}
 
 	// HTMLエスケープが適用されていないかチェック（JSON-UTF8出力の検証）
@@ -136,8 +183,8 @@ func TestDeleteHistory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// NewHandler の引数に合わせた初期化
-			h, _ := NewHandler(nil, nil, nil, &stubMusicRepository{}, nil)
+			repo := &stubMusicRepository{}
+			h, _ := NewHandler(nil, nil, nil, repo, nil)
 
 			req := httptest.NewRequest(http.MethodDelete, "/web/history/"+tt.jobID, nil)
 			routeCtx := chi.NewRouteContext()
@@ -149,6 +196,9 @@ func TestDeleteHistory(t *testing.T) {
 
 			if rec.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, rec.Code)
+			}
+			if tt.expectedStatus == http.StatusNoContent && repo.deletedJobID != tt.jobID {
+				t.Errorf("deleted jobID = %q, want %q", repo.deletedJobID, tt.jobID)
 			}
 		})
 	}
