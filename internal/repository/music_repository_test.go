@@ -83,7 +83,7 @@ func TestListHistoryLoadsRecipeMetadata(t *testing.T) {
           }`,
 		},
 	}
-	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, nil)
+	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, nil, NewHistoryCache())
 
 	histories, err := repo.ListHistory(context.Background(), "me")
 	if err != nil {
@@ -127,7 +127,7 @@ func TestListHistoryUsesCachedMetadata(t *testing.T) {
 			objectPath: `{"title":"初回タイトル","tempo":132}`,
 		},
 	}
-	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, nil)
+	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, nil, NewHistoryCache())
 
 	if _, err := repo.ListHistory(context.Background(), "me"); err != nil {
 		t.Fatalf("first ListHistory() error = %v", err)
@@ -157,7 +157,7 @@ func TestDeleteHistoryInvalidatesCachedMetadata(t *testing.T) {
 		},
 	}
 	writer := &fakeHistoryWriter{}
-	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, writer)
+	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, writer, NewHistoryCache())
 
 	if _, err := repo.ListHistory(context.Background(), "me"); err != nil {
 		t.Fatalf("first ListHistory() error = %v", err)
@@ -177,5 +177,42 @@ func TestDeleteHistoryInvalidatesCachedMetadata(t *testing.T) {
 	}
 	if got := histories[0].Title; got != "削除後タイトル" {
 		t.Fatalf("Title after cache invalidation = %q, want 削除後タイトル", got)
+	}
+}
+
+func TestDeleteHistoryInvalidatesCachedMetadataWithSanitizedJobID(t *testing.T) {
+	t.Parallel()
+
+	const (
+		jobID      = "20260501123456-abcd1234"
+		objectPath = "gs://music/20260501123456-abcd1234.json"
+	)
+	reader := &fakeHistoryReader{
+		paths: []string{objectPath},
+		files: map[string]string{
+			objectPath: `{"title":"削除前タイトル","tempo":132}`,
+		},
+	}
+	writer := &fakeHistoryWriter{}
+	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, writer, NewHistoryCache())
+
+	if _, err := repo.ListHistory(context.Background(), "me"); err != nil {
+		t.Fatalf("first ListHistory() error = %v", err)
+	}
+	if err := repo.DeleteHistory(context.Background(), "nested/"+jobID); err != nil {
+		t.Fatalf("DeleteHistory() error = %v", err)
+	}
+
+	reader.files[objectPath] = `{"title":"削除後タイトル","tempo":140}`
+	histories, err := repo.ListHistory(context.Background(), "me")
+	if err != nil {
+		t.Fatalf("second ListHistory() error = %v", err)
+	}
+
+	if got := reader.countOpen(objectPath); got != 2 {
+		t.Fatalf("Open count = %d, want 2", got)
+	}
+	if got := histories[0].Title; got != "削除後タイトル" {
+		t.Fatalf("Title after sanitized cache invalidation = %q, want 削除後タイトル", got)
 	}
 }
