@@ -39,7 +39,15 @@ func TestServeHistoryRendersDeleteControls(t *testing.T) {
 
 	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{
 		histories: []domain.MusicHistory{
-			{JobID: "job-list-1", Title: "一覧の曲", CreatedAt: "2026-05-01"},
+			{
+				JobID:       "job-list-1",
+				Title:       "一覧の曲",
+				Mood:        "透明感",
+				Tempo:       132,
+				CreatedAt:   "2026-05-01",
+				ComposeMode: "rave",
+				Seed:        "42",
+			},
 		},
 	}, nil)
 	if err != nil {
@@ -61,6 +69,10 @@ func TestServeHistoryRendersDeleteControls(t *testing.T) {
 		"`/web/history/${jobID}`",
 		`'X-CSRF-Token': csrfToken`,
 		`id="csrf_token"`,
+		`透明感`,
+		`132 BPM`,
+		`rave`,
+		`42`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("response body does not contain %q", want)

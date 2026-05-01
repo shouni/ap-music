@@ -32,7 +32,11 @@ type MusicSection struct {
 
 // MusicHistory は一覧画面の表示
 type MusicHistory struct {
-	JobID     string `json:"job_id"`
-	Title     string `json:"title"`
-	CreatedAt string `json:"created_at"`
+	JobID       string `json:"job_id"`
+	Title       string `json:"title"`
+	Mood        string `json:"mood,omitempty"`
+	Tempo       int    `json:"tempo,omitempty"`
+	CreatedAt   string `json:"created_at,omitempty"`
+	ComposeMode string `json:"compose_mode,omitempty"`
+	Seed        string `json:"seed,omitempty"`
 }
