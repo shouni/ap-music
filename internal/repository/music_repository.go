@@ -9,6 +9,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/shouni/go-remote-io/remoteio"
 
@@ -49,12 +50,21 @@ func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]dom
 		if jobID == "" {
 			return nil
 		}
-		histories = append(histories, domain.MusicHistory{
-			JobID: jobID,
-			// Title などは別途 GetRecipe で取得するか、
-			// ファイル名規則に Title を含める（timestamp-title-id.json等）と一覧性が上がります。
-			Title: jobID,
-		})
+
+		history, err := r.buildHistory(ctx, jobID)
+		if err != nil {
+			slog.WarnContext(ctx, "failed to load recipe metadata for history list",
+				"jobID", jobID,
+				"path", gcsPath,
+				"error", err,
+			)
+			history = domain.MusicHistory{
+				JobID:     jobID,
+				Title:     jobID,
+				CreatedAt: formatHistoryCreatedAt(jobID),
+			}
+		}
+		histories = append(histories, history)
 		return nil
 	})
 
@@ -68,6 +78,51 @@ func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]dom
 	})
 
 	return histories, nil
+}
+
+func (r *MusicRepository) buildHistory(ctx context.Context, jobID string) (domain.MusicHistory, error) {
+	recipe, err := r.GetRecipe(ctx, jobID)
+	if err != nil {
+		return domain.MusicHistory{}, err
+	}
+
+	title := strings.TrimSpace(recipe.Title)
+	if title == "" {
+		title = jobID
+	}
+
+	history := domain.MusicHistory{
+		JobID:       jobID,
+		Title:       title,
+		Mood:        strings.TrimSpace(recipe.Mood),
+		Tempo:       recipe.Tempo,
+		CreatedAt:   formatHistoryCreatedAt(jobID),
+		ComposeMode: strings.TrimSpace(recipe.ComposeMode),
+	}
+	if recipe.Seed != nil {
+		history.Seed = fmt.Sprintf("%d", *recipe.Seed)
+	}
+
+	return history, nil
+}
+
+func formatHistoryCreatedAt(jobID string) string {
+	const (
+		jobIDTimePrefixLen = len("20060102150405")
+		jobIDTimeLayout    = "20060102150405"
+		displayTimeLayout  = "2006-01-02 15:04 UTC"
+	)
+
+	if len(jobID) < jobIDTimePrefixLen {
+		return ""
+	}
+
+	createdAt, err := time.ParseInLocation(jobIDTimeLayout, jobID[:jobIDTimePrefixLen], time.UTC)
+	if err != nil {
+		return ""
+	}
+
+	return createdAt.Format(displayTimeLayout)
 }
 
 // GetRecipe は、特定の JSON ファイルを読み込んで構造体にパースします。
