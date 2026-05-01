@@ -9,20 +9,21 @@ import (
 
 // EnqueueTask はフォーム入力をジョブ化してキューに積みます。
 func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
+	// POSTメソッド以外は許可しない
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// フォームデータのパースを実行
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
 	}
-	if err := h.crossOriginProtection.Check(r); err != nil {
-		http.Error(w, "cross-origin request forbidden", http.StatusForbidden)
-		return
-	}
 
+	// タスクの構築
 	task := h.taskFactory.Build(r.Form)
+	// バリデーションチェック
 	if err := task.ValidateSubmission(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -46,5 +47,5 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// HTML レンダリング
-	h.render(w, http.StatusAccepted, "accepted.html", "タスク受付完了", task)
+	h.render(w, r, http.StatusAccepted, "accepted.html", "タスク受付完了", task)
 }

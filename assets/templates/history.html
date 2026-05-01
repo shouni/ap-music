@@ -21,13 +21,13 @@
                 </div>
             </div>
 
-            <div class="ms-3 d-flex align-items-center gap-2 position-relative z-2">
+            <div class="ms-3 d-flex align-items-center gap-2 position-relative z-3">
                 <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none"></audio>
 
                 <button class="btn btn-outline-primary btn-lg rounded-circle shadow-sm audio-toggle-btn"
                         id="btn-{{.JobID}}"
                         data-job-id="{{.JobID}}"
-                        onclick="toggleAudio(this.dataset.jobId)"
+                        onclick="toggleAudio(this.dataset.jobId, event)"
                         style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
                     <i class="bi bi-play-fill" id="icon-{{.JobID}}"></i>
                 </button>
@@ -35,6 +35,13 @@
                 <a href="/web/history/{{.JobID}}" class="btn btn-light btn-sm border">
                     詳細 <i class="bi bi-chevron-right"></i>
                 </a>
+
+                <!-- 追加: 削除ボタン -->
+                <button class="btn btn-outline-danger btn-sm"
+                        onclick="deleteHistory('{{.JobID}}', event)"
+                        title="削除">
+                    <i class="bi bi-trash"></i>
+                </button>
             </div>
         </div>
         {{else}}
@@ -46,16 +53,64 @@
     </div>
 </div>
 
+<!-- ページ全体で使えるようにCSRFトークンを埋め込み -->
+<input type="hidden" id="csrf_token" value="{{.CSRFToken}}">
+
 <script>
     /**
-     * オーディオの再生・一時停止を切り替え、アイコンを更新します。
+     * 指定されたジョブIDの履歴を削除します。
      */
-    function toggleAudio(jobID) {
+    async function deleteHistory(jobID, event) {
+        if (event) event.stopPropagation();
+
+        if (!confirm('この楽曲履歴を削除するのだ？（元には戻せないのだ！）')) {
+            return;
+        }
+
+        // 埋め込まれたCSRFトークンを取得
+        const csrfToken = document.getElementById('csrf_token').value;
+
+        try {
+            const response = await fetch(`/web/history/${jobID}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                }
+            });
+
+            if (response.ok) {
+                const item = document.getElementById('btn-' + jobID)?.closest('.list-group-item');
+                if (item) {
+                    item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(20px)';
+
+                    setTimeout(() => {
+                        item.remove();
+                        if (document.querySelectorAll('.list-group-item').length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
+            } else {
+                const errorText = await response.text();
+                alert('削除に失敗したのだ: ' + errorText);
+            }
+        } catch (error) {
+            console.error('Delete Error:', error);
+            alert('通信エラーが発生したのだ。');
+        }
+    }
+
+    /**
+     * オーディオの再生・一時停止を切り替え
+     */
+    function toggleAudio(jobID, event) {
+        if (event) event.stopPropagation();
+
         const audio = document.getElementById('audio-' + jobID);
         const icon = document.getElementById('icon-' + jobID);
-        const btn = document.getElementById('btn-' + jobID);
 
-        // 他の全てのオーディオを停止（同時再生を防止）
         document.querySelectorAll('audio').forEach(el => {
             if (el.id !== 'audio-' + jobID) {
                 el.pause();
@@ -79,7 +134,6 @@
             icon.className = 'bi bi-play-fill';
         }
 
-        // 再生終了時にアイコンを戻す
         audio.onended = () => {
             icon.className = 'bi bi-play-fill';
         };
