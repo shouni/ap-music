@@ -90,7 +90,9 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	// 6. Repositories (Data Access)
-	musicRepo := repository.NewGCSMusicRepository(cfg, rio.Reader, rio.Writer)
+	historyCache := repository.NewHistoryCache()
+	go historyCache.Start()
+	musicRepo := repository.NewGCSMusicRepository(cfg, rio.Reader, rio.Writer, historyCache)
 
 	appCtx := &app.Container{
 		Config:       cfg,
@@ -100,6 +102,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		HTTPClient:   httpClient,
 		Notifier:     slack,
 		MusicRepo:    musicRepo,
+		HistoryCache: historyCache,
 	}
 
 	return appCtx, nil

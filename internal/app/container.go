@@ -3,6 +3,7 @@ package app
 import (
 	"log/slog"
 
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/shouni/gcp-kit/tasks"
 	"github.com/shouni/go-http-kit/httpkit"
 	"github.com/shouni/go-remote-io/remoteio"
@@ -24,7 +25,8 @@ type Container struct {
 	HTTPClient httpkit.Requester
 	Notifier   domain.Notifier
 	// Data Access
-	MusicRepo domain.MusicRepository
+	MusicRepo    domain.MusicRepository
+	HistoryCache *ttlcache.Cache[string, domain.MusicHistory]
 }
 
 // RemoteIO は外部ストレージ操作に関するコンポーネントをまとめます。
@@ -57,5 +59,9 @@ func (c *Container) Close() {
 		if err := c.TaskEnqueuer.Close(); err != nil {
 			slog.Error("failed to close task enqueuer", "error", err)
 		}
+	}
+
+	if c.HistoryCache != nil {
+		c.HistoryCache.Stop()
 	}
 }

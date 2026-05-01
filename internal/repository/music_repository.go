@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/shouni/go-remote-io/remoteio"
 	"golang.org/x/sync/errgroup"
 
@@ -20,16 +21,28 @@ import (
 )
 
 type MusicRepository struct {
-	cfg    *config.Config
-	reader remoteio.InputReader
-	writer remoteio.OutputWriter
+	cfg          *config.Config
+	reader       remoteio.InputReader
+	writer       remoteio.OutputWriter
+	historyCache *ttlcache.Cache[string, domain.MusicHistory]
 }
 
-func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter) *MusicRepository {
+const defaultHistoryCacheTTL = 10 * time.Minute
+
+// NewHistoryCache creates the app-scoped cache injected into MusicRepository.
+func NewHistoryCache() *ttlcache.Cache[string, domain.MusicHistory] {
+	return ttlcache.New[string, domain.MusicHistory](
+		ttlcache.WithTTL[string, domain.MusicHistory](defaultHistoryCacheTTL),
+		ttlcache.WithDisableTouchOnHit[string, domain.MusicHistory](),
+	)
+}
+
+func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter, historyCache *ttlcache.Cache[string, domain.MusicHistory]) *MusicRepository {
 	return &MusicRepository{
-		cfg:    cfg,
-		reader: reader,
-		writer: writer,
+		cfg:          cfg,
+		reader:       reader,
+		writer:       writer,
+		historyCache: historyCache,
 	}
 }
 
@@ -101,6 +114,10 @@ func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]dom
 }
 
 func (r *MusicRepository) buildHistory(ctx context.Context, jobID string) (domain.MusicHistory, error) {
+	if history, ok := r.getCachedHistory(jobID); ok {
+		return history, nil
+	}
+
 	recipe, err := r.GetRecipe(ctx, jobID)
 	if err != nil {
 		return domain.MusicHistory{}, err
@@ -123,7 +140,30 @@ func (r *MusicRepository) buildHistory(ctx context.Context, jobID string) (domai
 		history.Seed = fmt.Sprintf("%d", *recipe.Seed)
 	}
 
+	r.setCachedHistory(jobID, history)
+
 	return history, nil
+}
+
+func (r *MusicRepository) getCachedHistory(jobID string) (domain.MusicHistory, bool) {
+	item := r.historyCache.Get(historyCacheKey(jobID))
+	if item == nil {
+		return domain.MusicHistory{}, false
+	}
+
+	return item.Value(), true
+}
+
+func (r *MusicRepository) setCachedHistory(jobID string, history domain.MusicHistory) {
+	r.historyCache.Set(historyCacheKey(jobID), history, ttlcache.DefaultTTL)
+}
+
+func (r *MusicRepository) deleteCachedHistory(jobID string) {
+	r.historyCache.Delete(historyCacheKey(jobID))
+}
+
+func historyCacheKey(jobID string) string {
+	return path.Base(jobID)
 }
 
 // formatHistoryCreatedAt は、JobIDから日付を安全にパースします。
@@ -193,5 +233,10 @@ func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error
 		)
 	}
 
-	return errors.Join(errs...)
+	if err := errors.Join(errs...); err != nil {
+		return err
+	}
+
+	r.deleteCachedHistory(jobID)
+	return nil
 }
