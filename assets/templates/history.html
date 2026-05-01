@@ -27,51 +27,53 @@
 
     <div class="list-group shadow-sm mt-3">
         {{range .Data}}
-        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 position-relative" id="history-item-{{.JobID}}">
-            <div class="flex-grow-1">
-                <a href="/web/history/{{.JobID}}" class="text-decoration-none text-dark d-block mb-1 stretched-link">
-                    <h5 class="mb-0 fw-bold">{{.Title}}</h5>
-                </a>
-                <div class="d-flex flex-wrap gap-2 align-items-center text-muted small">
-                    {{if .CreatedAt}}
-                    <span><i class="bi bi-calendar3 me-1"></i>{{.CreatedAt}}</span>
-                    {{end}}
-                    {{if .Mood}}
-                    <span class="badge text-bg-light border"><i class="bi bi-stars me-1"></i>{{.Mood}}</span>
-                    {{end}}
-                    {{if .Tempo}}
-                    <span class="badge text-bg-light border"><i class="bi bi-speedometer2 me-1"></i>{{.Tempo}} BPM</span>
-                    {{end}}
-                    {{if .ComposeMode}}
-                    <span class="badge text-bg-secondary">{{.ComposeMode}}</span>
-                    {{end}}
-                    {{if .Seed}}
-                    <span class="badge text-bg-light border"><i class="bi bi-dice-5 me-1"></i>{{.Seed}}</span>
-                    {{end}}
+        <div class="list-group-item list-group-item-action p-3 position-relative" id="history-item-{{.JobID}}">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div class="flex-grow-1 mb-3 mb-md-0 me-md-3">
+                    <a href="/web/history/{{.JobID}}" class="text-decoration-none text-dark d-block mb-1 stretched-link">
+                        <h5 class="mb-1 fw-bold text-truncate" style="max-width: 90%;">{{.Title}}</h5>
+                    </a>
+                    <div class="d-flex flex-wrap gap-2 align-items-center text-muted small">
+                        {{if .CreatedAt}}
+                        <span class="text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{.CreatedAt}}</span>
+                        {{end}}
+                        {{if .Mood}}
+                        <span class="badge text-bg-light border"><i class="bi bi-stars me-1"></i>{{.Mood}}</span>
+                        {{end}}
+                        {{if .Tempo}}
+                        <span class="badge text-bg-light border"><i class="bi bi-speedometer2 me-1"></i>{{.Tempo}} BPM</span>
+                        {{end}}
+                        {{if .ComposeMode}}
+                        <span class="badge text-bg-secondary">{{.ComposeMode}}</span>
+                        {{end}}
+                        {{if .Seed}}
+                        <span class="badge text-bg-light border"><i class="bi bi-dice-5 me-1"></i>{{.Seed}}</span>
+                        {{end}}
+                    </div>
                 </div>
-            </div>
+                <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-2 position-relative z-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none" data-job-id="{{.JobID}}"></audio>
+                        <button class="btn btn-primary rounded-circle shadow-sm audio-toggle-btn"
+                                id="btn-{{.JobID}}"
+                                data-job-id="{{.JobID}}"
+                                onclick="toggleAudio(this.dataset.jobId, event)"
+                                style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-play-fill fs-4" id="icon-{{.JobID}}"></i>
+                        </button>
+                    </div>
 
-            <div class="ms-3 d-flex align-items-center gap-2 position-relative z-3">
-                <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none" data-job-id="{{.JobID}}"></audio>
-
-                <button class="btn btn-outline-primary btn-lg rounded-circle shadow-sm audio-toggle-btn"
-                        id="btn-{{.JobID}}"
-                        data-job-id="{{.JobID}}"
-                        onclick="toggleAudio(this.dataset.jobId, event)"
-                        style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
-                    <i class="bi bi-play-fill" id="icon-{{.JobID}}"></i>
-                </button>
-
-                <a href="/web/history/{{.JobID}}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1">
-                    詳細<i class="bi bi-chevron-right"></i>
-                </a>
-
-                <!-- 追加: 削除ボタン -->
-                <button class="btn btn-outline-danger btn-sm"
-                        onclick="deleteHistory('{{.JobID}}', event)"
-                        title="削除">
-                    <i class="bi bi-trash"></i>
-                </button>
+                    <div class="d-flex gap-1">
+                        <a href="/web/history/{{.JobID}}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center px-3">
+                            詳細
+                        </a>
+                        <button class="btn btn-outline-danger btn-sm px-2"
+                                onclick="deleteHistory('{{.JobID}}', event)"
+                                title="削除">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         {{else}}
