@@ -45,14 +45,12 @@
                     </a>
 
                     <div class="text-muted small meta-container">
-                        <!-- 1段目：日付（スマホでの視認性を優先） -->
                         {{if .CreatedAt}}
                         <div class="mb-1">
                             <i class="bi bi-calendar3 me-1"></i>{{.CreatedAt}}
                         </div>
                         {{end}}
 
-                        <!-- 2段目：バッジ類（flex-wrapで溢れたら自然に折り返し） -->
                         <div class="d-flex flex-wrap gap-2 align-items-center">
                             {{if .Tempo}}
                             <span class="badge text-bg-light border">
@@ -71,7 +69,6 @@
                             {{end}}
 
                             {{if .Seed}}
-                            <!-- Seedはスマホでは隠し、sm(576px)以上で表示することでスッキリさせる -->
                             <span class="badge text-bg-light border d-none d-sm-inline-block">
                                 <i class="bi bi-dice-5 me-1"></i>{{.Seed}}
                             </span>
