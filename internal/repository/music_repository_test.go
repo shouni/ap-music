@@ -112,7 +112,7 @@ func TestListHistoryLoadsRecipeMetadata(t *testing.T) {
 	if got.Seed != "42" {
 		t.Fatalf("Seed = %q", got.Seed)
 	}
-	if got.CreatedAt != "2026-05-01 12:34 UTC" {
+	if got.CreatedAt != "2026-05-01 21:34 JST" {
 		t.Fatalf("CreatedAt = %q", got.CreatedAt)
 	}
 }
