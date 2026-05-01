@@ -171,8 +171,9 @@ func formatHistoryCreatedAt(jobID string) string {
 	const (
 		jobIDTimePrefixLen = 14 // "20060102150405"
 		jobIDTimeLayout    = "20060102150405"
-		displayTimeLayout  = "2006-01-02 15:04 UTC"
+		displayTimeLayout  = "2006-01-02 15:04 MST"
 	)
+	jst := time.FixedZone("JST", 9*60*60)
 
 	if len(jobID) < jobIDTimePrefixLen {
 		return ""
@@ -190,7 +191,7 @@ func formatHistoryCreatedAt(jobID string) string {
 		return ""
 	}
 
-	return createdAt.Format(displayTimeLayout)
+	return createdAt.In(jst).Format(displayTimeLayout)
 }
 
 // GetRecipe は、特定の JSON ファイルを読み込んで構造体にパースします。
