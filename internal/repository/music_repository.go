@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/shouni/go-remote-io/remoteio"
-	"golang.org/x/sync/errgroup" // 追加: 並行数制御用
+	"golang.org/x/sync/errgroup"
 
 	"ap-music/internal/config"
 	"ap-music/internal/domain"
@@ -58,8 +58,7 @@ func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]dom
 		return nil, fmt.Errorf("GCS履歴のリスト取得に失敗したのだ: %w", err)
 	}
 
-	// 2. errgroup を使って並行して詳細（Recipe）を取得する
-	// 同時実行数を制限（例: 10）することで、リモートストレージやリソースへの負荷を抑えます
+	// 2. 並行して詳細（Recipe）を取得する
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.SetLimit(10)
 
