@@ -172,7 +172,11 @@
       </div>
     </div>
 
-    <div class="card-footer text-end bg-light p-3 border-top-0">
+    <div class="card-footer d-flex justify-content-between align-items-center bg-light p-3 border-top-0">
+      <button class="btn btn-outline-danger" onclick="deleteHistory('{{.Data.Recipe.JobID}}')">
+        <i class="bi bi-trash me-1"></i> この履歴を削除
+      </button>
+
       <a href="/web/history" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> 履歴一覧へ戻る
       </a>
@@ -193,6 +197,30 @@
         btn.classList.replace('btn-success', 'btn-outline-primary');
       }, 2000);
     });
+  }
+
+  async function deleteHistory(jobID) {
+    if (!confirm('この楽曲履歴と生成ファイルを削除するのだ？（元には戻せないのだ！）')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/web/history/${jobID}`, {
+        method: 'DELETE',
+        // CSRF対策が必要な場合はここにヘッダーを追加
+      });
+
+      if (response.ok) {
+        alert('削除が完了したのだ！履歴一覧に戻るのだ。');
+        window.location.href = '/web/history';
+      } else {
+        const errorText = await response.text();
+        alert('削除に失敗したのだ...: ' + errorText);
+      }
+    } catch (error) {
+      console.error('Delete Error:', error);
+      alert('通信エラーが発生したのだ。');
+    }
   }
 </script>
 {{end}}
