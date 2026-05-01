@@ -253,15 +253,19 @@
         playNextPlaylistAudio();
     }
 
+    /**
+     * オーディオの再生・一時停止を切り替え
+     */
     function toggleAudio(jobID, event) {
         if (event) event.stopPropagation();
 
+        // 個別再生が開始されたため、一括再生（プレイリスト）モードは解除する
         playlistActive = false;
         playlistIndex = -1;
         setPlaylistButton(false);
 
         const audio = document.getElementById('audio-' + jobID);
-        pauseOtherAudios(jobID);
+        if (!audio) return;
 
         if (audio.paused) {
             playAudio(jobID, false);
@@ -270,11 +274,6 @@
             setAudioIcon(jobID, false);
             setPlayingItem(null);
         }
-
-        audio.onended = () => {
-            setAudioIcon(jobID, false);
-            setPlayingItem(null);
-        };
     }
 </script>
 {{end}}
