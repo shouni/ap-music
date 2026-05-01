@@ -79,17 +79,19 @@
             });
 
             if (response.ok) {
-                const item = document.getElementById('btn-' + jobID).closest('.list-group-item');
-                item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                item.style.opacity = '0';
-                item.style.transform = 'translateX(20px)';
+                const item = document.getElementById('btn-' + jobID)?.closest('.list-group-item');
+                if (item) {
+                    item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(20px)';
 
-                setTimeout(() => {
-                    item.remove();
-                    if (document.querySelectorAll('.list-group-item').length === 0) {
-                        window.location.reload();
-                    }
-                }, 300);
+                    setTimeout(() => {
+                        item.remove();
+                        if (document.querySelectorAll('.list-group-item').length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
             } else {
                 const errorText = await response.text();
                 alert('削除に失敗したのだ: ' + errorText);

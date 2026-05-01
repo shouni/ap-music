@@ -68,6 +68,8 @@ func setupRoutes(r chi.Router, cfg *config.Config, h *builder.AppHandlers) {
 					if h.Auth.GetCSRFTokenFromSession(r) == "" {
 						if _, err := h.Auth.GenerateAndSaveCSRFToken(w, r); err != nil {
 							slog.Error("Failed to auto-generate CSRF token", "error", err)
+							http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+							return
 						}
 					}
 				}
