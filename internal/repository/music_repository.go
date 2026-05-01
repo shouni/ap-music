@@ -17,13 +17,15 @@ import (
 type MusicRepository struct {
 	cfg    *config.Config
 	reader remoteio.InputReader
+	writer remoteio.OutputWriter
 }
 
 // NewGCSMusicRepository はリポジトリを初期化するのだ。
-func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader) *MusicRepository {
+func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter) *MusicRepository {
 	return &MusicRepository{
 		cfg:    cfg,
 		reader: reader,
+		writer: writer,
 	}
 }
 
@@ -83,4 +85,24 @@ func (r *MusicRepository) GetRecipe(ctx context.Context, jobID string) (*domain.
 	}
 
 	return &recipe, nil
+}
+
+// DeleteHistory は、指定されたジョブIDに関連するJSONファイルとオーディオファイルを削除します。
+func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
+	safeJobID := path.Base(jobID)
+	jsonPath := fmt.Sprintf("%s.json", safeJobID)
+	jsonURI := r.cfg.GetGCSObjectURL(jsonPath)
+
+	if err := r.writer.Delete(ctx, jsonURI); err != nil {
+		return fmt.Errorf("レシピJSONの削除に失敗したのだ (%s): %w", jsonURI, err)
+	}
+	audioPath := fmt.Sprintf("%s.wav", safeJobID)
+	audioURI := r.cfg.GetGCSObjectURL(audioPath)
+
+	if err := r.writer.Delete(ctx, audioURI); err != nil {
+		// オーディオファイルがない場合でもエラーにせずログに留めるなどの判断が必要です
+		fmt.Printf("Warning: オーディオファイルの削除をスキップまたは失敗しました: %v\n", err)
+	}
+
+	return nil
 }

@@ -9,4 +9,6 @@ type MusicRepository interface {
 	ListHistory(ctx context.Context, userID string) ([]MusicHistory, error)
 	// GetRecipe は、指定されたジョブIDに対応する詳細な楽曲設計図（MusicRecipe）を取得します。
 	GetRecipe(ctx context.Context, jobID string) (*MusicRecipe, error)
+	// DeleteHistory は、指定されたジョブIDの履歴を削除します。
+	DeleteHistory(ctx context.Context, jobID string) error
 }

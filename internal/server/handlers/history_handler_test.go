@@ -26,6 +26,11 @@ func (r *stubMusicRepository) GetRecipe(context.Context, string) (*domain.MusicR
 	return r.recipe, nil
 }
 
+// DeleteHistory を追加して MusicRepository インターフェースを充足させる
+func (r *stubMusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
+	return nil
+}
+
 func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 	t.Parallel()
 
@@ -40,6 +45,7 @@ func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 			Lyrics: "きみの声が\n朝に溶ける",
 		},
 	}
+	// インターフェースを満たしているため、NewHandler に渡せるようになる
 	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{recipe: recipe})
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
@@ -65,6 +71,8 @@ func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 	if !strings.Contains(body, "朝焼け") || !strings.Contains(body, "高揚感のある歌声") {
 		t.Fatalf("response body does not contain expected Japanese text: %s", body)
 	}
+
+	// HTMLエスケープが適用されていないかチェック（JSON-UTF8出力の検証）
 	if strings.Contains(body, `\u003c`) || strings.Contains(body, `\u003e`) || strings.Contains(body, `\u0026`) {
 		t.Fatalf("display JSON contains avoidable HTML unicode escapes: %s", body)
 	}
@@ -95,5 +103,50 @@ func extractCodeText(t *testing.T, body string) string {
 	if codeEnd < 0 {
 		t.Fatalf("json code block end not found")
 	}
+	// テンプレート側でエスケープされていても、デコードしてJSONとして検証可能にする
 	return html.UnescapeString(body[codeStart : codeStart+codeEnd])
+}
+
+func TestDeleteHistory(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		jobID          string
+		expectedStatus int
+	}{
+		{
+			name:           "Valid JobID should return No Content",
+			jobID:          "valid-job-123",
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "Invalid JobID (path traversal) should return Bad Request",
+			jobID:          "../forbidden",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid JobID (special characters) should return Bad Request",
+			jobID:          "job@id!",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h, _ := NewHandler(nil, nil, nil, &stubMusicRepository{})
+
+			req := httptest.NewRequest(http.MethodDelete, "/web/history/"+tt.jobID, nil)
+			routeCtx := chi.NewRouteContext()
+			routeCtx.URLParams.Add("jobID", tt.jobID)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, routeCtx))
+
+			rec := httptest.NewRecorder()
+			h.DeleteHistory(rec, req)
+
+			if rec.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rec.Code)
+			}
+		})
+	}
 }
