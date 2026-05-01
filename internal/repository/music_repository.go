@@ -9,9 +9,11 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/shouni/go-remote-io/remoteio"
+	"golang.org/x/sync/errgroup" // 追加: 並行数制御用
 
 	"ap-music/internal/config"
 	"ap-music/internal/domain"
@@ -23,7 +25,6 @@ type MusicRepository struct {
 	writer remoteio.OutputWriter
 }
 
-// NewGCSMusicRepository はリポジトリを初期化するのだ。
 func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter) *MusicRepository {
 	return &MusicRepository{
 		cfg:    cfg,
@@ -32,39 +33,24 @@ func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writ
 	}
 }
 
-// ListHistory は、GCSのファイル一覧を取得して MusicHistory のリストを作成します。
+// ListHistory は並行処理を用いて履歴一覧を高速に取得します。
 func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]domain.MusicHistory, error) {
 	gcsURI := r.cfg.GetGCSObjectURL("")
-	// バケット直下をリストする場合でも、末尾にスラッシュが必要
 	if !strings.HasSuffix(gcsURI, "/") {
 		gcsURI += "/"
 	}
-	var histories []domain.MusicHistory
 
+	// 1. まずファイル一覧（JobID）を取得する
+	var jobIDs []string
 	err := r.reader.List(ctx, gcsURI, func(gcsPath string) error {
 		if !strings.HasSuffix(gcsPath, ".json") {
 			return nil
 		}
 		fileName := path.Base(gcsPath)
 		jobID := strings.TrimSuffix(fileName, ".json")
-		if jobID == "" {
-			return nil
+		if jobID != "" {
+			jobIDs = append(jobIDs, jobID)
 		}
-
-		history, err := r.buildHistory(ctx, jobID)
-		if err != nil {
-			slog.WarnContext(ctx, "failed to load recipe metadata for history list",
-				"jobID", jobID,
-				"path", gcsPath,
-				"error", err,
-			)
-			history = domain.MusicHistory{
-				JobID:     jobID,
-				Title:     jobID,
-				CreatedAt: formatHistoryCreatedAt(jobID),
-			}
-		}
-		histories = append(histories, history)
 		return nil
 	})
 
@@ -72,7 +58,42 @@ func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]dom
 		return nil, fmt.Errorf("GCS履歴のリスト取得に失敗したのだ: %w", err)
 	}
 
-	// 降順（新しい順）にソートするのだ（JobID がタイムスタンプ開始と仮定）
+	// 2. errgroup を使って並行して詳細（Recipe）を取得する
+	// 同時実行数を制限（例: 10）することで、リモートストレージやリソースへの負荷を抑えます
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.SetLimit(10)
+
+	histories := make([]domain.MusicHistory, len(jobIDs))
+	var mu sync.Mutex
+
+	for i, id := range jobIDs {
+		eg.Go(func() error {
+			history, err := r.buildHistory(ctx, id)
+			if err != nil {
+				slog.WarnContext(ctx, "failed to load recipe metadata for history list",
+					"jobID", id,
+					"error", err,
+				)
+				// 取得失敗時はフォールバックデータを生成
+				history = domain.MusicHistory{
+					JobID:     id,
+					Title:     id,
+					CreatedAt: formatHistoryCreatedAt(id),
+				}
+			}
+
+			mu.Lock()
+			histories[i] = history
+			mu.Unlock()
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+
+	// 3. 最後にソート（新しい順）
 	sort.Slice(histories, func(i, j int) bool {
 		return histories[i].JobID > histories[j].JobID
 	})
@@ -106,9 +127,10 @@ func (r *MusicRepository) buildHistory(ctx context.Context, jobID string) (domai
 	return history, nil
 }
 
+// formatHistoryCreatedAt は、JobIDから日付を安全にパースします。
 func formatHistoryCreatedAt(jobID string) string {
 	const (
-		jobIDTimePrefixLen = len("20060102150405")
+		jobIDTimePrefixLen = 14 // "20060102150405"
 		jobIDTimeLayout    = "20060102150405"
 		displayTimeLayout  = "2006-01-02 15:04 UTC"
 	)
@@ -117,7 +139,14 @@ func formatHistoryCreatedAt(jobID string) string {
 		return ""
 	}
 
-	createdAt, err := time.ParseInLocation(jobIDTimeLayout, jobID[:jobIDTimePrefixLen], time.UTC)
+	prefix := jobID[:jobIDTimePrefixLen]
+	for _, char := range prefix {
+		if char < '0' || char > '9' {
+			return ""
+		}
+	}
+
+	createdAt, err := time.ParseInLocation(jobIDTimeLayout, prefix, time.UTC)
 	if err != nil {
 		return ""
 	}
@@ -144,19 +173,17 @@ func (r *MusicRepository) GetRecipe(ctx context.Context, jobID string) (*domain.
 	return &recipe, nil
 }
 
-// DeleteHistory は、指定されたジョブIDに関連するJSONファイルとオーディオファイルを削除します。
+// DeleteHistory は、関連ファイルを削除します。
 func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
 	safeJobID := path.Base(jobID)
 	var errs []error
 
-	// 1. レシピ JSON ファイルの削除
 	jsonPath := fmt.Sprintf("%s.json", safeJobID)
 	jsonURI := r.cfg.GetGCSObjectURL(jsonPath)
 	if err := r.writer.Delete(ctx, jsonURI); err != nil {
 		errs = append(errs, fmt.Errorf("failed to delete recipe JSON (%s): %w", jsonURI, err))
 	}
 
-	// 2. オーディオファイルの削除 (JSONの成否に関わらず実行する)
 	audioPath := fmt.Sprintf("%s.wav", safeJobID)
 	audioURI := r.cfg.GetGCSObjectURL(audioPath)
 	if err := r.writer.Delete(ctx, audioURI); err != nil {
