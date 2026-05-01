@@ -1,15 +1,33 @@
 {{define "content"}}
+<style>
+    .history-playing {
+        background-color: var(--bs-primary-bg-subtle);
+        border-left: 4px solid var(--bs-primary);
+    }
+
+    .history-playing h5 {
+        color: var(--bs-primary);
+    }
+</style>
+
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-clock-history me-2"></i>楽曲生成履歴</h2>
-        <a href="/" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-lg me-1"></i>新規作成
-        </a>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="mb-0"><i class="bi bi-clock-history me-2"></i>楽曲生成履歴</h2>
+        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            {{if .Data}}
+            <button id="playlist-toggle-btn" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" onclick="togglePlaylist(event)">
+                <i class="bi bi-play-fill" id="playlist-toggle-icon"></i><span id="playlist-toggle-label">一括再生</span>
+            </button>
+            {{end}}
+            <a href="/" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>新規作成
+            </a>
+        </div>
     </div>
 
     <div class="list-group shadow-sm mt-3">
         {{range .Data}}
-        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 position-relative">
+        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 position-relative" id="history-item-{{.JobID}}">
             <div class="flex-grow-1">
                 <a href="/web/history/{{.JobID}}" class="text-decoration-none text-dark d-block mb-1 stretched-link">
                     <h5 class="mb-0 fw-bold">{{.Title}}</h5>
@@ -34,7 +52,7 @@
             </div>
 
             <div class="ms-3 d-flex align-items-center gap-2 position-relative z-3">
-                <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none"></audio>
+                <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none" data-job-id="{{.JobID}}"></audio>
 
                 <button class="btn btn-outline-primary btn-lg rounded-circle shadow-sm audio-toggle-btn"
                         id="btn-{{.JobID}}"
@@ -117,37 +135,145 @@
     /**
      * オーディオの再生・一時停止を切り替え
      */
+    let playlistActive = false;
+    let playlistIndex = -1;
+
+    function getAudioElements() {
+        return Array.from(document.querySelectorAll('audio[data-job-id]'));
+    }
+
+    function getJobID(audio) {
+        return audio.dataset.jobId;
+    }
+
+    function setAudioIcon(jobID, playing) {
+        const icon = document.getElementById('icon-' + jobID);
+        if (icon) {
+            icon.className = playing ? 'bi bi-pause-fill' : 'bi bi-play-fill';
+        }
+    }
+
+    function setPlayingItem(jobID) {
+        document.querySelectorAll('.history-playing').forEach(item => {
+            item.classList.remove('history-playing');
+            item.removeAttribute('aria-current');
+        });
+
+        if (!jobID) return;
+
+        const item = document.getElementById('history-item-' + jobID);
+        if (item) {
+            item.classList.add('history-playing');
+            item.setAttribute('aria-current', 'true');
+        }
+    }
+
+    function setPlaylistButton(playing) {
+        const icon = document.getElementById('playlist-toggle-icon');
+        const label = document.getElementById('playlist-toggle-label');
+        if (icon) {
+            icon.className = playing ? 'bi bi-pause-fill' : 'bi bi-play-fill';
+        }
+        if (label) {
+            label.textContent = playing ? '一時停止' : '一括再生';
+        }
+    }
+
+    function pauseOtherAudios(activeJobID) {
+        getAudioElements().forEach(el => {
+            const jobID = getJobID(el);
+            if (jobID !== activeJobID) {
+                el.pause();
+                setAudioIcon(jobID, false);
+            }
+        });
+    }
+
+    function playAudio(jobID, continuePlaylist) {
+        const audio = document.getElementById('audio-' + jobID);
+        if (!audio) return;
+
+        pauseOtherAudios(jobID);
+
+        audio.onended = () => {
+            setAudioIcon(jobID, false);
+            setPlayingItem(null);
+            if (playlistActive && continuePlaylist) {
+                playNextPlaylistAudio();
+            }
+        };
+
+        audio.play().then(() => {
+            setAudioIcon(jobID, true);
+            setPlayingItem(jobID);
+            setPlaylistButton(playlistActive);
+        }).catch(err => {
+            console.error("再生に失敗しました:", err);
+            playlistActive = false;
+            setPlayingItem(null);
+            setPlaylistButton(false);
+            alert("楽曲ファイルを読み込めませんでした。");
+        });
+    }
+
+    function playNextPlaylistAudio() {
+        const audios = getAudioElements();
+        playlistIndex += 1;
+
+        if (playlistIndex >= audios.length) {
+            playlistActive = false;
+            playlistIndex = -1;
+            setPlaylistButton(false);
+            return;
+        }
+
+        playAudio(getJobID(audios[playlistIndex]), true);
+    }
+
+    function togglePlaylist(event) {
+        if (event) event.stopPropagation();
+
+        const audios = getAudioElements();
+        if (audios.length === 0) return;
+
+        if (playlistActive) {
+            playlistActive = false;
+            audios.forEach(audio => {
+                audio.pause();
+                setAudioIcon(getJobID(audio), false);
+            });
+            setPlayingItem(null);
+            setPlaylistButton(false);
+            return;
+        }
+
+        playlistActive = true;
+        playlistIndex = -1;
+        setPlaylistButton(true);
+        playNextPlaylistAudio();
+    }
+
     function toggleAudio(jobID, event) {
         if (event) event.stopPropagation();
 
-        const audio = document.getElementById('audio-' + jobID);
-        const icon = document.getElementById('icon-' + jobID);
+        playlistActive = false;
+        playlistIndex = -1;
+        setPlaylistButton(false);
 
-        document.querySelectorAll('audio').forEach(el => {
-            if (el.id !== 'audio-' + jobID) {
-                el.pause();
-                const otherID = el.id.replace('audio-', '');
-                const otherIcon = document.getElementById('icon-' + otherID);
-                if (otherIcon) {
-                    otherIcon.className = 'bi bi-play-fill';
-                }
-            }
-        });
+        const audio = document.getElementById('audio-' + jobID);
+        pauseOtherAudios(jobID);
 
         if (audio.paused) {
-            audio.play().then(() => {
-                icon.className = 'bi bi-pause-fill';
-            }).catch(err => {
-                console.error("再生に失敗しました:", err);
-                alert("楽曲ファイルを読み込めませんでした。");
-            });
+            playAudio(jobID, false);
         } else {
             audio.pause();
-            icon.className = 'bi bi-play-fill';
+            setAudioIcon(jobID, false);
+            setPlayingItem(null);
         }
 
         audio.onended = () => {
-            icon.className = 'bi bi-play-fill';
+            setAudioIcon(jobID, false);
+            setPlayingItem(null);
         };
     }
 </script>
