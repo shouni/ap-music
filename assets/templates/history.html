@@ -8,6 +8,14 @@
     .history-playing h5 {
         color: var(--bs-primary);
     }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 </style>
 
 <div class="container mt-4">
@@ -29,25 +37,38 @@
         {{range .Data}}
         <div class="list-group-item list-group-item-action p-3 position-relative" id="history-item-{{.JobID}}">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                <div class="flex-grow-1 mb-3 mb-md-0 me-md-3">
+                <div class="flex-grow-1 mb-3 mb-md-0 me-md-3 overflow-hidden">
                     <a href="/web/history/{{.JobID}}" class="text-decoration-none text-dark d-block mb-1 stretched-link">
-                        <h5 class="mb-1 fw-bold text-truncate" style="max-width: 90%;">{{.Title}}</h5>
+                        <h5 class="mb-1 fw-bold text-truncate" style="max-width: 100%;">{{.Title}}</h5>
                     </a>
-                    <div class="d-flex flex-wrap gap-2 align-items-center text-muted small">
+                    <div class="d-flex flex-nowrap gap-2 align-items-center text-muted small no-scrollbar"
+                         style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+
                         {{if .CreatedAt}}
                         <span class="text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{.CreatedAt}}</span>
                         {{end}}
+
                         {{if .Mood}}
-                        <span class="badge text-bg-light border"><i class="bi bi-stars me-1"></i>{{.Mood}}</span>
+                        <span class="badge text-bg-light border text-truncate d-inline-block align-bottom"
+                              style="max-width: 100px; vertical-align: middle;"
+                              title="{{.Mood}}">
+                            <i class="bi bi-stars me-1"></i>{{.Mood}}
+                        </span>
                         {{end}}
+
                         {{if .Tempo}}
                         <span class="badge text-bg-light border"><i class="bi bi-speedometer2 me-1"></i>{{.Tempo}} BPM</span>
                         {{end}}
+
                         {{if .ComposeMode}}
                         <span class="badge text-bg-secondary">{{.ComposeMode}}</span>
                         {{end}}
+
                         {{if .Seed}}
-                        <span class="badge text-bg-light border"><i class="bi bi-dice-5 me-1"></i>{{.Seed}}</span>
+                        <span class="badge text-bg-light border text-truncate d-inline-block"
+                              style="max-width: 80px; vertical-align: middle;" title="{{.Seed}}">
+                            <i class="bi bi-dice-5 me-1"></i>{{.Seed}}
+                        </span>
                         {{end}}
                     </div>
                 </div>
