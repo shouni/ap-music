@@ -5,6 +5,7 @@ go 1.26
 require (
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/google/uuid v1.6.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/shouni/gcp-kit v1.1.3
 	github.com/shouni/go-gemini-client v1.2.7
 	github.com/shouni/go-http-kit v1.4.0

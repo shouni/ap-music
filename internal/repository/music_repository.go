@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/shouni/go-remote-io/remoteio"
 	"golang.org/x/sync/errgroup"
 
@@ -20,16 +21,20 @@ import (
 )
 
 type MusicRepository struct {
-	cfg    *config.Config
-	reader remoteio.InputReader
-	writer remoteio.OutputWriter
+	cfg          *config.Config
+	reader       remoteio.InputReader
+	writer       remoteio.OutputWriter
+	historyCache *gocache.Cache
 }
+
+const defaultHistoryCacheTTL = 10 * time.Minute
 
 func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter) *MusicRepository {
 	return &MusicRepository{
-		cfg:    cfg,
-		reader: reader,
-		writer: writer,
+		cfg:          cfg,
+		reader:       reader,
+		writer:       writer,
+		historyCache: gocache.New(defaultHistoryCacheTTL, defaultHistoryCacheTTL),
 	}
 }
 
@@ -101,6 +106,10 @@ func (r *MusicRepository) ListHistory(ctx context.Context, userID string) ([]dom
 }
 
 func (r *MusicRepository) buildHistory(ctx context.Context, jobID string) (domain.MusicHistory, error) {
+	if history, ok := r.getCachedHistory(jobID); ok {
+		return history, nil
+	}
+
 	recipe, err := r.GetRecipe(ctx, jobID)
 	if err != nil {
 		return domain.MusicHistory{}, err
@@ -123,7 +132,32 @@ func (r *MusicRepository) buildHistory(ctx context.Context, jobID string) (domai
 		history.Seed = fmt.Sprintf("%d", *recipe.Seed)
 	}
 
+	r.setCachedHistory(jobID, history)
+
 	return history, nil
+}
+
+func (r *MusicRepository) getCachedHistory(jobID string) (domain.MusicHistory, bool) {
+	value, ok := r.historyCache.Get(jobID)
+	if !ok {
+		return domain.MusicHistory{}, false
+	}
+
+	history, ok := value.(domain.MusicHistory)
+	if !ok {
+		r.historyCache.Delete(jobID)
+		return domain.MusicHistory{}, false
+	}
+
+	return history, true
+}
+
+func (r *MusicRepository) setCachedHistory(jobID string, history domain.MusicHistory) {
+	r.historyCache.SetDefault(jobID, history)
+}
+
+func (r *MusicRepository) deleteCachedHistory(jobID string) {
+	r.historyCache.Delete(jobID)
 }
 
 // formatHistoryCreatedAt は、JobIDから日付を安全にパースします。
@@ -193,5 +227,10 @@ func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error
 		)
 	}
 
-	return errors.Join(errs...)
+	if err := errors.Join(errs...); err != nil {
+		return err
+	}
+
+	r.deleteCachedHistory(safeJobID)
+	return nil
 }
