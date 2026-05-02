@@ -6,7 +6,6 @@
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/shouni/ap-music)](https://github.com/shouni/ap-music/tags)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Report Card](https://goreportcard.com/badge/github.com/shouni/ap-music)](https://goreportcard.com/report/github.com/shouni/ap-music)
-[![Go Reference](https://pkg.go.dev/badge/github.com/shouni/ap-music.svg)](https://pkg.go.dev/github.com/shouni/ap-music)
 [![Status](https://img.shields.io/badge/Status-Completed-brightgreen)](#)
 
 ## 🚀 概要 (About) - 音楽生成のWebオーケストレーター
