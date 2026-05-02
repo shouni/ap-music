@@ -29,9 +29,9 @@ type ReaderAdapter struct {
 	contentReader ContentReader
 }
 
-func NewReaderAdapter(storage remoteio.ReadWriteFactory) (*ReaderAdapter, error) {
+func NewReaderAdapter(storage remoteio.IOFactory) (*ReaderAdapter, error) {
 	contentReader, err := reader.New(
-		reader.WithGCSFactory(func(ctx context.Context) (remoteio.ReadWriteFactory, error) {
+		reader.WithGCSFactory(func(ctx context.Context) (remoteio.IOFactory, error) {
 			return storage, nil
 		}),
 	)
