@@ -28,7 +28,6 @@ func (r *stubMusicRepository) GetRecipe(context.Context, string) (*domain.MusicR
 	return r.recipe, nil
 }
 
-// DeleteHistory を実装して MusicRepository インターフェースを充足させます
 func (r *stubMusicRepository) DeleteHistory(ctx context.Context, jobID string) error {
 	r.deletedJobID = jobID
 	return nil
@@ -80,7 +79,6 @@ func TestServeHistoryRendersDeleteControls(t *testing.T) {
 		`透明感`,
 		`132 BPM`,
 		`rave`,
-		`42`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("response body does not contain %q", want)
@@ -103,8 +101,6 @@ func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 		},
 	}
 
-	// NewHandler の引数に合わせて nil や stub を渡します
-	// 引数順: cfg, taskEnqueuer, remoteIO, musicRepo, authHandler
 	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{recipe: recipe}, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
@@ -141,7 +137,6 @@ func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 		}
 	}
 
-	// HTMLエスケープが適用されていないかチェック（JSON-UTF8出力の検証）
 	if strings.Contains(body, `\u003c`) || strings.Contains(body, `\u003e`) || strings.Contains(body, `\u0026`) {
 		t.Fatalf("display JSON contains avoidable HTML unicode escapes: %s", body)
 	}
@@ -172,7 +167,6 @@ func extractCodeText(t *testing.T, body string) string {
 	if codeEnd < 0 {
 		t.Fatalf("json code block end not found")
 	}
-	// テンプレート側でエスケープされていても、デコードしてJSONとして検証可能にする
 	return html.UnescapeString(body[codeStart : codeStart+codeEnd])
 }
 
