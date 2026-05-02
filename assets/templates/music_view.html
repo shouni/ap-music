@@ -4,8 +4,8 @@
   .music-view-container {
     --primary-blue: #0d6efd;
     --border-color: #dee2e6;
-    --inactive-bg: #e9ecef;
-    --inactive-text: #495057;
+    --inactive-bg: #6c757d;
+    --inactive-text: #ffffff;
   }
 
   /* オーディオプレイヤー：シークバーの視認性を最大化 */
@@ -29,19 +29,21 @@
 
   .music-view-container .nav-tabs .nav-link {
     color: var(--inactive-text);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--inactive-bg);
     background-color: var(--inactive-bg);
     font-weight: 500;
     padding: 0.75rem 1.5rem;
     position: relative;
     transition: all 0.2s ease;
     border-radius: 8px 8px 0 0;
+    opacity: 0.85;
   }
 
   .music-view-container .nav-tabs .nav-link:hover:not(.active) {
-    color: var(--primary-blue);
-    background-color: var(--border-color);
-    border-color: #ced4da;
+    color: #ffffff;
+    background-color: #5a6268; /* ホバー時は少し濃く */
+    border-color: #545b62;
+    opacity: 1;
   }
 
   .music-view-container .nav-tabs .nav-item .nav-link.active {
@@ -49,6 +51,7 @@
     background-color: #ffffff;
     border-color: var(--border-color) var(--border-color) #ffffff;
     font-weight: bold;
+    opacity: 1;
   }
 
   .music-view-container .nav-tabs .nav-link.active::after {
@@ -110,7 +113,7 @@
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="json-tab" data-bs-toggle="tab" data-bs-target="#json" type="button" role="tab">
-            <i class="bi bi-code-slash me-2"></i>入力用 JSON
+            <i class="bi bi-code-slash me-2"></i>JSON
           </button>
         </li>
       </ul>
@@ -216,7 +219,6 @@
       return;
     }
 
-    // 埋め込まれたトークンを取得
     const csrfToken = document.getElementById('csrf_token').value;
 
     try {
