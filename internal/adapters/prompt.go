@@ -66,7 +66,7 @@ func NewPromptAdapter() (*PromptAdapter, error) {
 }
 
 // GenerateLyrics は歌詞生成用プロンプトを返します。
-func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
+func (pa *PromptAdapter) GenerateLyrics(mode string, content string) (string, error) {
 	draft := domain.LyricsDraft{
 		Title:     "楽曲のタイトル",
 		Theme:     "世界観の核",
@@ -82,11 +82,16 @@ func (pa *PromptAdapter) GenerateLyrics(content string) (string, error) {
 		return "", fmt.Errorf("歌詞出力スキーマの生成に失敗: %w", err)
 	}
 	outputSchema := string(schemaBytes)
+	enrichedContent := content
+	if mode != "" && mode != assets.ModeLyrics {
+		enrichedContent = fmt.Sprintf("【楽曲ジャンル: %s 】\n%s", mode, content)
+	}
 
 	data := lyricsPromptData{
-		InputText:    content,
+		InputText:    enrichedContent,
 		OutputSchema: outputSchema,
 	}
+
 	prompt, err := pa.lyrics.Build(assets.ModeLyrics, data)
 	if err != nil {
 		return "", fmt.Errorf("歌詞テンプレートの実行に失敗: %w", err)

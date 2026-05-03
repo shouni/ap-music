@@ -16,16 +16,19 @@ import (
 	"ap-music/internal/domain"
 )
 
+// staticPromptGen はテスト用の固定プロンプト生成器です。
 type staticPromptGen struct {
 	lyricsPrompt string
 	recipePrompt string
 }
 
-func (g staticPromptGen) GenerateLyrics(string) (string, error) {
+// GenerateLyrics はインターフェース変更に合わせて (string, string) を受け取るように修正
+func (g staticPromptGen) GenerateLyrics(mode string, content string) (string, error) {
 	return g.lyricsPrompt, nil
 }
 
-func (g staticPromptGen) GenerateRecipe(string, *domain.LyricsDraft) (string, error) {
+// GenerateRecipe はインターフェース変更に合わせて (string, *domain.LyricsDraft) を受け取るように修正
+func (g staticPromptGen) GenerateRecipe(mode string, lyrics *domain.LyricsDraft) (string, error) {
 	return g.recipePrompt, nil
 }
 
@@ -93,7 +96,7 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 	for i := range callers {
 		go func(i int) {
 			defer wg.Done()
-			results[i], errs[i] = lyricist.GenerateLyrics(ctx, "same input", "")
+			results[i], errs[i] = lyricist.GenerateLyrics(ctx, "same input", "default", "gemini-flash")
 		}(i)
 	}
 
@@ -113,6 +116,7 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 	for _, err := range errs {
 		require.NoError(t, err)
 	}
+
 	require.NotSame(t, results[0], results[1])
 
 	results[0].Keywords[0] = "changed"

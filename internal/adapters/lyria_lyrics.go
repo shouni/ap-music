@@ -19,12 +19,12 @@ type lyriaLyricist struct {
 	group        singleflight.Group
 }
 
-func (g *lyriaLyricist) GenerateLyrics(ctx context.Context, contextText, model string) (*domain.LyricsDraft, error) {
+func (g *lyriaLyricist) GenerateLyrics(ctx context.Context, contextText, model, mode string) (*domain.LyricsDraft, error) {
 	if contextText == "" {
 		return nil, fmt.Errorf("empty input")
 	}
 
-	promptText, err := g.promptGen.GenerateLyrics(contextText)
+	promptText, err := g.promptGen.GenerateLyrics(mode, contextText)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build lyrics prompt: %w", err)
 	}

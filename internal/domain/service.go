@@ -20,7 +20,7 @@ type MusicRunner interface {
 
 // Lyricist は歌詞生成を担う役割です。
 type Lyricist interface {
-	GenerateLyrics(ctx context.Context, contextText, model string) (*LyricsDraft, error)
+	GenerateLyrics(ctx context.Context, contextText, model, mode string) (*LyricsDraft, error)
 }
 
 // Composer は楽曲の設計（レシピ構築）を担う役割です。

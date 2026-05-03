@@ -61,7 +61,7 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 
 // Run は音楽生成のコアプロセス（作詞〜音声生成）を一括で行います。
 func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText string) (*domain.MusicRecipe, []byte, error) {
-	lyrics, err := a.GenerateLyrics(ctx, contextText, task.AIModels.TextModel)
+	lyrics, err := a.GenerateLyrics(ctx, contextText, task.AIModels.TextModel, task.AIModels.ComposeMode)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -80,8 +80,8 @@ func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, contextText st
 	return recipe, wav, nil
 }
 
-func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model string) (*domain.LyricsDraft, error) {
-	return a.lyricist.GenerateLyrics(ctx, contextText, model)
+func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, contextText, model, mode string) (*domain.LyricsDraft, error) {
+	return a.lyricist.GenerateLyrics(ctx, contextText, model, mode)
 }
 
 func (a *LyriaAdapter) Compose(ctx context.Context, lyrics *domain.LyricsDraft, model, mode string) (*domain.MusicRecipe, error) {
