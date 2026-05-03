@@ -63,7 +63,7 @@ func TestTaskFactoryBuildWithInvalidMode(t *testing.T) {
 		"compose_mode": {"rave"},
 	})
 
-	assert.Equal(t, "", task.ComposeMode)
+	assert.Equal(t, "", task.AIModels.ComposeMode)
 }
 
 func TestTaskFactoryBuildGeneratesFallbacks(t *testing.T) {
