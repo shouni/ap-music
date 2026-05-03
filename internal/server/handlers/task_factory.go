@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -37,11 +38,8 @@ func (f *taskFactory) Build(form url.Values) domain.Task {
 
 	rawMode := strings.TrimSpace(form.Get("compose_mode"))
 	validatedMode := ""
-	for _, m := range f.allowedModes {
-		if m == rawMode {
-			validatedMode = rawMode
-			break
-		}
+	if slices.Contains(f.allowedModes, rawMode) {
+		validatedMode = rawMode
 	}
 
 	task := domain.Task{
@@ -73,6 +71,5 @@ func parseSeed(raw string, fallback func() int64) *int64 {
 		}
 	}
 
-	seed := fallback()
-	return &seed
+	return new(fallback())
 }
