@@ -83,7 +83,10 @@ func (pa *PromptAdapter) GenerateLyrics(mode string, content string) (string, er
 	}
 	outputSchema := string(schemaBytes)
 	enrichedContent := content
+	// lyrics_modelやcompose_modeの指定に応じて、プロンプトにモード特有の制約を付与
+	// assets.ModeLyrics ("lyrics") は標準モードのため、それ以外が指定された場合のみ処理を行う
 	if mode != "" && mode != assets.ModeLyrics {
+		// 特殊モード（jazz, techno-futurism等）の追加プロンプトを構築...
 		enrichedContent = fmt.Sprintf("【楽曲ジャンル: %s 】\n%s", mode, content)
 	}
 

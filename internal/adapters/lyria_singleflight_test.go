@@ -23,12 +23,14 @@ type staticPromptGen struct {
 }
 
 // GenerateLyrics はインターフェース変更に合わせて (string, string) を受け取るように修正
-func (g staticPromptGen) GenerateLyrics(mode string, content string) (string, error) {
+// 未使用引数をブランク識別子に置き換え、意図を明示
+func (g staticPromptGen) GenerateLyrics(_ string, _ string) (string, error) {
 	return g.lyricsPrompt, nil
 }
 
 // GenerateRecipe はインターフェース変更に合わせて (string, *domain.LyricsDraft) を受け取るように修正
-func (g staticPromptGen) GenerateRecipe(mode string, lyrics *domain.LyricsDraft) (string, error) {
+// 未使用引数をブランク識別子に置き換え、意図を明示
+func (g staticPromptGen) GenerateRecipe(_ string, _ *domain.LyricsDraft) (string, error) {
 	return g.recipePrompt, nil
 }
 
@@ -96,6 +98,7 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 	for i := range callers {
 		go func(i int) {
 			defer wg.Done()
+			// 修正: 引数の順序を (contextText, mode, model) の順に修正
 			results[i], errs[i] = lyricist.GenerateLyrics(ctx, "same input", "default", "gemini-flash")
 		}(i)
 	}
