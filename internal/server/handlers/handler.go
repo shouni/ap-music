@@ -89,7 +89,7 @@ func NewHandler(
 		templateCache: cache,
 		taskEnqueuer:  taskEnqueuer,
 		composeModes:  modes,
-		taskFactory:   newTaskFactory(),
+		taskFactory:   newTaskFactory(modes),
 		remoteIO:      remoteIO,
 		auth:          authHandler,
 		musicRepo:     musicRepo,

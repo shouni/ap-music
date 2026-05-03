@@ -14,23 +14,35 @@ import (
 )
 
 type taskFactory struct {
-	now      func() time.Time
-	newSeed  func() int64
-	newJobID func(time.Time) string
+	now          func() time.Time
+	newSeed      func() int64
+	newJobID     func(time.Time) string
+	allowedModes []string
 }
 
-func newTaskFactory() *taskFactory {
+// newTaskFactory は許可されたモードリストを受け取って初期化するように変更
+func newTaskFactory(allowedModes []string) *taskFactory {
 	return &taskFactory{
 		now:     func() time.Time { return time.Now().UTC() },
 		newSeed: rand.Int64,
 		newJobID: func(now time.Time) string {
 			return fmt.Sprintf("%s-%s", now.Format("20060102150405"), uuid.New().String()[:8])
 		},
+		allowedModes: allowedModes,
 	}
 }
 
 func (f *taskFactory) Build(form url.Values) domain.Task {
 	createdAt := f.now()
+
+	rawMode := strings.TrimSpace(form.Get("compose_mode"))
+	validatedMode := ""
+	for _, m := range f.allowedModes {
+		if m == rawMode {
+			validatedMode = rawMode
+			break
+		}
+	}
 
 	task := domain.Task{
 		JobID:      strings.TrimSpace(form.Get("job_id")),
@@ -41,7 +53,7 @@ func (f *taskFactory) Build(form url.Values) domain.Task {
 		AIModels: domain.AIModels{
 			TextModel:   strings.TrimSpace(form.Get("lyrics_model")),
 			AudioModel:  strings.TrimSpace(form.Get("compose_model")),
-			ComposeMode: strings.TrimSpace(form.Get("compose_mode")),
+			ComposeMode: validatedMode, // バリデーション済みの値をセット
 			Seed:        parseSeed(form.Get("seed"), f.newSeed),
 		},
 	}

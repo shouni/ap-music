@@ -98,8 +98,7 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 	for i := range callers {
 		go func(i int) {
 			defer wg.Done()
-			// 修正: 引数の順序を (contextText, mode, model) の順に修正
-			results[i], errs[i] = lyricist.GenerateLyrics(ctx, "same input", "default", "gemini-flash")
+			results[i], errs[i] = lyricist.GenerateLyrics(ctx, "same input", "gemini-flash", "default")
 		}(i)
 	}
 
