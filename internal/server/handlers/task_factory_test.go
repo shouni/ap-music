@@ -12,10 +12,13 @@ import (
 
 func TestTaskFactoryBuildUsesProvidedValues(t *testing.T) {
 	now := time.Date(2026, 4, 26, 10, 30, 0, 0, time.UTC)
+	allowed := []string{"rave", "jazz", "techno"}
+
 	factory := &taskFactory{
-		now:      func() time.Time { return now },
-		newSeed:  func() int64 { return 99 },
-		newJobID: func(time.Time) string { return "generated-job" },
+		now:          func() time.Time { return now },
+		newSeed:      func() int64 { return 99 },
+		newJobID:     func(time.Time) string { return "generated-job" },
+		allowedModes: allowed,
 	}
 
 	task := factory.Build(url.Values{
@@ -25,7 +28,7 @@ func TestTaskFactoryBuildUsesProvidedValues(t *testing.T) {
 		"image":         {" https://example.com/image.png "},
 		"lyrics_model":  {" gemini-text "},
 		"compose_model": {" lyria-audio "},
-		"compose_mode":  {" rave "},
+		"compose_mode":  {" rave "}, // 許可リストにある値を指定
 		"seed":          {"42"},
 	})
 
@@ -39,11 +42,28 @@ func TestTaskFactoryBuildUsesProvidedValues(t *testing.T) {
 			TextModel:   "gemini-text",
 			AudioModel:  "lyria-audio",
 			ComposeMode: "rave",
-			Seed:        ptrInt64(42),
+			Seed:        new(int64(42)),
 		},
 	}
 
 	assert.Equal(t, expected, task)
+}
+
+func TestTaskFactoryBuildWithInvalidMode(t *testing.T) {
+	now := time.Date(2026, 4, 26, 10, 30, 0, 0, time.UTC)
+	// 許可リストに "rave" はない状態
+	factory := &taskFactory{
+		now:          func() time.Time { return now },
+		newSeed:      func() int64 { return 99 },
+		newJobID:     func(time.Time) string { return "generated-job" },
+		allowedModes: []string{"jazz"},
+	}
+
+	task := factory.Build(url.Values{
+		"compose_mode": {"rave"},
+	})
+
+	assert.Equal(t, "", task.AIModels.ComposeMode)
 }
 
 func TestTaskFactoryBuildGeneratesFallbacks(t *testing.T) {
@@ -52,6 +72,7 @@ func TestTaskFactoryBuildGeneratesFallbacks(t *testing.T) {
 		now:      func() time.Time { return now },
 		newSeed:  func() int64 { return 1234 },
 		newJobID: func(time.Time) string { return "generated-job" },
+		// allowedModes を指定しない場合、全ての入力は空文字として扱われる
 	}
 
 	task := factory.Build(url.Values{
@@ -63,8 +84,4 @@ func TestTaskFactoryBuildGeneratesFallbacks(t *testing.T) {
 	}
 	assert.Equal(t, "generated-job", task.JobID)
 	assert.Equal(t, now, task.CreatedAt)
-}
-
-func ptrInt64(v int64) *int64 {
-	return &v
 }

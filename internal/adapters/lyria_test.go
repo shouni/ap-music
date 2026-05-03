@@ -27,7 +27,6 @@ func (m *MockGeminiClient) GenerateContent(ctx context.Context, model, prompt st
 	return nil, args.Error(1)
 }
 
-// *gemini.GenerateOptions ではなく gemini.GenerateOptions (値渡し) に修正
 func (m *MockGeminiClient) GenerateWithParts(ctx context.Context, modelName string, parts []*genai.Part, opts gemini.GenerateOptions) (*gemini.Response, error) {
 	args := m.Called(ctx, modelName, parts, opts)
 	if res, ok := args.Get(0).(*gemini.Response); ok {
@@ -45,8 +44,9 @@ type MockPromptGen struct {
 	mock.Mock
 }
 
-func (m *MockPromptGen) GenerateLyrics(input string) (string, error) {
-	args := m.Called(input)
+// GenerateLyrics に mode 引数を追加
+func (m *MockPromptGen) GenerateLyrics(mode string, input string) (string, error) {
+	args := m.Called(mode, input)
 	return args.String(0), args.Error(1)
 }
 
@@ -63,7 +63,6 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	mPrompt := new(MockPromptGen)
 
 	// テスト対象のアダプターを構築
-	// 内部で呼び出される sub-struct (lyriaLyricistなど) にモックを注入
 	adapter := &LyriaAdapter{
 		lyricist: &lyriaLyricist{
 			aiClient:     mAI,
@@ -78,7 +77,7 @@ func TestLyriaAdapter_Run(t *testing.T) {
 		audio: &lyriaAudioGenerator{
 			aiClient:          mAI,
 			defaultLyriaModel: "lyria-3",
-			limiter:           rate.NewLimiter(rate.Inf, 0), // テストなので待ち時間なし
+			limiter:           rate.NewLimiter(rate.Inf, 0),
 			promptBuilder:     lyriaAudioPromptBuilder{},
 		},
 	}
@@ -101,27 +100,23 @@ func TestLyriaAdapter_Run(t *testing.T) {
 		Lyrics: "Canals reflect the neon lights...",
 	}
 
-	// AIからのレスポンス想定
-	// マークダウンタグが含まれていても cleanJSONResponse で処理されることを想定
 	lyricsJSON := `{"title": "Rainy Amsterdam", "theme": "Neon reflection on canals", "lyrics": "Canals reflect the neon lights..."}`
 	recipeJSON := `{"title": "Rainy Amsterdam", "tempo": 85, "mood": "melancholic"}`
+	fakeWav := []byte("RIFF....WAVEfmt....data")
 
-	fakeWav := []byte("RIFF....WAVEfmt....data") // 簡略化したWAVヘッダ
-
-	// 1. 作詞プロンプト生成 -> AI実行
-	mPrompt.On("GenerateLyrics", contextText).Return("prompt-lyrics-text", nil)
+	// 1. 作詞プロンプト生成 (ComposeMode "jazz" を渡す想定)
+	mPrompt.On("GenerateLyrics", "jazz", contextText).Return("prompt-lyrics-text", nil)
 	mAI.On("GenerateContent", mock.Anything, "custom-text-model", "prompt-lyrics-text").Return(&gemini.Response{
 		Text: "```json\n" + lyricsJSON + "\n```",
 	}, nil)
 
-	// 2. 作曲レシピ生成 -> AI実行
+	// 2. 作曲レシピ生成
 	mPrompt.On("GenerateRecipe", "jazz", expectedLyrics).Return("prompt-recipe-text", nil)
 	mAI.On("GenerateContent", mock.Anything, "custom-text-model", "prompt-recipe-text").Return(&gemini.Response{
 		Text: recipeJSON,
 	}, nil)
 
 	// 3. 音声生成実行
-	// GenerateWithParts の第4引数は mock.Anything または具体的条件
 	mAI.On("GenerateWithParts", mock.Anything, "lyria-custom-v1", mock.Anything, mock.Anything).Return(&gemini.Response{
 		Audios: [][]byte{fakeWav},
 	}, nil)
@@ -136,7 +131,6 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	assert.Equal(t, 85, recipe.Tempo)
 	assert.Equal(t, fakeWav, wav)
 
-	// Seed値の伝搬確認
 	if assert.NotNil(t, recipe.AIModels.Seed) {
 		assert.Equal(t, int64(42), *recipe.AIModels.Seed)
 	}
@@ -168,7 +162,6 @@ func TestLyriaAdapter_Compose(t *testing.T) {
 		Text: rawJSON,
 	}, nil)
 
-	// 実行（モデル指定なしの場合は defaultModel が使われる）
 	recipe, err := adapter.Compose(ctx, lyrics, "", mode)
 
 	assert.NoError(t, err)
