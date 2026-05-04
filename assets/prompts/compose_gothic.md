@@ -19,14 +19,14 @@
 *   **theme**: 楽曲の核。例：「神への冒涜」「永劫の空虚」「美しき崩壊」。
 *   **mood**: **英語**で記述（例: "Dark Gothic Horror Epic, Aggressive Orchestral Despair, Haunting and Grand"）。
 *   **tempo**: **66-72** の範囲で、深淵から這い上がるような重厚さを最優先して整数で指定すること。
-*   **instruments**: 3-6個、**英語**で指定（Grand Pipe Organ, Contra Bass Section, Church Bell, Soprano Choir, Timpani, Harpsichord）。
+*   **instruments**: 3-6個、**英語**で指定（Grand Pipe Organ, Friction-heavy Cello, Distorted Low Brass, Church Bell, Soprano Choir, Timpani）。
 *   **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
         *   **duration_seconds**: **70**
-        *   **prompt**: `[Beginning of Despair] Start with a haunting, lonely harpsichord and low pipe organ melody. The Japanese vocals should be cold, whispered, and filled with quiet madness. The feel is ritualistic and slow. Gradually layer in brooding double basses and the distant tolling of a church bell. Build a cold, creeping tension like walking through a graveyard.`
+        *   **prompt**: `[Beginning of Despair] Start with a haunting, lonely harpsichord and low pipe organ melody. The Japanese vocals should be cold, whispered, and filled with quiet madness. The feel is ritualistic and slow. Gradually layer in friction-heavy cello with raspy, dry textures and the distant tolling of a church bell. Build a cold, creeping tension like walking through a graveyard.`
     2.  **name**: `"Chorus"`
         *   **duration_seconds**: **90**
-        *   **prompt**: `[The Gates of Hell - Combat Phase] A massive, explosive crescendo. The pipe organ roars with full power, joined by aggressive, fast-paced orchestral staccatos and thunderous, rapid timpani strikes. The Japanese vocals should ascend to a tragic, operatic scream of despair. Incorporate a soaring soprano hum and a grand liturgical choir. Every beat should feel heavy yet driven by a frantic, heroic urgency.`
+        *   **prompt**: `[The Gates of Hell - Combat Phase] A massive, explosive crescendo. The pipe organ roars with full power, joined by distorted low brass that growls with abyssal energy. Add aggressive, fast-paced orchestral staccatos and thunderous, rapid timpani strikes. The Japanese vocals should ascend to a tragic, operatic scream of despair. Incorporate a soaring soprano hum and a grand liturgical choir. Every beat should feel heavy yet driven by a frantic, heroic urgency.`
     3.  **name**: `"Outro"`
         *   **duration_seconds**: **20**
         *   **prompt**: `[The Beautiful End] The chaotic combat sounds suddenly fade, leaving only a single, weeping violin and a faint soprano echo. The final lyrics should be delivered with a breathy, dying resonance, disappearing into a hollow, cavernous silence. The world ends with a lingering, beautiful sorrow fading into perfect darkness.`
