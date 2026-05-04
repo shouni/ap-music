@@ -24,8 +24,10 @@ type taskFactory struct {
 // newTaskFactory は許可されたモードリストを受け取って初期化するように変更
 func newTaskFactory(allowedModes []string) *taskFactory {
 	return &taskFactory{
-		now:     func() time.Time { return time.Now().UTC() },
-		newSeed: rand.Int64,
+		now: func() time.Time { return time.Now().UTC() },
+		newSeed: func() int64 {
+			return int64(rand.Uint32() >> 1)
+		},
 		newJobID: func(now time.Time) string {
 			return fmt.Sprintf("%s-%s", now.Format("20060102150405"), uuid.New().String()[:8])
 		},
@@ -33,6 +35,7 @@ func newTaskFactory(allowedModes []string) *taskFactory {
 	}
 }
 
+// Build はフォームデータからタスクを構築します。フォームデータのバリデーションとタスクの構築を実行します。
 func (f *taskFactory) Build(form url.Values) domain.Task {
 	createdAt := f.now()
 
@@ -63,13 +66,20 @@ func (f *taskFactory) Build(form url.Values) domain.Task {
 	return task
 }
 
+// parseSeed 指定された生のシード文字列を解析してint64ポインタに変換します。解析に失敗した場合は、フォールバック関数を使用します。
+// 解析された値がint32の最大値を超える場合は、int32の制限内に収まるように値をラップします。
 func parseSeed(raw string, fallback func() int64) *int64 {
 	seedText := strings.TrimSpace(raw)
 	if seedText != "" {
 		if val, err := strconv.ParseInt(seedText, 10, 64); err == nil {
+			const maxInt32 = 2147483647
+			if val > maxInt32 {
+				val = val % (maxInt32 + 1)
+			}
 			return &val
 		}
 	}
 
-	return new(fallback())
+	fVal := fallback()
+	return &fVal
 }
