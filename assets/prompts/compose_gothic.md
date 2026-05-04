@@ -18,7 +18,7 @@
 *   **title**: 楽曲のタイトル（終焉を告げる、不吉で美しい題名）
 *   **theme**: 楽曲の核。例：「神への冒涜」「永劫の空虚」「美しき崩壊」。
 *   **mood**: **英語**で記述（例: "Dark Gothic Horror Epic, Aggressive Orchestral Despair, Haunting and Grand"）。
-*   **tempo**: **74** を基準とし、重厚さと躍動感を両立させる。
+*   **tempo**: **66-72** の範囲で、深淵から這い上がるような重厚さを最優先して整数で指定すること。
 *   **instruments**: 3-6個、**英語**で指定（Grand Pipe Organ, Contra Bass Section, Church Bell, Soprano Choir, Timpani, Harpsichord）。
 *   **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
@@ -35,14 +35,7 @@
 *   **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
 
 #### 4. 歌詞案
-Title: {{.Lyrics.Title}}
-Theme: {{.Lyrics.Theme}}
-Hook: {{.Lyrics.Hook}}
-Mood: {{.Lyrics.Mood}}
-Narrative: {{.Lyrics.Narrative}}
-Keywords: {{range $i, $keyword := .Lyrics.Keywords}}{{if $i}}, {{end}}{{$keyword}}{{end}}
-Lyrics:
-{{.Lyrics.Lyrics}}
+{{.LyricsContent}}
 
 #### 5. 出力スキーマ
 応答は以下の構造を持つ有効なJSONオブジェクト1つのみとしてください。
