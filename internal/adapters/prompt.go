@@ -150,9 +150,11 @@ func buildLyricsContent(ld *domain.LyricsDraft) string {
 	fmt.Fprintf(&sb, "Mood: %s\n", ld.Mood)
 	fmt.Fprintf(&sb, "Narrative: %s\n", ld.Narrative)
 
-	sb.WriteString("Keywords: ")
-	sb.WriteString(strings.Join(ld.Keywords, ", "))
-	sb.WriteString("\n")
+	if len(ld.Keywords) > 0 {
+		sb.WriteString("Keywords: ")
+		sb.WriteString(strings.Join(ld.Keywords, ", "))
+		sb.WriteString("\n")
+	}
 
 	sb.WriteString("Lyrics:\n")
 	sb.WriteString(ld.Lyrics)
