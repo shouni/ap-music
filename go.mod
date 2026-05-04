@@ -8,8 +8,8 @@ require (
 	github.com/jellydator/ttlcache/v3 v3.4.0
 	github.com/shouni/gcp-kit v1.1.3
 	github.com/shouni/go-gemini-client v1.2.10
-	github.com/shouni/go-http-kit v1.4.1
-	github.com/shouni/go-notifier v1.2.2
+	github.com/shouni/go-http-kit v1.4.2
+	github.com/shouni/go-notifier v1.2.3
 	github.com/shouni/go-prompt-kit v1.0.4
 	github.com/shouni/go-remote-io v1.4.0
 	github.com/shouni/go-utils v1.0.20
