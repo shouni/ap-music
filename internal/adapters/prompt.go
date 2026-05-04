@@ -120,7 +120,7 @@ func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft)
 		},
 	}
 
-	LyricsContent := pa.buildLyricsContent(lyrics)
+	lyricsContent := buildLyricsContent(lyrics)
 	schemaBytes, err := json.MarshalIndent(recipeTemplate, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("レシピ出力スキーマの生成に失敗: %w", err)
@@ -129,7 +129,7 @@ func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft)
 		LyricsContent string
 		OutputSchema  string
 	}{
-		LyricsContent: LyricsContent,
+		LyricsContent: lyricsContent,
 		OutputSchema:  string(schemaBytes),
 	}
 
@@ -141,7 +141,7 @@ func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft)
 }
 
 // buildLyricsSection は、プロンプトに埋め込むための「歌詞案」セクションを構築します。
-func (pa *PromptAdapter) buildLyricsContent(ld *domain.LyricsDraft) string {
+func buildLyricsContent(ld *domain.LyricsDraft) string {
 	if ld == nil {
 		return ""
 	}
@@ -155,8 +155,7 @@ func (pa *PromptAdapter) buildLyricsContent(ld *domain.LyricsDraft) string {
 
 	sb.WriteString("Keywords: ")
 	sb.WriteString(strings.Join(ld.Keywords, ", "))
-	sb.WriteString("\n\n")
-	sb.WriteString("\n\n")
+	sb.WriteString("\n")
 
 	sb.WriteString("Lyrics:\n")
 	sb.WriteString(ld.Lyrics)
