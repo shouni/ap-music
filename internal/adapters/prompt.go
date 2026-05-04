@@ -3,6 +3,7 @@ package adapters
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/shouni/go-prompt-kit/prompts"
 
@@ -18,8 +19,8 @@ type lyricsPromptData struct {
 
 // recipePromptData はレシピプロンプトのテンプレートに渡すデータ構造です。
 type recipePromptData struct {
-	Lyrics       *domain.LyricsDraft
-	OutputSchema string
+	LyricsContent string
+	OutputSchema  string
 }
 
 // promptBuilder は、フォーマット済みのプロンプトを作成するためのインターフェース
@@ -119,13 +120,14 @@ func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft)
 		},
 	}
 
+	lyricsContent := buildLyricsContent(lyrics)
 	schemaBytes, err := json.MarshalIndent(recipeTemplate, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("レシピ出力スキーマの生成に失敗: %w", err)
 	}
 	data := recipePromptData{
-		Lyrics:       lyrics,
-		OutputSchema: string(schemaBytes),
+		LyricsContent: lyricsContent,
+		OutputSchema:  string(schemaBytes),
 	}
 
 	prompt, err := pa.compose.Build(mode, data)
@@ -133,4 +135,29 @@ func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft)
 		return "", fmt.Errorf("レシピテンプレートの実行に失敗: %w", err)
 	}
 	return prompt, nil
+}
+
+// buildLyricsContent は、プロンプトに埋め込むための「歌詞案」セクションを構築します。
+func buildLyricsContent(ld *domain.LyricsDraft) string {
+	if ld == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "Title: %s\n", ld.Title)
+	fmt.Fprintf(&sb, "Theme: %s\n", ld.Theme)
+	fmt.Fprintf(&sb, "Hook: %s\n", ld.Hook)
+	fmt.Fprintf(&sb, "Mood: %s\n", ld.Mood)
+	fmt.Fprintf(&sb, "Narrative: %s\n", ld.Narrative)
+
+	if len(ld.Keywords) > 0 {
+		sb.WriteString("Keywords: ")
+		sb.WriteString(strings.Join(ld.Keywords, ", "))
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString("Lyrics:\n")
+	sb.WriteString(ld.Lyrics)
+
+	return sb.String()
 }

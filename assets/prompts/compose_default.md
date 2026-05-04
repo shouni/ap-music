@@ -30,15 +30,7 @@
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
 
 #### 4. 歌詞案
-
-Title: {{.Lyrics.Title}}
-Theme: {{.Lyrics.Theme}}
-Hook: {{.Lyrics.Hook}}
-Mood: {{.Lyrics.Mood}}
-Narrative: {{.Lyrics.Narrative}}
-Keywords: {{range $i, $keyword := .Lyrics.Keywords}}{{if $i}}, {{end}}{{$keyword}}{{end}}
-Lyrics:
-{{.Lyrics.Lyrics}}
+{{.LyricsContent}}
 
 #### 5. 出力スキーマ
 
