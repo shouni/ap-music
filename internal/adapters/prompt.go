@@ -120,16 +120,16 @@ func (pa *PromptAdapter) GenerateRecipe(mode string, lyrics *domain.LyricsDraft)
 		},
 	}
 
-	lyricsSection := pa.buildLyricsContent(lyrics)
+	LyricsContent := pa.buildLyricsContent(lyrics)
 	schemaBytes, err := json.MarshalIndent(recipeTemplate, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("レシピ出力スキーマの生成に失敗: %w", err)
 	}
 	data := struct {
-		LyricsSection string
+		LyricsContent string
 		OutputSchema  string
 	}{
-		LyricsSection: lyricsSection,
+		LyricsContent: LyricsContent,
 		OutputSchema:  string(schemaBytes),
 	}
 
@@ -154,12 +154,8 @@ func (pa *PromptAdapter) buildLyricsContent(ld *domain.LyricsDraft) string {
 	fmt.Fprintf(&sb, "Narrative: %s\n", ld.Narrative)
 
 	sb.WriteString("Keywords: ")
-	for i, keyword := range ld.Keywords {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(keyword)
-	}
+	sb.WriteString(strings.Join(ld.Keywords, ", "))
+	sb.WriteString("\n\n")
 	sb.WriteString("\n\n")
 
 	sb.WriteString("Lyrics:\n")
