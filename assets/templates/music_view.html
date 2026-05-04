@@ -1,6 +1,6 @@
 {{define "content"}}
 <style>
-  /* 1. 全体コンテナ：特異性を高めるためのルート */
+  /* 1. 全体コンテナ */
   .music-view-container {
     --primary-blue: #0d6efd;
     --border-color: #dee2e6;
@@ -10,7 +10,7 @@
     --color-text-code: #eceff1;
   }
 
-  /* オーディオプレイヤー：シークバーの視認性を最大化 */
+  /* オーディオプレイヤー */
   .music-view-container .audio-player-unit {
     background-color: #f8f9fa;
     border: 2px solid var(--border-color);
@@ -19,15 +19,16 @@
   }
 
   .music-view-container audio {
-    filter: contrast(150%) brightness(80%) grayscale(100%);
+    filter: contrast(110%) brightness(95%);
     height: 40px;
   }
 
   /* 2. モダンなタブUI */
   .music-view-container .nav-tabs {
-    border-bottom: 1px solid var(--border-color);
-    gap: 2rem;
+    border-bottom: 2px solid var(--border-color);
     background-color: transparent;
+    display: flex;
+    gap: 0.5rem;
   }
 
   .music-view-container .nav-tabs .nav-link {
@@ -35,35 +36,43 @@
     border: none !important;
     background-color: transparent !important;
     font-weight: 500;
-    padding: 1rem 0.5rem;
+    padding: 0.75rem 1.25rem;
     position: relative;
     transition: all 0.2s ease;
-    border-radius: 0;
-    opacity: 1;
+    border-radius: 6px 6px 0 0;
+    opacity: 0.8;
+    min-width: 100px;
+    text-align: center;
   }
 
   .music-view-container .nav-tabs .nav-link:hover {
-    color: #0f1419 !important;
-    background-color: rgba(15, 20, 25, 0.1) !important;
-    transform: translateY(-1px);
+    color: var(--primary-blue) !important;
+    background-color: rgba(13, 110, 253, 0.05) !important;
+    opacity: 1;
   }
 
-  .music-view-container .nav-tabs .nav-item .nav-link.active {
-    color: #0f1419 !important;
+  .music-view-container .nav-tabs .nav-link.active {
+    color: var(--primary-blue) !important;
     font-weight: 800;
+    opacity: 1;
   }
 
-  .music-view-container .nav-tabs .nav-link.active::after {
+  /* アクティブなタブの下線 */
+  .music-view-container .nav-tabs .nav-link::after {
     content: "";
     position: absolute;
-    bottom: 0;
+    bottom: -2px;
     left: 0;
-    right: 0;
-    margin: 0 auto;
     width: 100%;
     height: 4px;
     background-color: var(--primary-blue);
-    border-radius: 9999px;
+    border-radius: 2px 2px 0 0;
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+  }
+
+  .music-view-container .nav-tabs .nav-link.active::after {
+    transform: scaleX(1);
   }
 
   /* 3. JSONコード */
@@ -77,7 +86,6 @@
     box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
   }
 
-  /* 歌詞表示エリア */
   .music-view-container .lyrics-display {
     white-space: pre-wrap;
     font-family: 'Noto Sans JP', sans-serif;
