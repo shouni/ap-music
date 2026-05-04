@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"math"
 	"math/rand/v2"
 	"net/url"
 	"slices"
@@ -26,7 +27,7 @@ func newTaskFactory(allowedModes []string) *taskFactory {
 	return &taskFactory{
 		now: func() time.Time { return time.Now().UTC() },
 		newSeed: func() int64 {
-			return int64(rand.Uint32() >> 1)
+			return int64(rand.Uint32() & math.MaxInt32)
 		},
 		newJobID: func(now time.Time) string {
 			return fmt.Sprintf("%s-%s", now.Format("20060102150405"), uuid.New().String()[:8])
@@ -72,14 +73,12 @@ func parseSeed(raw string, fallback func() int64) *int64 {
 	seedText := strings.TrimSpace(raw)
 	if seedText != "" {
 		if val, err := strconv.ParseInt(seedText, 10, 64); err == nil {
-			const maxInt32 = 2147483647
-			if val > maxInt32 {
-				val = val % (maxInt32 + 1)
+			if val > math.MaxInt32 {
+				val = val % (math.MaxInt32 + 1)
 			}
 			return &val
 		}
 	}
 
-	fVal := fallback()
-	return &fVal
+	return new(fallback())
 }
