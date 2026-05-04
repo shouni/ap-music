@@ -31,7 +31,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 		return fmt.Errorf("failed to build handlers: %w", err)
 	}
 
-	router := NewRouter(cfg, h)
+	router := NewRouter(h)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,
