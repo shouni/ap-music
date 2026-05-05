@@ -175,23 +175,33 @@ func TestDeleteHistory(t *testing.T) {
 
 	tests := []struct {
 		name           string
+		method         string
 		jobID          string
 		expectedStatus int
 	}{
 		{
 			name:           "Valid JobID should return No Content",
+			method:         http.MethodDelete,
 			jobID:          "valid-job-123",
 			expectedStatus: http.StatusNoContent,
 		},
 		{
 			name:           "Invalid JobID (path traversal) should return Bad Request",
+			method:         http.MethodDelete,
 			jobID:          "../forbidden",
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Invalid JobID (special characters) should return Bad Request",
+			method:         http.MethodDelete,
 			jobID:          "job@id!",
 			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Wrong method should return Method Not Allowed",
+			method:         http.MethodGet,
+			jobID:          "valid-job-123",
+			expectedStatus: http.StatusMethodNotAllowed,
 		},
 	}
 
@@ -200,7 +210,7 @@ func TestDeleteHistory(t *testing.T) {
 			repo := &stubMusicRepository{}
 			h, _ := NewHandler(nil, nil, nil, repo)
 
-			req := httptest.NewRequest(http.MethodDelete, "/web/history/"+tt.jobID, nil)
+			req := httptest.NewRequest(tt.method, "/web/history/"+tt.jobID, nil)
 			routeCtx := chi.NewRouteContext()
 			routeCtx.URLParams.Add("jobID", tt.jobID)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, routeCtx))

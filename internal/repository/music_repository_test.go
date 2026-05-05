@@ -117,6 +117,30 @@ func TestListHistoryLoadsRecipeMetadata(t *testing.T) {
 	}
 }
 
+func TestListHistoryInitializesMissingCache(t *testing.T) {
+	t.Parallel()
+
+	const objectPath = "gs://music/20260501123456-abcd1234.json"
+	reader := &fakeHistoryReader{
+		paths: []string{objectPath},
+		files: map[string]string{
+			objectPath: `{"title":"キャッシュ未指定","tempo":132}`,
+		},
+	}
+	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, reader, nil, nil)
+
+	histories, err := repo.ListHistory(context.Background(), "me")
+	if err != nil {
+		t.Fatalf("ListHistory() error = %v", err)
+	}
+	if len(histories) != 1 {
+		t.Fatalf("len(histories) = %d, want 1", len(histories))
+	}
+	if got := histories[0].Title; got != "キャッシュ未指定" {
+		t.Fatalf("Title = %q, want キャッシュ未指定", got)
+	}
+}
+
 func TestListHistoryUsesCachedMetadata(t *testing.T) {
 	t.Parallel()
 
