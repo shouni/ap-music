@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -39,12 +40,11 @@ func calculateImagesHash(images []domain.ImagePayload) string {
 		}
 
 		mimeType := image.MIMEType
-		hasher.Write([]byte(strconv.Itoa(len(mimeType))))
-		hasher.Write([]byte{0})
 		hasher.Write([]byte(mimeType))
 		hasher.Write([]byte{0})
-		hasher.Write([]byte(strconv.Itoa(len(image.Data))))
-		hasher.Write([]byte{0})
+		lengthBuf := make([]byte, 8)
+		binary.LittleEndian.PutUint64(lengthBuf, uint64(len(image.Data)))
+		hasher.Write(lengthBuf)
 		hasher.Write(image.Data)
 		hasher.Write([]byte{0})
 	}
