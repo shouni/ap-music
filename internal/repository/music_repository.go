@@ -38,6 +38,10 @@ func NewHistoryCache() *ttlcache.Cache[string, domain.MusicHistory] {
 }
 
 func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter, historyCache *ttlcache.Cache[string, domain.MusicHistory]) *MusicRepository {
+	if historyCache == nil {
+		historyCache = NewHistoryCache()
+	}
+
 	return &MusicRepository{
 		cfg:          cfg,
 		reader:       reader,
@@ -238,6 +242,6 @@ func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error
 		return err
 	}
 
-	r.deleteCachedHistory(jobID)
+	r.deleteCachedHistory(safeJobID)
 	return nil
 }

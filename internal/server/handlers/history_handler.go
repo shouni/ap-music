@@ -117,6 +117,11 @@ func (h *Handler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 
 // DeleteHistory は、指定されたジョブIDの履歴とファイルを削除します。
 func (h *Handler) DeleteHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	ctx := r.Context()
 	jobID := chi.URLParam(r, "jobID")
 
