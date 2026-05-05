@@ -11,8 +11,7 @@ import (
 func TestHomeRendersComposeForm(t *testing.T) {
 	t.Parallel()
 
-	// NewHandler の引数を 5 つ（cfg, enqueuer, remoteIO, repo, auth）に修正
-	h, err := NewHandler(nil, nil, nil, nil, nil)
+	h, err := NewHandler(nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
@@ -39,7 +38,7 @@ func TestEnqueueTaskRejectsCrossOriginRequest(t *testing.T) {
 	t.Skip("Origin check has been moved to middleware or removed from handler")
 	t.Parallel()
 
-	h, err := NewHandler(nil, nil, nil, nil, nil)
+	h, err := NewHandler(nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
@@ -63,7 +62,7 @@ func TestEnqueueTaskRejectsEmptySubmission(t *testing.T) {
 	t.Parallel()
 
 	// 依存関係を nil で初期化（taskFactoryなどが内部で panic しないよう注意が必要な場合があります）
-	h, err := NewHandler(nil, nil, nil, nil, nil)
+	h, err := NewHandler(nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}

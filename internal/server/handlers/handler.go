@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/shouni/gcp-kit/auth"
 	"github.com/shouni/gcp-kit/tasks"
 
 	"ap-music/assets"
@@ -27,7 +26,6 @@ type Handler struct {
 	composeModes  []string
 	taskFactory   *taskFactory
 	remoteIO      *app.RemoteIO
-	auth          *auth.Handler
 	musicRepo     domain.MusicRepository
 }
 
@@ -37,7 +35,6 @@ func NewHandler(
 	taskEnqueuer *tasks.Enqueuer[domain.Task],
 	remoteIO *app.RemoteIO,
 	musicRepo domain.MusicRepository,
-	authHandler *auth.Handler,
 ) (*Handler, error) {
 	cache := make(map[string]*template.Template)
 
@@ -91,7 +88,6 @@ func NewHandler(
 		composeModes:  modes,
 		taskFactory:   newTaskFactory(modes),
 		remoteIO:      remoteIO,
-		auth:          authHandler,
 		musicRepo:     musicRepo,
 	}, nil
 }
@@ -127,7 +123,7 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, status int, pag
 	}{
 		Title:     title + titleSuffix,
 		Data:      data,
-		CSRFToken: h.csrfTokenFromSession(r),
+		CSRFToken: csrfTokenFromContext(r.Context()),
 	}
 
 	var buf bytes.Buffer
@@ -142,12 +138,4 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, status int, pag
 	if _, err := buf.WriteTo(w); err != nil {
 		slog.Error("レスポンスの書き込みに失敗しました", "error", err)
 	}
-}
-
-// csrfTokenFromSession は、は現在のセッションから CSRF トークンを抽出します
-func (h *Handler) csrfTokenFromSession(r *http.Request) string {
-	if h.auth == nil {
-		return ""
-	}
-	return h.auth.GetCSRFTokenFromSession(r)
 }

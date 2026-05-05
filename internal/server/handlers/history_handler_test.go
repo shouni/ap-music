@@ -48,7 +48,7 @@ func TestServeHistoryRendersDeleteControls(t *testing.T) {
 				Seed:        "42",
 			},
 		},
-	}, nil)
+	})
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
@@ -101,7 +101,7 @@ func TestServeDetailsRendersRecipeJSONAsUTF8(t *testing.T) {
 		},
 	}
 
-	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{recipe: recipe}, nil)
+	h, err := NewHandler(nil, nil, nil, &stubMusicRepository{recipe: recipe})
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
@@ -198,7 +198,7 @@ func TestDeleteHistory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &stubMusicRepository{}
-			h, _ := NewHandler(nil, nil, nil, repo, nil)
+			h, _ := NewHandler(nil, nil, nil, repo)
 
 			req := httptest.NewRequest(http.MethodDelete, "/web/history/"+tt.jobID, nil)
 			routeCtx := chi.NewRouteContext()
