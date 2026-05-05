@@ -69,7 +69,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 		return nil, err
 	}
 
-	reader, err := adapters.NewReaderAdapter(rio.Factory)
+	reader, err := adapters.NewReaderAdapter(rio.Factory, httpClient)
 	if err != nil {
 		return nil, err
 	}

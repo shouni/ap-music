@@ -32,7 +32,7 @@ type ReaderAdapter struct {
 	requester     httpkit.Requester
 }
 
-func NewReaderAdapter(storage remoteio.IOFactory) (*ReaderAdapter, error) {
+func NewReaderAdapter(storage remoteio.IOFactory, requester httpkit.Requester) (*ReaderAdapter, error) {
 	contentReader, err := reader.New(
 		reader.WithGCSFactory(func(ctx context.Context) (remoteio.IOFactory, error) {
 			return storage, nil
@@ -44,6 +44,7 @@ func NewReaderAdapter(storage remoteio.IOFactory) (*ReaderAdapter, error) {
 
 	return &ReaderAdapter{
 		contentReader: contentReader,
+		requester:     requester,
 	}, nil
 }
 
