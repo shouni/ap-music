@@ -1,7 +1,6 @@
 package server
 
 import (
-	"ap-music/internal/server/handlers"
 	"log/slog"
 	"net/http"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"ap-music/internal/builder"
+	"ap-music/internal/server/handlers"
 )
 
 // NewRouter は、ミドルウェアとルーティングを統合した http.Handler を構築します。
