@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -29,6 +30,26 @@ func singleflightSeedKey(seed *int64) string {
 		return "seed:nil"
 	}
 	return "seed:" + strconv.FormatInt(*seed, 10)
+}
+
+func calculateImagesHash(images []domain.ImagePayload) string {
+	hasher := sha256.New()
+	lengthBuf := make([]byte, 8)
+	for _, image := range images {
+		if len(image.Data) == 0 {
+			continue
+		}
+
+		mimeType := image.MIMEType
+		hasher.Write([]byte(mimeType))
+		hasher.Write([]byte{0})
+		binary.LittleEndian.PutUint64(lengthBuf, uint64(len(image.Data)))
+		hasher.Write(lengthBuf)
+		hasher.Write(image.Data)
+		hasher.Write([]byte{0})
+	}
+
+	return "images:" + hex.EncodeToString(hasher.Sum(nil))
 }
 
 func doSingleflight[T any](ctx context.Context, group *singleflight.Group, key string, fn func(execCtx context.Context) (T, error)) (T, error) {

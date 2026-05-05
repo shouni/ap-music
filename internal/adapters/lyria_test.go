@@ -92,6 +92,9 @@ func TestLyriaAdapter_Run(t *testing.T) {
 		},
 	}
 	contextText := "雨のアムステルダム"
+	input := &domain.CollectedContent{
+		Prompt: contextText,
+	}
 
 	// 期待される中間データ
 	expectedLyrics := &domain.LyricsDraft{
@@ -122,7 +125,7 @@ func TestLyriaAdapter_Run(t *testing.T) {
 	}, nil)
 
 	// 実行
-	recipe, wav, err := adapter.Run(ctx, task, contextText)
+	recipe, wav, err := adapter.Run(ctx, task, input)
 
 	// 検証
 	assert.NoError(t, err)

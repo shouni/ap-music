@@ -13,18 +13,19 @@ import (
 )
 
 type lyriaLyricist struct {
-	aiClient     gemini.ContentGenerator
-	promptGen    domain.PromptGenerator
+	aiClient  gemini.ContentGenerator
+	promptGen domain.PromptGenerator
+
 	defaultModel string
 	group        singleflight.Group
 }
 
-func (g *lyriaLyricist) GenerateLyrics(ctx context.Context, contextText, model, mode string) (*domain.LyricsDraft, error) {
-	if contextText == "" {
+func (g *lyriaLyricist) GenerateLyrics(ctx context.Context, input *domain.CollectedContent, model, mode string) (*domain.LyricsDraft, error) {
+	if input == nil {
 		return nil, fmt.Errorf("empty input")
 	}
 
-	promptText, err := g.promptGen.GenerateLyrics(mode, contextText)
+	promptText, err := g.promptGen.GenerateLyrics(mode, input.Prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build lyrics prompt: %w", err)
 	}
