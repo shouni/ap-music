@@ -34,6 +34,7 @@ func singleflightSeedKey(seed *int64) string {
 
 func calculateImagesHash(images []domain.ImagePayload) string {
 	hasher := sha256.New()
+	lengthBuf := make([]byte, 8)
 	for _, image := range images {
 		if len(image.Data) == 0 {
 			continue
@@ -42,7 +43,6 @@ func calculateImagesHash(images []domain.ImagePayload) string {
 		mimeType := image.MIMEType
 		hasher.Write([]byte(mimeType))
 		hasher.Write([]byte{0})
-		lengthBuf := make([]byte, 8)
 		binary.LittleEndian.PutUint64(lengthBuf, uint64(len(image.Data)))
 		hasher.Write(lengthBuf)
 		hasher.Write(image.Data)
