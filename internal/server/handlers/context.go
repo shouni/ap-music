@@ -4,12 +4,12 @@ import "context"
 
 type csrfTokenContextKey struct{}
 
-// WithCSRFToken stores the CSRF token that should be exposed to templates.
+// WithCSRFToken は、テンプレートに公開すべきCSRFトークンをコンテキストに保存します。
 func WithCSRFToken(ctx context.Context, token string) context.Context {
 	return context.WithValue(ctx, csrfTokenContextKey{}, token)
 }
 
-// csrfTokenFromContext returns the CSRF token stored in the context.
+// csrfTokenFromContext は、コンテキストに保存されたCSRFトークンを取得します。
 func csrfTokenFromContext(ctx context.Context) string {
 	token, ok := ctx.Value(csrfTokenContextKey{}).(string)
 	if !ok {
