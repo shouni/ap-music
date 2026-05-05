@@ -25,7 +25,7 @@ type lyriaAudioGenerator struct {
 }
 
 // GenerateAudio は MusicRecipe 全体を 1 回の Lyria 呼び出しで音声化します。
-func (g *lyriaAudioGenerator) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
+func (g *lyriaAudioGenerator) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe, images []domain.ImagePayload) ([]byte, error) {
 	if recipe == nil {
 		return nil, fmt.Errorf("recipe cannot be nil")
 	}
@@ -36,6 +36,7 @@ func (g *lyriaAudioGenerator) GenerateAudio(ctx context.Context, recipe *domain.
 	}
 
 	promptText := g.promptBuilder.BuildFullSong(recipe)
+	parts := g.buildMultiModalParts(promptText, images)
 	responseMIMEType := ""
 	key := singleflightKey("audio-full", targetModel, promptText, singleflightSeedKey(recipe.AIModels.Seed), responseMIMEType)
 	audio, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) ([]byte, error) {
@@ -46,7 +47,7 @@ func (g *lyriaAudioGenerator) GenerateAudio(ctx context.Context, recipe *domain.
 		resp, err := g.aiClient.GenerateWithParts(
 			execCtx,
 			targetModel,
-			[]*genai.Part{{Text: promptText}},
+			parts,
 			buildAudioGenerateOptions(recipe.AIModels.Seed, responseMIMEType),
 		)
 		if err != nil {
@@ -66,7 +67,7 @@ func (g *lyriaAudioGenerator) GenerateAudio(ctx context.Context, recipe *domain.
 }
 
 // GenerateFullAudio は MusicRecipe の各セクションを個別に生成し、1 つの WAV に結合します。
-func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe) ([]byte, error) {
+func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe, images []domain.ImagePayload) ([]byte, error) {
 	if recipe == nil || len(recipe.Sections) == 0 {
 		return nil, errors.New("recipe sections are empty")
 	}
@@ -79,7 +80,7 @@ func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *dom
 
 	for i, sec := range recipe.Sections {
 		group.Go(func() error {
-			data, err := g.generateAudioSection(groupCtx, recipe, sec)
+			data, err := g.generateAudioSection(groupCtx, recipe, sec, images)
 			if err != nil {
 				return fmt.Errorf("section '%s' generation failed: %w", sec.Name, err)
 			}
@@ -101,7 +102,7 @@ func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *dom
 }
 
 // generateAudioSection は指定された 1 セクションを Lyria で音声化します。
-func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *domain.MusicRecipe, sec domain.MusicSection) ([]byte, error) {
+func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *domain.MusicRecipe, sec domain.MusicSection, images []domain.ImagePayload) ([]byte, error) {
 	if recipe == nil {
 		return nil, errors.New("recipe is nil")
 	}
@@ -115,6 +116,7 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 	}
 
 	promptText := g.promptBuilder.BuildSection(recipe, sec)
+	parts := g.buildMultiModalParts(promptText, images)
 	responseMIMEType := "audio/wav"
 	key := singleflightKey("audio-section", targetModel, promptText, singleflightSeedKey(recipe.AIModels.Seed), responseMIMEType)
 	audio, err := doSingleflight(ctx, &g.group, key, func(execCtx context.Context) ([]byte, error) {
@@ -125,7 +127,7 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 		resp, err := g.aiClient.GenerateWithParts(
 			execCtx,
 			targetModel,
-			[]*genai.Part{{Text: promptText}},
+			parts,
 			buildAudioGenerateOptions(recipe.AIModels.Seed, responseMIMEType),
 		)
 		if err != nil {
@@ -142,6 +144,25 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 	}
 
 	return cloneBytes(audio), nil
+}
+
+// buildMultiModalParts はプロンプトと画像を Lyria 入力用の Part スライスにまとめます。
+func (g *lyriaAudioGenerator) buildMultiModalParts(prompt string, images []domain.ImagePayload) []*genai.Part {
+	parts := make([]*genai.Part, 0, len(images)+1)
+	parts = append(parts, &genai.Part{Text: prompt})
+
+	for _, img := range images {
+		if len(img.Data) == 0 {
+			continue
+		}
+		parts = append(parts, &genai.Part{
+			InlineData: &genai.Blob{
+				MIMEType: img.MIMEType,
+				Data:     img.Data,
+			},
+		})
+	}
+	return parts
 }
 
 // buildAudioGenerateOptions は Lyria 音声生成で共通して使う生成オプションを組み立てます。

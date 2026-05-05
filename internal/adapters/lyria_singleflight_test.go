@@ -22,15 +22,13 @@ type staticPromptGen struct {
 	recipePrompt string
 }
 
-// GenerateLyrics はインターフェース変更に合わせて (string, string) を受け取るように修正
-// 未使用引数をブランク識別子に置き換え、意図を明示
-func (g staticPromptGen) GenerateLyrics(_ string, _ string) (string, error) {
+// GenerateLyrics は domain.PromptGenerator インターフェースに合わせる
+func (g staticPromptGen) GenerateLyrics(mode string, prompt string) (string, error) {
 	return g.lyricsPrompt, nil
 }
 
-// GenerateRecipe はインターフェース変更に合わせて (string, *domain.LyricsDraft) を受け取るように修正
-// 未使用引数をブランク識別子に置き換え、意図を明示
-func (g staticPromptGen) GenerateRecipe(_ string, _ *domain.LyricsDraft) (string, error) {
+// GenerateRecipe も同様にインターフェースに合わせる
+func (g staticPromptGen) GenerateRecipe(mode string, lyrics *domain.LyricsDraft) (string, error) {
 	return g.recipePrompt, nil
 }
 
@@ -90,6 +88,11 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 		defaultModel: "gemini-flash",
 	}
 
+	// 修正：文字列ではなく *domain.CollectedContent を渡す
+	input := &domain.CollectedContent{
+		Prompt: "same input",
+	}
+
 	const callers = 5
 	results := make([]*domain.LyricsDraft, callers)
 	errs := make([]error, callers)
@@ -98,7 +101,8 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 	for i := range callers {
 		go func(i int) {
 			defer wg.Done()
-			results[i], errs[i] = lyricist.GenerateLyrics(ctx, "same input", "gemini-flash", "default")
+			// インターフェースに合わせた引数
+			results[i], errs[i] = lyricist.GenerateLyrics(ctx, input, "gemini-flash", "default")
 		}(i)
 	}
 
@@ -110,6 +114,7 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 			return false
 		}
 	}, time.Second, time.Millisecond)
+
 	time.Sleep(20 * time.Millisecond)
 	close(client.releaseContentCh)
 	wg.Wait()
@@ -119,8 +124,8 @@ func TestLyriaLyricistSingleflightDeduplicatesConcurrentCalls(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+	// ディープコピーの検証（shared reference による事故を防いでいるか）
 	require.NotSame(t, results[0], results[1])
-
 	results[0].Keywords[0] = "changed"
 	assert.Equal(t, "one", results[1].Keywords[0])
 }
@@ -137,6 +142,7 @@ func TestLyriaAudioGeneratorSingleflightDeduplicatesConcurrentCalls(t *testing.T
 		limiter:           rate.NewLimiter(rate.Inf, 0),
 		promptBuilder:     lyriaAudioPromptBuilder{},
 	}
+
 	recipe := &domain.MusicRecipe{
 		Title:       "Song",
 		Mood:        "Bright",
@@ -148,6 +154,10 @@ func TestLyriaAudioGeneratorSingleflightDeduplicatesConcurrentCalls(t *testing.T
 		AIModels: domain.AIModels{Seed: &seed},
 	}
 
+	images := []domain.ImagePayload{
+		{Data: []byte("fake-image"), MIMEType: "image/png"},
+	}
+
 	const callers = 5
 	results := make([][]byte, callers)
 	errs := make([]error, callers)
@@ -156,7 +166,8 @@ func TestLyriaAudioGeneratorSingleflightDeduplicatesConcurrentCalls(t *testing.T
 	for i := range callers {
 		go func(i int) {
 			defer wg.Done()
-			results[i], errs[i] = generator.GenerateAudio(ctx, recipe)
+			// 修正：引数に images を追加
+			results[i], errs[i] = generator.GenerateAudio(ctx, recipe, images)
 		}(i)
 	}
 
@@ -168,15 +179,18 @@ func TestLyriaAudioGeneratorSingleflightDeduplicatesConcurrentCalls(t *testing.T
 			return false
 		}
 	}, time.Second, time.Millisecond)
+
 	time.Sleep(20 * time.Millisecond)
 	close(client.releasePartsCh)
 	wg.Wait()
 
+	// singleflight により、1回しか API が呼ばれていないことを確認
 	require.Equal(t, int32(1), client.partsCalls.Load())
 	for _, err := range errs {
 		require.NoError(t, err)
 	}
 
+	// 修正後の cloneBytes の検証：バイナリが独立したメモリ領域であることを確認
 	results[0][0] = 9
 	assert.Equal(t, byte(1), results[1][0])
 }

@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/shouni/go-http-kit/httpkit"
 	"github.com/shouni/go-remote-io/remoteio"
 	"github.com/shouni/go-web-reader/pkg/reader"
 
@@ -27,6 +29,7 @@ type ContentReader interface {
 // ReaderAdapter は入力情報を収集します。
 type ReaderAdapter struct {
 	contentReader ContentReader
+	requester     httpkit.Requester
 }
 
 func NewReaderAdapter(storage remoteio.IOFactory) (*ReaderAdapter, error) {
@@ -45,9 +48,11 @@ func NewReaderAdapter(storage remoteio.IOFactory) (*ReaderAdapter, error) {
 }
 
 // Collect は、コンテンツを取得します。
-func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, error) {
+func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (*domain.CollectedContent, error) {
+	res := &domain.CollectedContent{}
+	var textParts []string
 	if err := task.ValidateSubmission(); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var parts []string
@@ -56,10 +61,10 @@ func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, 
 	if requestURL != "" {
 		content, err := r.readURLContent(ctx, requestURL)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		if strings.TrimSpace(content) == "" {
-			return "", fmt.Errorf("source URL content is empty: %s", requestURL)
+			return nil, fmt.Errorf("source URL content is empty: %s", requestURL)
 		}
 		parts = append(parts, fmt.Sprintf("[Source URL]\n%s\n\n[Source Content]\n%s", requestURL, content))
 	}
@@ -71,10 +76,23 @@ func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (string, 
 
 	imageURL := strings.TrimSpace(task.ImageURL)
 	if imageURL != "" {
-		parts = append(parts, fmt.Sprintf("[Image URL]\n%s", imageURL))
+		imgData, err := r.requester.FetchBytes(ctx, imageURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch image from %s: %w", imageURL, err)
+		}
+		mimeType := http.DetectContentType(imgData)
+		if !strings.HasPrefix(mimeType, "image/") {
+			return nil, fmt.Errorf("unsupported file type: %s", mimeType)
+		}
+
+		res.Images = append(res.Images, domain.ImagePayload{
+			Data:     imgData,
+			MIMEType: mimeType,
+		})
 	}
 
-	return strings.Join(parts, "\n\n"), nil
+	res.Prompt = strings.Join(textParts, "\n\n")
+	return res, nil
 }
 
 // readURLContent は、指定されたソースURLからコンテンツを取得します。
