@@ -16,7 +16,7 @@ const (
 	// defaultInitialDelay はリトライ時の初期待ち時間です。
 	defaultInitialDelay = 60 * time.Second
 	// defaultVertexLocationID はVertex AI のデフォルトロケーション
-	defaultVertexLocationID = "us-central1"
+	defaultVertexLocationID = "global"
 	// defaultVertexTemperature は生成パラメータ
 	defaultVertexTemperature = float32(0.7)
 	// defaultVertexInitialDelay はリトライ遅延
