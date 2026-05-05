@@ -11,6 +11,9 @@ func WithCSRFToken(ctx context.Context, token string) context.Context {
 
 // csrfTokenFromContext returns the CSRF token stored in the context.
 func csrfTokenFromContext(ctx context.Context) string {
-	token, _ := ctx.Value(csrfTokenContextKey{}).(string)
+	token, ok := ctx.Value(csrfTokenContextKey{}).(string)
+	if !ok {
+		return ""
+	}
 	return token
 }
