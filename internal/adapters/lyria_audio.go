@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/shouni/audio/wav"
 	"github.com/shouni/go-gemini-client/gemini"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -94,7 +95,7 @@ func (g *lyriaAudioGenerator) GenerateFullAudio(ctx context.Context, recipe *dom
 		return nil, err
 	}
 
-	combinedWav, err := CombineWavData(wavParts)
+	combinedWav, err := wav.CombineWavData(wavParts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to combine wav sections: %w", err)
 	}
