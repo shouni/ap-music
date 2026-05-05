@@ -194,3 +194,102 @@ func TestLyriaAudioGeneratorSingleflightDeduplicatesConcurrentCalls(t *testing.T
 	results[0][0] = 9
 	assert.Equal(t, byte(1), results[1][0])
 }
+
+func TestLyriaAudioGeneratorSingleflightSeparatesDifferentImages(t *testing.T) {
+	ctx := context.Background()
+	client := newBlockingGeminiClient()
+	client.partsResp = &gemini.Response{Audios: [][]byte{{1, 2, 3}}}
+	seed := int64(7)
+
+	generator := &lyriaAudioGenerator{
+		aiClient:          client,
+		defaultLyriaModel: "lyria-3",
+		limiter:           rate.NewLimiter(rate.Inf, 0),
+		promptBuilder:     lyriaAudioPromptBuilder{},
+	}
+
+	recipe := &domain.MusicRecipe{
+		Title:       "Song",
+		Mood:        "Bright",
+		Tempo:       140,
+		Instruments: []string{"synth"},
+		Sections: []domain.MusicSection{
+			{Name: "Verse", Duration: 30, Prompt: "pulse"},
+		},
+		AIModels: domain.AIModels{Seed: &seed},
+	}
+
+	imagesA := []domain.ImagePayload{{Data: []byte("image-a"), MIMEType: "image/png"}}
+	imagesB := []domain.ImagePayload{{Data: []byte("image-b"), MIMEType: "image/png"}}
+
+	var wg sync.WaitGroup
+	errs := make([]error, 2)
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_, errs[0] = generator.GenerateAudio(ctx, recipe, imagesA)
+	}()
+	go func() {
+		defer wg.Done()
+		_, errs[1] = generator.GenerateAudio(ctx, recipe, imagesB)
+	}()
+
+	require.Eventually(t, func() bool {
+		return client.partsCalls.Load() == 2
+	}, time.Second, time.Millisecond)
+
+	close(client.releasePartsCh)
+	wg.Wait()
+
+	for _, err := range errs {
+		require.NoError(t, err)
+	}
+}
+
+func TestLyriaAudioGeneratorSectionSingleflightSeparatesDifferentImages(t *testing.T) {
+	ctx := context.Background()
+	client := newBlockingGeminiClient()
+	client.partsResp = &gemini.Response{Audios: [][]byte{{1, 2, 3}}}
+	seed := int64(7)
+
+	generator := &lyriaAudioGenerator{
+		aiClient:          client,
+		defaultLyriaModel: "lyria-3",
+		limiter:           rate.NewLimiter(rate.Inf, 0),
+		promptBuilder:     lyriaAudioPromptBuilder{},
+	}
+
+	recipe := &domain.MusicRecipe{
+		Title:       "Song",
+		Mood:        "Bright",
+		Tempo:       140,
+		Instruments: []string{"synth"},
+		AIModels:    domain.AIModels{Seed: &seed},
+	}
+	section := domain.MusicSection{Name: "Verse", Duration: 30, Prompt: "pulse"}
+	imagesA := []domain.ImagePayload{{Data: []byte("image-a"), MIMEType: "image/png"}}
+	imagesB := []domain.ImagePayload{{Data: []byte("image-b"), MIMEType: "image/png"}}
+
+	var wg sync.WaitGroup
+	errs := make([]error, 2)
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_, errs[0] = generator.generateAudioSection(ctx, recipe, section, imagesA)
+	}()
+	go func() {
+		defer wg.Done()
+		_, errs[1] = generator.generateAudioSection(ctx, recipe, section, imagesB)
+	}()
+
+	require.Eventually(t, func() bool {
+		return client.partsCalls.Load() == 2
+	}, time.Second, time.Millisecond)
+
+	close(client.releasePartsCh)
+	wg.Wait()
+
+	for _, err := range errs {
+		require.NoError(t, err)
+	}
+}

@@ -31,6 +31,27 @@ func singleflightSeedKey(seed *int64) string {
 	return "seed:" + strconv.FormatInt(*seed, 10)
 }
 
+func calculateImagesHash(images []domain.ImagePayload) string {
+	hasher := sha256.New()
+	for _, image := range images {
+		if len(image.Data) == 0 {
+			continue
+		}
+
+		mimeType := image.MIMEType
+		hasher.Write([]byte(strconv.Itoa(len(mimeType))))
+		hasher.Write([]byte{0})
+		hasher.Write([]byte(mimeType))
+		hasher.Write([]byte{0})
+		hasher.Write([]byte(strconv.Itoa(len(image.Data))))
+		hasher.Write([]byte{0})
+		hasher.Write(image.Data)
+		hasher.Write([]byte{0})
+	}
+
+	return "images:" + hex.EncodeToString(hasher.Sum(nil))
+}
+
 func doSingleflight[T any](ctx context.Context, group *singleflight.Group, key string, fn func(execCtx context.Context) (T, error)) (T, error) {
 	execCtx := context.WithoutCancel(ctx)
 	ch := group.DoChan(key, func() (any, error) {

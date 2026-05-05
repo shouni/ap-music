@@ -51,7 +51,6 @@ func NewReaderAdapter(storage remoteio.IOFactory, requester httpkit.Requester) (
 // Collect は、コンテンツを取得します。
 func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (*domain.CollectedContent, error) {
 	res := &domain.CollectedContent{}
-	var textParts []string
 	if err := task.ValidateSubmission(); err != nil {
 		return nil, err
 	}
@@ -92,7 +91,7 @@ func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (*domain.
 		})
 	}
 
-	res.Prompt = strings.Join(textParts, "\n\n")
+	res.Prompt = strings.Join(parts, "\n\n")
 	return res, nil
 }
 
