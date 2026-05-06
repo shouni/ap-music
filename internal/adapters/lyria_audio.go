@@ -175,14 +175,16 @@ func (g *lyriaAudioGenerator) buildMultiModalParts(prompt string, images []domai
 // convertToReading はテキスト内の日本語を抽出し、カタカナの読みに変換します。
 // 英単語や記号、改行などはそのまま保持します。
 func (g *lyriaAudioGenerator) convertToReading(input string) string {
+	const readingIndex = 7
 
 	tokens := g.tokenizer.Tokenize(input)
 	var sb strings.Builder
+	sb.Grow(len(input) * 2)
 
 	for _, token := range tokens {
 		features := token.Features()
-		if len(features) > 7 && features[7] != "*" {
-			sb.WriteString(features[7])
+		if len(features) > readingIndex && features[readingIndex] != "*" {
+			sb.WriteString(features[readingIndex])
 		} else {
 			sb.WriteString(token.Surface)
 		}
