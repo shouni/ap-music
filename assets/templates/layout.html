@@ -96,7 +96,8 @@
     document.addEventListener('DOMContentLoaded', () => {
         const currentPath = window.location.pathname;
         document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
+            const href = link.getAttribute('href');
+            if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
                 link.classList.add('active');
             }
         });
