@@ -14,7 +14,10 @@ import (
 	"ap-music/internal/domain"
 )
 
-const recipeJSONContentType = "application/json; charset=utf-8"
+const (
+	recipeJSONContentType = "application/json; charset=utf-8"
+	defaultCacheControl   = "public, max-age=1800"
+)
 
 // PublisherAdapter は成果物保存を行うアダプターです。
 type PublisherAdapter struct {
@@ -58,11 +61,12 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 	storageURI := remoteio.BuildGCSURI(a.Bucket, fmt.Sprintf("%s.wav", task.JobID))
 	recipeStorageURI := remoteio.BuildGCSURI(a.Bucket, fmt.Sprintf("%s.json", task.JobID))
 
-	// 1. 音声データの書き込み
+	// 1. 音声データの書き込み（Cache-Control を適用）
 	contentReader := bytes.NewReader(audioData)
 	if err := a.writer.Write(ctx, storageURI, contentReader,
 		remoteio.WithContentType("audio/wav"),
 		remoteio.WithInline(),
+		remoteio.WithCacheControl(defaultCacheControl),
 	); err != nil {
 		return nil, fmt.Errorf("failed to write audio to storage: %w", err)
 	}
@@ -74,10 +78,11 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 		return nil, fmt.Errorf("failed to marshal recipe json: %w", err)
 	}
 
-	// 3. レシピJSONの書き込み
+	// 3. レシピJSONの書き込み（Cache-Control を適用）
 	recipeReader := bytes.NewReader(recipeData)
 	if err := a.writer.Write(ctx, recipeStorageURI, recipeReader,
 		remoteio.WithContentType(recipeJSONContentType),
+		remoteio.WithCacheControl(defaultCacheControl),
 	); err != nil {
 		a.cleanupOnFailure(ctx, recipeStorageURI, storageURI)
 		return nil, fmt.Errorf("failed to write recipe to storage (audio file %s was already written): %w", storageURI, err)

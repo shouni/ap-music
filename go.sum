@@ -158,8 +158,8 @@ github.com/shouni/go-notifier v1.2.3 h1:104NoQgQiS6RUx5hM5LqjUDc3CopMRTGs8Io0Fn1
 github.com/shouni/go-notifier v1.2.3/go.mod h1:abW/uOV5KVi7LvWMdqCUlwt86Nu45cVS4Q6nr270PAc=
 github.com/shouni/go-prompt-kit v1.0.4 h1:RfPGSQrCtAesruiHdVqWLHp6OBuXfFxs2MM1DRgmmvY=
 github.com/shouni/go-prompt-kit v1.0.4/go.mod h1:TVt7Vq3uSztr9SWf90VzDzxOVflJ/1yMiTLo6/rkUBQ=
-github.com/shouni/go-remote-io v1.5.0 h1:qelEJJoOfDcDHHpLfxhrZ63LCxkmkfW2pCbwGRgCWLM=
-github.com/shouni/go-remote-io v1.5.0/go.mod h1:Nv/Xtd/UL8aeEibiSonTyuvh7cCEyFYp2aBwBRGL/gc=
+github.com/shouni/go-remote-io v1.5.2 h1:iV7KvcPdNyAbZEcytabwlkxHEGWOzMmNW/zRYtyffaA=
+github.com/shouni/go-remote-io v1.5.2/go.mod h1:Nv/Xtd/UL8aeEibiSonTyuvh7cCEyFYp2aBwBRGL/gc=
 github.com/shouni/go-utils v1.0.20 h1:gdjQfqJdY+uJI02FPNSE7B9GTIihGQ4DMjN36+0pd9M=
 github.com/shouni/go-utils v1.0.20/go.mod h1:IGMDiCaF1QlkT/roB0YTrNCUTcfcMhtnOUjG0e3AR8w=
 github.com/shouni/go-web-exact/v2 v2.2.1 h1:8Fa9YOcujKHL3VJO8zeKehCYayQOpM4zBwyy1BH9UZc=
