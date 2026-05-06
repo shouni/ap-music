@@ -10,26 +10,26 @@
 *   **Melodic & Energetic**:
     サウンドはハードだが、メロディはキャッチーで疾走感溢れるものにすること。90年代〜現代のガールズメタルシーンを象徴する、華やかでテクニカルな旋律を目指すこと。
 *   **Youthful Vocal Power**:
-    ボーカル指示には、芯の強いパワフルな歌声の中にも、女子高生らしい若々しさとエモーショナルな響き（キュートさと力強さの共存）を盛り込むこと。
+    ボーカル指示には、芯の強いパワフルな歌声の中にも、若々しさとエモーショナルな響き（キュートさと力強さの共存）を盛り込むこと。
 *   **Live Front-Row Energy (Crucial)**:
-    **ライブハウスの最前列で浴びるような、熱気と臨場感のある音響設計を徹底すること。** スピーカーから直接響くような音圧（Sonic pressure）と、観客の熱気を感じるアンビエント感を意識させること。
+    **ライブハウスの最前列で浴びるような、熱気と臨場感のある音響設計を徹底すること。** スピーカーから直接響くような音圧（Sonic pressure）と、観客の熱気を感じるアンビエント感（Live ambiance）を意識させること。
 
 #### 2. Music Recipe の構成要素
 *   **title**: 楽曲のタイトル（放課後の日常とメタルの激しさが同居するような、勢いのある題名）
 *   **theme**: 楽曲の核。例：「放課後の反逆」「放たれた閃光」「絆のディストーション」。
 *   **mood**: **英語**で記述（例: "High-Energy Girls Metal, Immersive Live Venue Atmosphere, Powerful and Melodic"）。
 *   **tempo**: BPMを整数で指定（疾走感と人間らしいグルーヴを両立させるため、**170-182** の範囲を推奨）。
-*   **instruments**: 3-6個、**英語**で指定（Heavy Distortion Guitar, Punchy Precision Bass, Dynamic Live Drums, Female Vocals, Analog Synthesizer）。
+*   **instruments**: 3-6個、**英語**で指定（e.g., Heavy Distortion Twin Guitars, Punchy Precision Bass, Double-Bass Live Drums, Powerful Female Vocals, Bright Modern Synthesizer）。
 *   **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
         * **duration_seconds**: **70**
-        * **prompt**: `[Verse & Narrative Build-up] Focus on the first half of the lyrics. Start with a mysterious atmospheric intro. Evolve the sound from a minimal beat to a rich, complex electronic arrangement. Progressively increase tension, ensuring the vocals lead the narrative toward the first grand peak.`
+        * **prompt**: `[Narrative Drive & Gradual Heat] Start with an energetic guitar riff that evokes an "after-school" atmosphere. The female vocals should be clear and youthful, delivering the lyrics with a storytelling feel. Gradually build tension with chugging guitar rhythms and a driving bass line. The sound should feel like the excitement of a rehearsal turning into a professional performance.`
     2.  **name**: `"Chorus"`
         * **duration_seconds**: **90**
-        * **prompt**: `[Ultimate Chorus & Anthem] The core climax. Perform with maximum emotional intensity. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the vocals to shine as a powerful anthem.`
+        * **prompt**: `[Ultimate Metal Anthem & High-Voltage Peak] The core climax. Unleash a powerful metal sound with maximum emotional intensity. Features high-gain twin guitar harmonies, aggressive double-bass drumming, and soaring vocal melodies. Maintain peak energy and high sonic pressure, making it feel like the most intense moment of a live concert where the audience is jumping in unison.`
     3.  **name**: `"Outro"`
         * **duration_seconds**: **20**
-        * **prompt**: `[Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Transition into a sprawling digital soundscape. Create a sophisticated fade-out with layered echoes and a resonant, lingering atmosphere.`
+        * **prompt**: `[Feedback & Triumphant Afterglow] A high-energy finish with a final soaring vocal note and a dramatic guitar shred or pick slide. End with the lingering ring of distorted chords and the fading cheer of a live crowd. A brief, melodic synth sparkle at the very end to leave a lingering sense of youthful nostalgia.`
 
 #### 3. 出力ルール（厳守）
 *   **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
