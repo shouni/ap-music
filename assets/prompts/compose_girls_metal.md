@@ -42,4 +42,3 @@
 Markdownのコードブロック（```json）や解説は一切不要です。
 
 {{.OutputSchema}}
-
