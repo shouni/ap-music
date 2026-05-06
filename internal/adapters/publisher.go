@@ -60,7 +60,10 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 
 	// 1. 音声データの書き込み
 	contentReader := bytes.NewReader(audioData)
-	if err := a.writer.Write(ctx, storageURI, contentReader, "audio/wav"); err != nil {
+	if err := a.writer.Write(ctx, storageURI, contentReader,
+		remoteio.WithContentType("audio/wav"),
+		remoteio.WithInline(),
+	); err != nil {
 		return nil, fmt.Errorf("failed to write audio to storage: %w", err)
 	}
 
@@ -73,7 +76,9 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 
 	// 3. レシピJSONの書き込み
 	recipeReader := bytes.NewReader(recipeData)
-	if err := a.writer.Write(ctx, recipeStorageURI, recipeReader, recipeJSONContentType); err != nil {
+	if err := a.writer.Write(ctx, recipeStorageURI, recipeReader,
+		remoteio.WithContentType(recipeJSONContentType),
+	); err != nil {
 		a.cleanupOnFailure(ctx, recipeStorageURI, storageURI)
 		return nil, fmt.Errorf("failed to write recipe to storage (audio file %s was already written): %w", storageURI, err)
 	}

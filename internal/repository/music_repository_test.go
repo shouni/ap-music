@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"ap-music/internal/config"
+
+	"github.com/shouni/go-remote-io/remoteio"
 )
 
 type fakeHistoryReader struct {
@@ -53,7 +55,7 @@ type fakeHistoryWriter struct {
 	deleted []string
 }
 
-func (w *fakeHistoryWriter) Write(context.Context, string, io.Reader, string) error {
+func (w *fakeHistoryWriter) Write(ctx context.Context, path string, r io.Reader, opts ...remoteio.WriteOption) error {
 	return nil
 }
 
