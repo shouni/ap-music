@@ -126,6 +126,12 @@ github.com/gorilla/sessions v1.4.0 h1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzq
 github.com/gorilla/sessions v1.4.0/go.mod h1:FLWm50oby91+hl7p/wRxDth9bWSuk0qVL2emc7lT5ik=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+github.com/ikawaha/kagome-dict v1.1.7 h1:O/uAL+WCGhp6kT0+szxBSPaSM4i+vdArSefFvJE4Nug=
+github.com/ikawaha/kagome-dict v1.1.7/go.mod h1:9tvk7/jZkvYt40foxkB9CqSAAknoQrIPfzqQd05UkFw=
+github.com/ikawaha/kagome-dict/ipa v1.2.6 h1:Bcvm4jgxAAnTIKb6ckqUKBiFDN0wuanFfycMuYt7xGQ=
+github.com/ikawaha/kagome-dict/ipa v1.2.6/go.mod h1:ONdTMUAKMCq9yx4s69QRtPcJLEMVM0BNNYQrMCJLWb0=
+github.com/ikawaha/kagome/v2 v2.11.0 h1:R914EkRzay9qtUbsFzEbcdZ3wHwwSPvbPkuBI1oIf78=
+github.com/ikawaha/kagome/v2 v2.11.0/go.mod h1:6mYPezBou+iNVnX9uNa00Sfu6S6t2zcM8Nv1EW9Y9so=
 github.com/jellydator/ttlcache/v3 v3.4.0 h1:YS4P125qQS0tNhtL6aeYkheEaB/m8HCqdMMP4mnWdTY=
 github.com/jellydator/ttlcache/v3 v3.4.0/go.mod h1:Hw9EgjymziQD3yGsQdf1FqFdpp7YjFMd4Srg5EJlgD4=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=

@@ -3,7 +3,10 @@ package adapters
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/ikawaha/kagome-dict/ipa"
+	"github.com/ikawaha/kagome/v2/tokenizer"
 	"github.com/shouni/go-gemini-client/gemini"
 	"golang.org/x/time/rate"
 
@@ -38,6 +41,11 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 
 	limiter := rate.NewLimiter(rate.Every(cfg.RateInterval), 1)
 
+	t, err := tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize tokenizer: %w", err)
+	}
+
 	return &LyriaAdapter{
 		lyricist: &lyriaLyricist{
 			aiClient:     aiClient,
@@ -55,6 +63,7 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 			limiter:           limiter,
 			maxConcurrency:    cfg.MaxConcurrency,
 			defaultLyriaModel: cfg.LyriaModel,
+			tokenizer:         t,
 		},
 	}, nil
 }
