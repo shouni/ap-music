@@ -1,5 +1,11 @@
 package domain
 
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
+
 // LyricsDraft は作詞フェーズの出力です。
 type LyricsDraft struct {
 	Title     string   `json:"title"`
@@ -21,6 +27,38 @@ type MusicRecipe struct {
 	Sections    []MusicSection `json:"sections"`
 	Lyrics      *LyricsDraft   `json:"lyrics,omitempty"`
 	AIModels
+}
+
+// DecodeMusicRecipeJSON parses user-submitted JSON into a MusicRecipe.
+func DecodeMusicRecipeJSON(raw string) (*MusicRecipe, error) {
+	recipeText := strings.TrimSpace(raw)
+	if recipeText == "" {
+		return nil, fmt.Errorf("music recipe json is required")
+	}
+
+	var recipe MusicRecipe
+	if err := json.Unmarshal([]byte(recipeText), &recipe); err != nil {
+		return nil, fmt.Errorf("invalid music recipe json: %w", err)
+	}
+	if err := recipe.ValidateForGeneration(); err != nil {
+		return nil, err
+	}
+
+	return &recipe, nil
+}
+
+// ValidateForGeneration checks that the recipe has enough musical direction to
+// send to the audio generator.
+func (r MusicRecipe) ValidateForGeneration() error {
+	if strings.TrimSpace(r.Title) == "" &&
+		strings.TrimSpace(r.Theme) == "" &&
+		len(r.Instruments) == 0 &&
+		len(r.Sections) == 0 &&
+		r.Lyrics == nil {
+		return fmt.Errorf("music recipe must include title, theme, instruments, sections, or lyrics")
+	}
+
+	return nil
 }
 
 // MusicSection は曲内セクションです。

@@ -21,7 +21,7 @@ func TestTaskFactoryBuildUsesProvidedValues(t *testing.T) {
 		allowedModes: allowed,
 	}
 
-	task := factory.Build(url.Values{
+	task := factory.BuildCompose(url.Values{
 		"job_id":        {"job-123"},
 		"url":           {" https://example.com "},
 		"text":          {" hello "},
@@ -33,6 +33,7 @@ func TestTaskFactoryBuildUsesProvidedValues(t *testing.T) {
 	})
 
 	expected := domain.Task{
+		Command:    domain.TaskCommandCompose,
 		JobID:      "job-123",
 		RequestURL: "https://example.com",
 		InputText:  "hello",
@@ -59,7 +60,7 @@ func TestTaskFactoryBuildWithInvalidMode(t *testing.T) {
 		allowedModes: []string{"jazz"},
 	}
 
-	task := factory.Build(url.Values{
+	task := factory.BuildCompose(url.Values{
 		"compose_mode": {"rave"},
 	})
 
@@ -75,7 +76,7 @@ func TestTaskFactoryBuildGeneratesFallbacks(t *testing.T) {
 		// allowedModes を指定しない場合、全ての入力は空文字として扱われる
 	}
 
-	task := factory.Build(url.Values{
+	task := factory.BuildCompose(url.Values{
 		"seed": {"not-a-number"},
 	})
 
@@ -84,4 +85,77 @@ func TestTaskFactoryBuildGeneratesFallbacks(t *testing.T) {
 	}
 	assert.Equal(t, "generated-job", task.JobID)
 	assert.Equal(t, now, task.CreatedAt)
+}
+
+func TestTaskFactoryBuildGenerateFromRecipe(t *testing.T) {
+	now := time.Date(2026, 4, 26, 10, 30, 0, 0, time.UTC)
+	factory := &taskFactory{
+		now:      func() time.Time { return now },
+		newSeed:  func() int64 { return 99 },
+		newJobID: func(time.Time) string { return "generated-job" },
+	}
+
+	task, err := factory.BuildGenerateFromRecipe(url.Values{
+		"recipe_json":   {` {"title":"x"} `},
+		"compose_model": {" lyria-audio "},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, domain.TaskCommandGenerateFromRecipe, task.Command)
+	assert.Equal(t, "generated-job", task.JobID)
+	if assert.NotNil(t, task.Recipe) {
+		assert.Equal(t, "x", task.Recipe.Title)
+	}
+	assert.Equal(t, "lyria-audio", task.AudioModel)
+	if assert.NotNil(t, task.Seed) {
+		assert.Equal(t, int64(99), *task.Seed)
+	}
+}
+
+func TestTaskFactoryBuildGenerateFromRecipeKeepsRecipeSeedWhenFormSeedIsEmpty(t *testing.T) {
+	now := time.Date(2026, 4, 26, 10, 30, 0, 0, time.UTC)
+	factory := &taskFactory{
+		now:      func() time.Time { return now },
+		newSeed:  func() int64 { return 99 },
+		newJobID: func(time.Time) string { return "generated-job" },
+	}
+
+	task, err := factory.BuildGenerateFromRecipe(url.Values{
+		"recipe_json": {`{"title":"x","seed":42}`},
+	})
+
+	assert.NoError(t, err)
+	assert.Nil(t, task.Seed)
+	if assert.NotNil(t, task.Recipe) && assert.NotNil(t, task.Recipe.Seed) {
+		assert.Equal(t, int64(42), *task.Recipe.Seed)
+	}
+}
+
+func TestTaskFactoryBuildGenerateFromRecipeRejectsInvalidRecipeJSON(t *testing.T) {
+	factory := &taskFactory{
+		now:      func() time.Time { return time.Date(2026, 4, 26, 10, 30, 0, 0, time.UTC) },
+		newSeed:  func() int64 { return 99 },
+		newJobID: func(time.Time) string { return "generated-job" },
+	}
+
+	_, err := factory.BuildGenerateFromRecipe(url.Values{
+		"recipe_json": {"{not-json"},
+	})
+
+	assert.Error(t, err)
+}
+
+func TestTaskFactoryBuildGenerateFromRecipeRejectsInvalidSeed(t *testing.T) {
+	factory := &taskFactory{
+		now:      func() time.Time { return time.Date(2026, 4, 26, 10, 30, 0, 0, time.UTC) },
+		newSeed:  func() int64 { return 99 },
+		newJobID: func(time.Time) string { return "generated-job" },
+	}
+
+	_, err := factory.BuildGenerateFromRecipe(url.Values{
+		"recipe_json": {`{"title":"x"}`},
+		"seed":        {"abc"},
+	})
+
+	assert.Error(t, err)
 }

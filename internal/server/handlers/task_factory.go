@@ -36,8 +36,8 @@ func newTaskFactory(allowedModes []string) *taskFactory {
 	}
 }
 
-// Build はフォームデータからタスクを構築します。フォームデータのバリデーションとタスクの構築を実行します。
-func (f *taskFactory) Build(form url.Values) domain.Task {
+// BuildCompose はフォームデータから通常の作曲タスクを構築します。
+func (f *taskFactory) BuildCompose(form url.Values) domain.Task {
 	createdAt := f.now()
 
 	rawMode := strings.TrimSpace(form.Get("compose_mode"))
@@ -47,6 +47,7 @@ func (f *taskFactory) Build(form url.Values) domain.Task {
 	}
 
 	task := domain.Task{
+		Command:    domain.TaskCommandCompose,
 		JobID:      strings.TrimSpace(form.Get("job_id")),
 		RequestURL: strings.TrimSpace(form.Get("url")),
 		InputText:  strings.TrimSpace(form.Get("text")),
@@ -60,11 +61,59 @@ func (f *taskFactory) Build(form url.Values) domain.Task {
 		},
 	}
 
+	f.ensureJobID(&task, createdAt)
+
+	return task
+}
+
+// BuildGenerateFromRecipe はMusicRecipe JSONフォームからPhase 4/5専用タスクを構築します。
+func (f *taskFactory) BuildGenerateFromRecipe(form url.Values) (domain.Task, error) {
+	createdAt := f.now()
+	recipe, err := domain.DecodeMusicRecipeJSON(form.Get("recipe_json"))
+	if err != nil {
+		return domain.Task{}, err
+	}
+
+	seed, err := parseOptionalSeed(form.Get("seed"))
+	if err != nil {
+		return domain.Task{}, err
+	}
+	if seed == nil && recipe.Seed == nil {
+		seed = new(f.newSeed())
+	}
+
+	task := domain.Task{
+		Command:   domain.TaskCommandGenerateFromRecipe,
+		JobID:     strings.TrimSpace(form.Get("job_id")),
+		Recipe:    recipe,
+		CreatedAt: createdAt,
+		AIModels: domain.AIModels{
+			AudioModel: strings.TrimSpace(form.Get("compose_model")),
+			Seed:       seed,
+		},
+	}
+
+	f.ensureJobID(&task, createdAt)
+
+	return task, nil
+}
+
+func (f *taskFactory) ensureJobID(task *domain.Task, createdAt time.Time) {
 	if task.JobID == "" {
 		task.JobID = f.newJobID(createdAt)
 	}
+}
 
-	return task
+func parseOptionalSeed(raw string) (*int64, error) {
+	seedText := strings.TrimSpace(raw)
+	if seedText == "" {
+		return nil, nil
+	}
+	if val, err := strconv.ParseInt(seedText, 10, 64); err == nil {
+		val = val & math.MaxInt32
+		return &val, nil
+	}
+	return nil, fmt.Errorf("invalid seed: %s", seedText)
 }
 
 // parseSeed 指定された生のシード文字列を解析してint64ポインタに変換します。解析に失敗した場合は、フォールバック関数を使用します。

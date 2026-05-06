@@ -88,16 +88,7 @@ func (s *SlackAdapter) NotifyError(ctx context.Context, errDetail error, req dom
 
 	title := slackErrorTitle
 	var sb strings.Builder
-	if req.SourceURL != "" {
-		sb.WriteString(fmt.Sprintf("*ソース:* %s\n", req.SourceURL))
-	}
-	if req.OutputCategory != "" {
-		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
-	}
-
-	if req.Seed != nil {
-		sb.WriteString(fmt.Sprintf("*Seed:* `%d` 🎲\n", *req.Seed))
-	}
+	writeSlackRequestMetadata(&sb, req)
 
 	if sb.Len() > 0 {
 		sb.WriteString("\n")
@@ -122,16 +113,7 @@ func (s *SlackAdapter) NotifyError(ctx context.Context, errDetail error, req dom
 func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domain.NotificationRequest) string {
 	var sb strings.Builder
 
-	if req.SourceURL != "" {
-		sb.WriteString(fmt.Sprintf("*ソース:* %s\n", req.SourceURL))
-	}
-	if req.OutputCategory != "" {
-		sb.WriteString(fmt.Sprintf("*カテゴリ:* %s\n", req.OutputCategory))
-	}
-
-	if req.Seed != nil {
-		sb.WriteString(fmt.Sprintf("*Seed:* `%d` 🎲\n", *req.Seed))
-	}
+	writeSlackRequestMetadata(&sb, req)
 
 	if historyURL := s.historyDetailURL(result.JobID); historyURL != "" {
 		sb.WriteString(fmt.Sprintf("*History Detail:* <%s|%s>\n", historyURL, result.JobID))
@@ -156,6 +138,22 @@ func (s *SlackAdapter) buildSlackContent(result *domain.PublishResult, req domai
 	}
 
 	return sb.String()
+}
+
+func writeSlackRequestMetadata(sb *strings.Builder, req domain.NotificationRequest) {
+	if req.Command != "" {
+		sb.WriteString(fmt.Sprintf("*Command:* `%s`\n", req.Command))
+	}
+	if req.SourceURL != "" {
+		sb.WriteString(fmt.Sprintf("*ソース:* %s\n", req.SourceURL))
+	}
+	if req.Mode != "" {
+		sb.WriteString(fmt.Sprintf("*Mode:* `%s`\n", req.Mode))
+	}
+
+	if req.Seed != nil {
+		sb.WriteString(fmt.Sprintf("*Seed:* `%d` 🎲\n", *req.Seed))
+	}
 }
 
 func (s *SlackAdapter) historyDetailURL(jobID string) string {

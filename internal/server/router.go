@@ -81,6 +81,8 @@ func setupRoutes(r chi.Router, h *builder.AppHandlers) {
 		if h.Web != nil {
 			r.Get("/", h.Web.Home)
 			r.Post("/web/compose", h.Web.EnqueueTask)
+			r.Get("/web/generate-from-recipe", h.Web.GenerateFromRecipe)
+			r.Post("/web/generate-from-recipe", h.Web.EnqueueGenerateFromRecipe)
 			r.Route("/web/history", func(r chi.Router) {
 				r.Get("/", h.Web.ServeHistory)
 				r.Get("/{jobID}", h.Web.ServeDetails)
