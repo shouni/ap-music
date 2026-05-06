@@ -42,9 +42,9 @@ func (p MusicPipeline) Execute(ctx context.Context, task domain.Task) (err error
 
 	switch task.NormalizedCommand() {
 	case domain.TaskCommandCompose:
-		return p.executeCompose(ctx, task, notifReq)
+		return p.executeCompose(ctx, task, &notifReq)
 	case domain.TaskCommandGenerateFromRecipe:
-		return p.executeGenerateFromRecipe(ctx, task, notifReq)
+		return p.executeGenerateFromRecipe(ctx, task, &notifReq)
 	default:
 		return fmt.Errorf("unsupported command: %s", task.Command)
 	}
@@ -57,7 +57,7 @@ func notificationMode(task domain.Task) string {
 	return task.AIModels.ComposeMode
 }
 
-func (p MusicPipeline) executeCompose(ctx context.Context, task domain.Task, notifReq domain.NotificationRequest) error {
+func (p MusicPipeline) executeCompose(ctx context.Context, task domain.Task, notifReq *domain.NotificationRequest) error {
 	// 3. 各フェーズの実行
 
 	// Step A: コンテキスト収集（外部情報の取得）
@@ -81,14 +81,14 @@ func (p MusicPipeline) executeCompose(ctx context.Context, task domain.Task, not
 	}
 
 	// Step D: 成功通知
-	if nErr := p.Notifier.NotifyWithRequest(ctx, result, notifReq); nErr != nil {
+	if nErr := p.Notifier.NotifyWithRequest(ctx, result, *notifReq); nErr != nil {
 		slog.WarnContext(ctx, "success notification failed", "error", nErr)
 	}
 
 	return nil
 }
 
-func (p MusicPipeline) executeGenerateFromRecipe(ctx context.Context, task domain.Task, notifReq domain.NotificationRequest) error {
+func (p MusicPipeline) executeGenerateFromRecipe(ctx context.Context, task domain.Task, notifReq *domain.NotificationRequest) error {
 	if task.Recipe == nil {
 		return fmt.Errorf("recipe is required for command %q", domain.TaskCommandGenerateFromRecipe)
 	}
@@ -98,6 +98,7 @@ func (p MusicPipeline) executeGenerateFromRecipe(ctx context.Context, task domai
 	}
 	notifReq.Title = recipeTitle(recipe)
 	applyTaskOverridesToRecipe(task, recipe)
+	notifReq.Seed = recipe.AIModels.Seed
 
 	wav, err := p.AudioGenerator.GenerateAudio(ctx, recipe, nil)
 	if err != nil {
@@ -109,7 +110,7 @@ func (p MusicPipeline) executeGenerateFromRecipe(ctx context.Context, task domai
 		return fmt.Errorf("publish phase failed: %w", err)
 	}
 
-	if nErr := p.Notifier.NotifyWithRequest(ctx, result, notifReq); nErr != nil {
+	if nErr := p.Notifier.NotifyWithRequest(ctx, result, *notifReq); nErr != nil {
 		slog.WarnContext(ctx, "success notification failed", "error", nErr)
 	}
 

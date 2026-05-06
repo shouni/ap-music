@@ -127,6 +127,9 @@ func TestMusicPipelineGenerateFromRecipeRunsPhase4And5Only(t *testing.T) {
 	if notifier.req.Title != "Recipe Song" {
 		t.Fatalf("expected title in success notification, got %q", notifier.req.Title)
 	}
+	if notifier.req.Seed == nil || *notifier.req.Seed != seed {
+		t.Fatalf("expected task seed in success notification, got %#v", notifier.req.Seed)
+	}
 	if notifier.req.Mode != "" {
 		t.Fatalf("expected empty mode for recipe generation, got %q", notifier.req.Mode)
 	}
@@ -150,6 +153,42 @@ func TestMusicPipelineComposeNotificationUsesComposeMode(t *testing.T) {
 
 	if notifReq.Mode != "rave" {
 		t.Fatalf("expected compose mode, got %q", notifReq.Mode)
+	}
+}
+
+func TestMusicPipelineGenerateFromRecipeNotificationUsesRecipeSeed(t *testing.T) {
+	t.Parallel()
+
+	audio := &recordingAudioGenerator{}
+	notifier := &recordingNotifier{}
+	p := MusicPipeline{
+		Collector:      panicCollector{},
+		MusicGenerator: panicMusicGenerator{},
+		AudioGenerator: audio,
+		Publisher:      &recordingPublisher{},
+		Notifier:       notifier,
+	}
+	recipeSeed := int64(42)
+
+	err := p.Execute(context.Background(), domain.Task{
+		Command: domain.TaskCommandGenerateFromRecipe,
+		JobID:   "job-1",
+		Recipe: &domain.MusicRecipe{
+			Title: "Recipe Seed Song",
+			AIModels: domain.AIModels{
+				Seed: &recipeSeed,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	if audio.recipe == nil || audio.recipe.Seed == nil || *audio.recipe.Seed != recipeSeed {
+		t.Fatalf("expected recipe seed to be used for generation, got %#v", audio.recipe)
+	}
+	if notifier.req.Seed == nil || *notifier.req.Seed != recipeSeed {
+		t.Fatalf("expected recipe seed in success notification, got %#v", notifier.req.Seed)
 	}
 }
 
