@@ -59,10 +59,10 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 		audio: &lyriaAudioGenerator{
 			aiClient:          aiClient,
 			promptBuilder:     lyriaAudioPromptBuilder{},
+			converter:         converter,
 			limiter:           limiter,
 			maxConcurrency:    cfg.MaxConcurrency,
 			defaultLyriaModel: cfg.LyriaModel,
-			converter:         converter,
 		},
 	}, nil
 }

@@ -44,6 +44,12 @@ type MockPromptGen struct {
 	mock.Mock
 }
 
+type noopPhoneticConverter struct{}
+
+func (noopPhoneticConverter) ConvertToReading(input string) string {
+	return input
+}
+
 // GenerateLyrics に mode 引数を追加
 func (m *MockPromptGen) GenerateLyrics(mode string, input string) (string, error) {
 	args := m.Called(mode, input)
@@ -79,6 +85,7 @@ func TestLyriaAdapter_Run(t *testing.T) {
 			defaultLyriaModel: "lyria-3",
 			limiter:           rate.NewLimiter(rate.Inf, 0),
 			promptBuilder:     lyriaAudioPromptBuilder{},
+			converter:         noopPhoneticConverter{},
 		},
 	}
 
