@@ -81,7 +81,7 @@
                 <!-- 右側：操作エリア（再生・詳細・削除） -->
                 <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-2 position-relative z-3">
                     <div class="d-flex align-items-center gap-2">
-                        <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="none" data-job-id="{{.JobID}}"></audio>
+                        <audio id="audio-{{.JobID}}" src="/web/audio/{{.JobID}}" preload="metadata" data-job-id="{{.JobID}}"></audio>
                         <button class="btn btn-primary rounded-circle shadow-sm audio-toggle-btn"
                                 id="btn-{{.JobID}}"
                                 data-job-id="{{.JobID}}"
@@ -240,11 +240,14 @@
             setPlaylistButton();
         }).catch(err => {
             console.error("再生に失敗しました:", err);
-            playlistActive = false;
-            playlistPaused = false;
-            setPlayingItem(null);
-            setPlaylistButton();
-            alert("楽曲ファイルを読み込めませんでした。");
+            if (playlistActive && continuePlaylist) {
+                console.warn("この曲をスキップして次へ進みます...");
+                playNextPlaylistAudio();
+            } else {
+                playlistActive = false;
+                setPlaylistButton();
+                alert("楽曲のストリーミングに失敗したのだ。");
+            }
         });
     }
 

@@ -10,12 +10,15 @@
     --color-text-code: #eceff1;
   }
 
-  /* オーディオプレイヤー */
   .music-view-container .audio-player-unit {
-    background-color: #f8f9fa;
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    transition: all 0.3s ease;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .music-view-container .audio-player-unit:hover {
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08) !important;
   }
 
   .music-view-container audio {
@@ -57,7 +60,6 @@
     opacity: 1;
   }
 
-  /* アクティブなタブの下線 */
   .music-view-container .nav-tabs .nav-link::after {
     content: "";
     position: absolute;
@@ -98,18 +100,20 @@
 <div class="container mt-4 music-view-container">
   <div class="card shadow-sm border-0">
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-3">
-      <h3 class="mb-0 fs-4">{{.Data.Recipe.Title}}</h3>
-      <span class="badge bg-info">Lyria 3 Generation</span>
+      <h3 class="mb-0 fs-5 fw-bold">{{.Data.Recipe.Title}}</h3>
+      <div class="d-flex gap-2">
+        <span class="badge bg-success opacity-75">Lyria 3</span>
+        <span class="badge bg-info text-dark small">High-Fidelity</span>
+      </div>
     </div>
 
     <div class="card-body p-4">
-      <!-- プレイヤー部分 -->
-      <div class="text-center mb-4 p-4 sticky-top audio-player-unit shadow-sm" style="top: 1rem; z-index: 1010;">
+      <div class="text-center mb-5 p-4 sticky-top audio-player-unit shadow-sm" style="top: 1rem; z-index: 1010;">
         <div class="d-flex justify-content-between align-items-center mb-2 px-1">
           <small class="text-secondary fw-bold"><i class="bi bi-waveform me-1"></i>AUDIO PREVIEW</small>
-          <small class="text-muted small">High-Fidelity Mode</small>
+          <small class="text-muted small">Streaming Enabled</small>
         </div>
-        <audio controls src="{{.Data.AudioURL}}" class="w-100">
+        <audio controls src="{{.Data.AudioURL}}" class="w-100" preload="metadata">
           ブラウザが音声再生に対応していません。
         </audio>
       </div>
@@ -187,15 +191,16 @@
       </div>
     </div>
 
-    <!-- フッターアクション -->
-    <div class="card-footer d-flex justify-content-between align-items-center bg-light p-3 border-top-0">
-      <button class="btn btn-outline-danger" onclick="deleteHistory('{{.Data.ID}}')">
-        <i class="bi bi-trash me-1"></i> この履歴を削除
-      </button>
-
-      <a href="/web/history" class="btn btn-outline-secondary">
+    <div class="card-footer d-flex justify-content-between align-items-center bg-light p-3 border-top">
+      <a href="/web/history" class="btn btn-link text-secondary text-decoration-none">
         <i class="bi bi-arrow-left me-1"></i> 履歴一覧へ戻る
       </a>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-danger" onclick="deleteHistory('{{.Data.ID}}')">
+          <i class="bi bi-trash me-1"></i> 削除
+        </button>
+      </div>
     </div>
   </div>
 </div>
