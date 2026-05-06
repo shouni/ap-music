@@ -64,7 +64,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	// 4. Music Generator
-	musicGenerator, err := adapters.NewLyriaAdapter(cfg, aiClient, promptGen)
+	lyriaAdapter, err := adapters.NewLyriaAdapter(cfg, aiClient, promptGen)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func BuildContainer(ctx context.Context, cfg *config.Config) (container *app.Con
 	}
 
 	// 5. Pipeline (Core Logic)
-	pipeline, err := buildPipeline(reader, musicGenerator, musicGenerator, publisher, slack)
+	pipeline, err := buildPipeline(reader, lyriaAdapter, lyriaAdapter, publisher, slack)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize music pipeline: %w", err)
 	}
