@@ -190,10 +190,11 @@ func (g *lyriaAudioGenerator) convertToReading(input string) string {
 		if len(features) > readingIndex && features[readingIndex] != "*" {
 			reading := features[readingIndex]
 
-			if len(features) > posIndex && features[posIndex] == "助詞" {
-				if token.Surface == "は" {
+			if features[posIndex] == "助詞" {
+				switch token.Surface {
+				case "は":
 					reading = "ワ"
-				} else if token.Surface == "へ" {
+				case "へ":
 					reading = "エ"
 				}
 			}
