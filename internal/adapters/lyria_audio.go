@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/ikawaha/kagome/v2/tokenizer"
 	"github.com/shouni/audio/wav"
 	"github.com/shouni/go-gemini-client/gemini"
 	"golang.org/x/sync/errgroup"
@@ -17,6 +15,10 @@ import (
 	"ap-music/internal/domain"
 )
 
+type phoneticConverter interface {
+	ConvertToReading(input string) string
+}
+
 // lyriaAudioGenerator は MusicRecipe を Lyria に渡し、音声バイナリを生成します。
 type lyriaAudioGenerator struct {
 	aiClient          gemini.Generator
@@ -25,7 +27,7 @@ type lyriaAudioGenerator struct {
 	limiter           *rate.Limiter
 	maxConcurrency    int
 	group             singleflight.Group
-	tokenizer         *tokenizer.Tokenizer
+	converter         phoneticConverter
 }
 
 // GenerateAudio は MusicRecipe 全体を 1 回の Lyria 呼び出しで音声化します。
@@ -155,7 +157,7 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 // buildMultiModalParts はプロンプトと画像を Lyria 入力用の Part スライスにまとめます。
 func (g *lyriaAudioGenerator) buildMultiModalParts(prompt string, images []domain.ImagePayload) []*genai.Part {
 	parts := make([]*genai.Part, 0, len(images)+1)
-	safePrompt := g.convertToReading(prompt)
+	safePrompt := g.converter.ConvertToReading(prompt)
 	parts = append(parts, &genai.Part{Text: safePrompt})
 
 	for _, img := range images {
@@ -170,41 +172,6 @@ func (g *lyriaAudioGenerator) buildMultiModalParts(prompt string, images []domai
 		})
 	}
 	return parts
-}
-
-// convertToReading はテキスト内の日本語を抽出し、カタカナの読みに変換します。
-// 英単語や記号、改行などはそのまま保持します。
-func (g *lyriaAudioGenerator) convertToReading(input string) string {
-	const (
-		posIndex     = 0
-		readingIndex = 7
-	)
-
-	tokens := g.tokenizer.Tokenize(input)
-	var sb strings.Builder
-	sb.Grow(len(input) * 2)
-
-	for _, token := range tokens {
-		features := token.Features()
-
-		if len(features) > readingIndex && features[readingIndex] != "*" {
-			reading := features[readingIndex]
-
-			if features[posIndex] == "助詞" {
-				switch token.Surface {
-				case "は":
-					reading = "ワ"
-				case "へ":
-					reading = "エ"
-				}
-			}
-			sb.WriteString(reading)
-		} else {
-			sb.WriteString(token.Surface)
-		}
-	}
-
-	return sb.String()
 }
 
 // buildAudioGenerateOptions は Lyria 音声生成で共通して使う生成オプションを組み立てます。

@@ -5,10 +5,8 @@ go 1.26
 require (
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/google/uuid v1.6.0
-	github.com/ikawaha/kagome-dict/ipa v1.2.6
-	github.com/ikawaha/kagome/v2 v2.11.0
 	github.com/jellydator/ttlcache/v3 v3.4.0
-	github.com/shouni/audio v1.0.5
+	github.com/shouni/audio v1.0.6
 	github.com/shouni/gcp-kit v1.1.3
 	github.com/shouni/go-gemini-client v1.2.12
 	github.com/shouni/go-http-kit v1.4.2
@@ -77,6 +75,8 @@ require (
 	github.com/gorilla/sessions v1.4.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/ikawaha/kagome-dict v1.1.7 // indirect
+	github.com/ikawaha/kagome-dict/ipa v1.2.6 // indirect
+	github.com/ikawaha/kagome/v2 v2.11.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
