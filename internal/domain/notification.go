@@ -10,6 +10,9 @@ type NotificationRequest struct {
 	// Command は、実行されたタスク種別です。
 	Command string `json:"command,omitempty"`
 
+	// Title は、生成対象の楽曲タイトルです。
+	Title string `json:"title,omitempty"`
+
 	// SourceURL は、元になった記事やスクリプトのURLです。
 	SourceURL string `json:"source_url"`
 

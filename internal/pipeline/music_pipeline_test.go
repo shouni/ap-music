@@ -124,6 +124,9 @@ func TestMusicPipelineGenerateFromRecipeRunsPhase4And5Only(t *testing.T) {
 	if notifier.req.Command != string(domain.TaskCommandGenerateFromRecipe) {
 		t.Fatalf("expected command in success notification, got %q", notifier.req.Command)
 	}
+	if notifier.req.Title != "Recipe Song" {
+		t.Fatalf("expected title in success notification, got %q", notifier.req.Title)
+	}
 	if notifier.req.Mode != "" {
 		t.Fatalf("expected empty mode for recipe generation, got %q", notifier.req.Mode)
 	}
