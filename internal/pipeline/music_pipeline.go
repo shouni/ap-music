@@ -72,6 +72,7 @@ func (p MusicPipeline) executeCompose(ctx context.Context, task domain.Task, not
 	if err != nil {
 		return fmt.Errorf("music generation failed: %w", err)
 	}
+	notifReq.Title = recipeTitle(recipe)
 
 	// Step C: 成果物の永続化
 	result, err := p.Publisher.Publish(ctx, task, recipe, wav)
@@ -95,6 +96,7 @@ func (p MusicPipeline) executeGenerateFromRecipe(ctx context.Context, task domai
 	if err := recipe.ValidateForGeneration(); err != nil {
 		return fmt.Errorf("recipe validation failed: %w", err)
 	}
+	notifReq.Title = recipeTitle(recipe)
 	applyTaskOverridesToRecipe(task, recipe)
 
 	wav, err := p.AudioGenerator.GenerateAudio(ctx, recipe, nil)
@@ -112,6 +114,13 @@ func (p MusicPipeline) executeGenerateFromRecipe(ctx context.Context, task domai
 	}
 
 	return nil
+}
+
+func recipeTitle(recipe *domain.MusicRecipe) string {
+	if recipe == nil {
+		return ""
+	}
+	return recipe.Title
 }
 
 func applyTaskOverridesToRecipe(task domain.Task, recipe *domain.MusicRecipe) {

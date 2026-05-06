@@ -144,6 +144,9 @@ func writeSlackRequestMetadata(sb *strings.Builder, req domain.NotificationReque
 	if req.Command != "" {
 		sb.WriteString(fmt.Sprintf("*Command:* `%s`\n", req.Command))
 	}
+	if req.Title != "" {
+		sb.WriteString(fmt.Sprintf("*Title:* %s\n", req.Title))
+	}
 	if req.SourceURL != "" {
 		sb.WriteString(fmt.Sprintf("*ソース:* %s\n", req.SourceURL))
 	}

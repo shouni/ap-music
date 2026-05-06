@@ -29,12 +29,16 @@ func TestSlackMetadataIncludesCommand(t *testing.T) {
 	var sb strings.Builder
 	writeSlackRequestMetadata(&sb, domain.NotificationRequest{
 		Command: string(domain.TaskCommandCompose),
+		Title:   "Midnight Recipe",
 		Mode:    "rave",
 	})
 
 	got := sb.String()
 	if !strings.Contains(got, "*Command:* `compose`") {
 		t.Fatalf("expected command in slack metadata, got %q", got)
+	}
+	if !strings.Contains(got, "*Title:* Midnight Recipe") {
+		t.Fatalf("expected title in slack metadata, got %q", got)
 	}
 	if !strings.Contains(got, "*Mode:* `rave`") {
 		t.Fatalf("expected mode in slack metadata, got %q", got)
