@@ -107,6 +107,16 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	h.render(w, r, http.StatusOK, "compose_form.html", "Compose", data)
 }
 
+// GenerateFromRecipe はMusicRecipe JSONから生成する画面を表示します。
+func (h *Handler) GenerateFromRecipe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	h.render(w, r, http.StatusOK, "generate_recipe_form.html", "Generate from Recipe", nil)
+}
+
 // render は HTML テンプレートをレンダリングし、レスポンスを書き込みます。
 func (h *Handler) render(w http.ResponseWriter, r *http.Request, status int, pageName string, title string, data any) {
 	tmpl, ok := h.templateCache[pageName]

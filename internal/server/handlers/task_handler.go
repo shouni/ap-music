@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"ap-music/internal/domain"
 )
 
-// EnqueueTask はフォーム入力をジョブ化してキューに積みます。
+// EnqueueTask は通常の作曲フォーム入力をジョブ化してキューに積みます。
 func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 	// POSTメソッド以外は許可しない
 	if r.Method != http.MethodPost {
@@ -22,13 +24,42 @@ func (h *Handler) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// タスクの構築
-	task := h.taskFactory.Build(r.Form)
+	task := h.taskFactory.BuildCompose(r.Form)
 	// バリデーションチェック
 	if err := task.ValidateSubmission(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	h.enqueueAndRespond(w, r, task)
+}
+
+// EnqueueGenerateFromRecipe はMusicRecipe JSONからPhase 4/5専用ジョブをキューに積みます。
+func (h *Handler) EnqueueGenerateFromRecipe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+
+	task, err := h.taskFactory.BuildGenerateFromRecipe(r.Form)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := task.ValidateSubmission(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	h.enqueueAndRespond(w, r, task)
+}
+
+func (h *Handler) enqueueAndRespond(w http.ResponseWriter, r *http.Request, task domain.Task) {
 	// Cloud Tasks 等へのエンキュー実行
 	if err := h.taskEnqueuer.Enqueue(r.Context(), task); err != nil {
 		slog.Error("failed to enqueue task", "job_id", task.JobID, "error", err)

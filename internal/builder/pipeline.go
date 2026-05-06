@@ -8,14 +8,16 @@ import (
 // buildPipeline は、提供された設定と各コンポーネントを使用して新しいパイプラインを初期化して返します。
 func buildPipeline(
 	collector domain.Collector,
-	runner domain.MusicRunner,
+	musicGenerator domain.MusicRunner,
+	audioGenerator domain.AudioGenerator,
 	publisher domain.Publisher,
 	notifier domain.Notifier,
 ) (domain.Pipeline, error) {
 	return pipeline.MusicPipeline{
-		Collector: collector,
-		Runner:    runner,
-		Publisher: publisher,
-		Notifier:  notifier,
+		Collector:      collector,
+		MusicGenerator: musicGenerator,
+		AudioGenerator: audioGenerator,
+		Publisher:      publisher,
+		Notifier:       notifier,
 	}, nil
 }
