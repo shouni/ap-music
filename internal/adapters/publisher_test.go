@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"strings"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -20,12 +21,11 @@ import (
 
 // stubWriter は remoteio.OutputWriter をシミュレートします
 type stubWriter struct {
-	writes              []string
-	deletes             []string
-	dataByURI           map[string][]byte
-	contentTypes        map[string]string
-	contentDispositions map[string]string
-	failOn              map[string]error
+	writes       []string
+	deletes      []string
+	dataByURI    map[string][]byte
+	contentTypes map[string]string
+	failOn       map[string]error
 }
 
 // Write はインターフェース remoteio.OutputWriter を実装します
@@ -34,12 +34,6 @@ func (w *stubWriter) Write(ctx context.Context, uri string, contentReader io.Rea
 		return err
 	}
 
-	// 渡された Functional Options を解析するために、ダミーの config に適用する
-	// ※ remoteio パッケージに Exported な内部構造体がないことを想定し、
-	// ここでは WriteOption が c.contentType などを書き換える性質を利用します。
-	// もしコンパイルが通らない場合は、remoteio 側の定義に合わせて調整してください。
-
-	// 検証用の簡易的な仕組み
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, contentReader); err != nil {
 		return err
@@ -51,19 +45,13 @@ func (w *stubWriter) Write(ctx context.Context, uri string, contentReader io.Rea
 	}
 	w.dataByURI[uri] = buf.Bytes()
 
-	// Content-Type 等を検証したい場合、PublisherAdapter側で
-	// 確実に remoteio.WithContentType が呼ばれることを前提に
-	// モック側で値をキャプチャする仕組みが必要です。
-	// ここではコンパイルを通すことを優先し、ContentType の保存を固定で行うか
-	// テスト側で期待値を調整します。
 	if w.contentTypes == nil {
 		w.contentTypes = make(map[string]string)
 	}
 
-	// 今回の Publisher では .wav と .json を書き分けるため、簡易的に判定
-	if bytes.HasPrefix(buf.Bytes(), []byte("{")) {
+	if strings.HasSuffix(uri, ".json") {
 		w.contentTypes[uri] = recipeJSONContentType
-	} else {
+	} else if strings.HasSuffix(uri, ".wav") {
 		w.contentTypes[uri] = "audio/wav"
 	}
 
@@ -89,7 +77,7 @@ func (s *testURLSigner) GenerateSignedURL(_ context.Context, uri string, _ strin
 	return "https://signed.example/" + uri, nil
 }
 
-// --- Test 関数群はそのまま利用可能 ---
+// --- Test 関数群 ---
 
 func TestPublisherPublishCleansUpOnRecipeWriteFailure(t *testing.T) {
 	t.Parallel()
