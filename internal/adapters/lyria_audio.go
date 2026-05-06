@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/ikawaha/kagome/v2/tokenizer"
 	"github.com/shouni/audio/wav"
 	"github.com/shouni/go-gemini-client/gemini"
 	"golang.org/x/sync/errgroup"
@@ -23,6 +25,7 @@ type lyriaAudioGenerator struct {
 	limiter           *rate.Limiter
 	maxConcurrency    int
 	group             singleflight.Group
+	tokenizer         *tokenizer.Tokenizer
 }
 
 // GenerateAudio は MusicRecipe 全体を 1 回の Lyria 呼び出しで音声化します。
@@ -152,7 +155,8 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 // buildMultiModalParts はプロンプトと画像を Lyria 入力用の Part スライスにまとめます。
 func (g *lyriaAudioGenerator) buildMultiModalParts(prompt string, images []domain.ImagePayload) []*genai.Part {
 	parts := make([]*genai.Part, 0, len(images)+1)
-	parts = append(parts, &genai.Part{Text: prompt})
+	safePrompt := g.convertToReading(prompt)
+	parts = append(parts, &genai.Part{Text: safePrompt})
 
 	for _, img := range images {
 		if len(img.Data) == 0 {
@@ -166,6 +170,25 @@ func (g *lyriaAudioGenerator) buildMultiModalParts(prompt string, images []domai
 		})
 	}
 	return parts
+}
+
+// convertToReading はテキスト内の日本語を抽出し、カタカナの読みに変換します。
+// 英単語や記号、改行などはそのまま保持します。
+func (g *lyriaAudioGenerator) convertToReading(input string) string {
+
+	tokens := g.tokenizer.Tokenize(input)
+	var sb strings.Builder
+
+	for _, token := range tokens {
+		features := token.Features()
+		if len(features) > 7 && features[7] != "*" {
+			sb.WriteString(features[7])
+		} else {
+			sb.WriteString(token.Surface)
+		}
+	}
+
+	return sb.String()
 }
 
 // buildAudioGenerateOptions は Lyria 音声生成で共通して使う生成オプションを組み立てます。
