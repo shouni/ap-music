@@ -22,14 +22,14 @@
 *   **instruments**: 3-6個、**英語**で指定（Bright Electric Guitar, Melodic Electric Bass, Punchy Pop Drums, Clear Female Vocals, Sparkling Synthesizer）。
 *   **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
-        *   **duration_seconds**: **70**
-        *   **prompt**: `[Fresh Start & Rhythmic Drive] Start with a bright, clean guitar intro and an upbeat pop rock beat. The Japanese female vocals are clear and youthful, telling a story of daily school life. Keep the arrangement light and rhythmic, with a bouncy bass line that adds to the fresh, airy atmosphere.`
+        * **duration_seconds**: **70**
+        * **prompt**: `[Verse & Narrative Build-up] Focus on the first half of the lyrics. Start with a mysterious atmospheric intro. Evolve the sound from a minimal beat to a rich, complex electronic arrangement. Progressively increase tension, ensuring the vocals lead the narrative toward the first grand peak.`
     2.  **name**: `"Chorus"`
-        *   **duration_seconds**: **90**
-        *   **prompt**: `[Sparkling Pop Anthem] The ultimate emotional climax. Unleash a bright wall of sound with melodic guitar octaves and driving drum fills. The vocals soar with high-pitched clarity and heartfelt emotion. It must feel like a burst of sunshine in a packed live house, full of energy and positive vibration.`
+        * **duration_seconds**: **90**
+        * **prompt**: `[Ultimate Chorus & Anthem] The core climax. Perform with maximum emotional intensity. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the vocals to shine as a powerful anthem.`
     3.  **name**: `"Outro"`
-        *   **duration_seconds**: **20**
-        *   **prompt**: `[Afterglow & Sunset Finish] A high-energy finish with a final happy vocal ad-lib and a ringing guitar chord. End with a clean, lingering sustain and a brief, playful synth melody that captures the feeling of walking home after school under a sunset sky.`
+        * **duration_seconds**: **20**
+        * **prompt**: `[Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Transition into a sprawling digital soundscape. Create a sophisticated fade-out with layered echoes and a resonant, lingering atmosphere.`
 
 #### 3. 出力ルール（厳守）
 *   **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。

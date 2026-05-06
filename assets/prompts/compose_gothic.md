@@ -22,14 +22,14 @@
 *   **instruments**: 3-6個、**英語**で指定（Grand Pipe Organ, Friction-heavy Cello, Distorted Low Brass, Church Bell, Soprano Choir, Timpani）。
 *   **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
-        *   **duration_seconds**: **70**
-        *   **prompt**: `[Beginning of Despair] Start with a haunting, lonely harpsichord and low pipe organ melody. The Japanese vocals should be cold, whispered, and filled with quiet madness. The feel is ritualistic and slow. Gradually layer in friction-heavy cello with raspy, dry textures and the distant tolling of a church bell. Build a cold, creeping tension like walking through a graveyard.`
+        * **duration_seconds**: **70**
+        * **prompt**: `[Verse & Narrative Build-up] Focus on the first half of the lyrics. Start with a mysterious atmospheric intro. Evolve the sound from a minimal beat to a rich, complex electronic arrangement. Progressively increase tension, ensuring the vocals lead the narrative toward the first grand peak.`
     2.  **name**: `"Chorus"`
-        *   **duration_seconds**: **90**
-        *   **prompt**: `[The Gates of Hell - Combat Phase] A massive, explosive crescendo. The pipe organ roars with full power, joined by distorted low brass that growls with abyssal energy. Add aggressive, fast-paced orchestral staccatos and thunderous, rapid timpani strikes. The Japanese vocals should ascend to a tragic, operatic scream of despair. Incorporate a soaring soprano hum and a grand liturgical choir. Every beat should feel heavy yet driven by a frantic, heroic urgency.`
+        * **duration_seconds**: **90**
+        * **prompt**: `[Ultimate Chorus & Anthem] The core climax. Perform with maximum emotional intensity. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the vocals to shine as a powerful anthem.`
     3.  **name**: `"Outro"`
-        *   **duration_seconds**: **20**
-        *   **prompt**: `[The Beautiful End] The chaotic combat sounds suddenly fade, leaving only a single, weeping violin and a faint soprano echo. The final lyrics should be delivered with a breathy, dying resonance, disappearing into a hollow, cavernous silence. The world ends with a lingering, beautiful sorrow fading into perfect darkness.`
+        * **duration_seconds**: **20**
+        * **prompt**: `[Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Transition into a sprawling digital soundscape. Create a sophisticated fade-out with layered echoes and a resonant, lingering atmosphere.`
 
 #### 3. 出力ルール（厳守）
 *   **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。

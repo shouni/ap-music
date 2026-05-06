@@ -17,13 +17,13 @@
 * **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
         * **duration_seconds**: **70**
-        * **prompt**: `[Intro & Storytelling] Start with a delicate, sparkling glass harp and piano duet. The Japanese female vocals should be breathy, intimate, and deeply emotional. Over 70 seconds, gradually introduce warm cello melodies and atmospheric orchestral pads, building a sense of longing and a grand journey about to begin.`
+        * **prompt**: `[Verse & Narrative Build-up] Focus on the first half of the lyrics. Start with a mysterious atmospheric intro. Evolve the sound from a minimal beat to a rich, complex electronic arrangement. Progressively increase tension, ensuring the vocals lead the narrative toward the first grand peak.`
     2.  **name**: `"Chorus"`
         * **duration_seconds**: **90**
-        * **prompt**: `[Grand Climax & Hymn] The ultimate emotional peak. A massive orchestral swell with powerful soaring strings and cinematic marching drums. The vocals transform into a powerful, operatic anthem. Incorporate a lush liturgical background choir to enhance the "High-Fantasy Epic" atmosphere. Every note should resonate with hope and overwhelming scale.`
+        * **prompt**: `[Ultimate Chorus & Anthem] The core climax. Perform with maximum emotional intensity. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the vocals to shine as a powerful anthem.`
     3.  **name**: `"Outro"`
         * **duration_seconds**: **20**
-        * **prompt**: `[Ethereal Echoes] A transition from the grand orchestra back to a single fading piano or flute. The final words of the lyrics should linger with a deep, cavernous reverb, fading into a shimmering, magical silence that evokes the feeling of a long story finally reaching its peaceful conclusion.`
+        * **prompt**: `[Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Transition into a sprawling digital soundscape. Create a sophisticated fade-out with layered echoes and a resonant, lingering atmosphere.`
 
 #### 3. 出力ルール（厳守）
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。

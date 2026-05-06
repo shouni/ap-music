@@ -25,13 +25,13 @@
 * **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
         * **duration_seconds**: **70**
-        * **prompt**: `[Extended Verse & Lonely Atmosphere] Start with a haunting, ethereal pad and a distant, melancholic synth motif. Over 70 seconds, introduce a driving but somber 16-beat sequence. The Japanese vocals should sound intimate and reflective, building a sense of longing and technological solitude toward the first grand peak.`
+        * **prompt**: `[Verse & Narrative Build-up] Focus on the first half of the lyrics. Start with a mysterious atmospheric intro. Evolve the sound from a minimal beat to a rich, complex electronic arrangement. Progressively increase tension, ensuring the vocals lead the narrative toward the first grand peak.`
     2.  **name**: `"Chorus"`
         * **duration_seconds**: **90**
-        * **prompt**: `[Ultimate Emotional Climax] The 90-second emotional peak. Transition into a soaring, high-energy chorus but maintain a heart-wrenching minor-key melody. The lead synth should "cry" with vibrato, blending the fast tempo with deep sorrow. The Japanese vocals should deliver a powerful, tear-jerking anthem of hope amidst sadness.`
+        * **prompt**: `[Ultimate Chorus & Anthem] The core climax. Perform with maximum emotional intensity. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the vocals to shine as a powerful anthem.`
     3.  **name**: `"Outro"`
         * **duration_seconds**: **20**
-        * **prompt**: `[Fading Echoes of Sadness] The beat drops out, leaving only the resonant, layered echoes of the main melody. A sophisticated, cold digital fade-out that leaves the listener with a sense of beautiful emptiness and lingering nostalgia.`
+        * **prompt**: `[Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Transition into a sprawling digital soundscape. Create a sophisticated fade-out with layered echoes and a resonant, lingering atmosphere.`
 
 #### 3. 出力ルール（厳守）
 * **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。

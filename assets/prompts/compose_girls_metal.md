@@ -22,14 +22,14 @@
 *   **instruments**: 3-6個、**英語**で指定（Heavy Distortion Guitar, Punchy Precision Bass, Dynamic Live Drums, Female Vocals, Analog Synthesizer）。
 *   **sections**: **以下の3つをこの順で必ず含め、合計180秒とすること。**
     1.  **name**: `"Verse"`
-        *   **duration_seconds**: **70**
-        *   **prompt**: `[Ignition & Front-Row Drive] Start with an immersive live sound, like being at the front row of a concert. Intense guitar riffs and a punchy rock beat with organic dynamics. The Japanese female vocals are energetic and youthful. Build the sonic pressure over 70 seconds with chugging rhythms and a rhythmic, melodic bass line.`
+        * **duration_seconds**: **70**
+        * **prompt**: `[Verse & Narrative Build-up] Focus on the first half of the lyrics. Start with a mysterious atmospheric intro. Evolve the sound from a minimal beat to a rich, complex electronic arrangement. Progressively increase tension, ensuring the vocals lead the narrative toward the first grand peak.`
     2.  **name**: `"Chorus"`
-        *   **duration_seconds**: **90**
-        *   **prompt**: `[Unleashed Metal Anthem] The ultimate climax. Unleash a massive wall of sound with high-gain twin guitar harmonies and aggressive, soul-stirring double-bass drumming. The vocals soar with high-pitched passion and grit. It must feel like the maximum heat of a packed live house, with heavy bass resonance vibrating through the floor.`
+        * **duration_seconds**: **90**
+        * **prompt**: `[Ultimate Chorus & Anthem] The core climax. Perform with maximum emotional intensity. The arrangement should be dense and heroic, featuring soaring synths and a relentless rhythmic drive. Maintain peak energy throughout, allowing the vocals to shine as a powerful anthem.`
     3.  **name**: `"Outro"`
-        *   **duration_seconds**: **20**
-        *   **prompt**: `[Feedback & Live Afterglow] A high-energy finish with a final soaring vocal note and a dramatic guitar shred. End with the raw, lingering ring of a distorted chord and the realistic, fading cheers of a live crowd. A brief, lighthearted synth sparkle at the very end to capture the nostalgic after-school vibe.`
+        * **duration_seconds**: **20**
+        * **prompt**: `[Outro & Cybernetic Decay] Focus on the final lyrics and emotional resolution. Transition into a sprawling digital soundscape. Create a sophisticated fade-out with layered echoes and a resonant, lingering atmosphere.`
 
 #### 3. 出力ルール（厳守）
 *   **言語**: `prompt`, `mood`, `instruments` は必ず**英語**。その他のフィールドは日本語。
