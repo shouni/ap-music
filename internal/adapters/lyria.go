@@ -42,7 +42,7 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 
 	converter, err := phonetic.NewConverter()
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize phonetic Converter: %w", err)
+		return nil, fmt.Errorf("failed to initialize phonetic converter: %w", err)
 	}
 
 	return &LyriaAdapter{
