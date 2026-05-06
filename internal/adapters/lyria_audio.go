@@ -19,21 +19,15 @@ type phoneticConverter interface {
 	ConvertToReading(input string) string
 }
 
-type noopPhoneticConverter struct{}
-
-func (noopPhoneticConverter) ConvertToReading(input string) string {
-	return input
-}
-
 // lyriaAudioGenerator は MusicRecipe を Lyria に渡し、音声バイナリを生成します。
 type lyriaAudioGenerator struct {
 	aiClient          gemini.Generator
 	promptBuilder     lyriaAudioPromptBuilder
+	converter         phoneticConverter
 	defaultLyriaModel string
 	limiter           *rate.Limiter
 	maxConcurrency    int
 	group             singleflight.Group
-	converter         phoneticConverter
 }
 
 // GenerateAudio は MusicRecipe 全体を 1 回の Lyria 呼び出しで音声化します。
@@ -163,11 +157,7 @@ func (g *lyriaAudioGenerator) generateAudioSection(ctx context.Context, recipe *
 // buildMultiModalParts はプロンプトと画像を Lyria 入力用の Part スライスにまとめます。
 func (g *lyriaAudioGenerator) buildMultiModalParts(prompt string, images []domain.ImagePayload) []*genai.Part {
 	parts := make([]*genai.Part, 0, len(images)+1)
-	converter := g.converter
-	if converter == nil {
-		converter = noopPhoneticConverter{}
-	}
-	safePrompt := converter.ConvertToReading(prompt)
+	safePrompt := g.converter.ConvertToReading(prompt)
 	parts = append(parts, &genai.Part{Text: safePrompt})
 
 	for _, img := range images {

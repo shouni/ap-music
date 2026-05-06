@@ -141,6 +141,7 @@ func TestLyriaAudioGeneratorSingleflightDeduplicatesConcurrentCalls(t *testing.T
 		defaultLyriaModel: "lyria-3",
 		limiter:           rate.NewLimiter(rate.Inf, 0),
 		promptBuilder:     lyriaAudioPromptBuilder{},
+		converter:         noopPhoneticConverter{},
 	}
 
 	recipe := &domain.MusicRecipe{
@@ -206,6 +207,7 @@ func TestLyriaAudioGeneratorSingleflightSeparatesDifferentImages(t *testing.T) {
 		defaultLyriaModel: "lyria-3",
 		limiter:           rate.NewLimiter(rate.Inf, 0),
 		promptBuilder:     lyriaAudioPromptBuilder{},
+		converter:         noopPhoneticConverter{},
 	}
 
 	recipe := &domain.MusicRecipe{
@@ -257,6 +259,7 @@ func TestLyriaAudioGeneratorSectionSingleflightSeparatesDifferentImages(t *testi
 		defaultLyriaModel: "lyria-3",
 		limiter:           rate.NewLimiter(rate.Inf, 0),
 		promptBuilder:     lyriaAudioPromptBuilder{},
+		converter:         noopPhoneticConverter{},
 	}
 
 	recipe := &domain.MusicRecipe{
