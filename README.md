@@ -14,12 +14,6 @@
 
 本プロジェクトの最大の特徴は、**Lyria 3 Pro による WAV 直接出力**と、**独自開発のバイナリ結合ロジック**を組み合わせた高品質な音声生成パイプラインです。複数の楽曲パーツを並列生成し、ロスレスで統合することで、複雑な構成の楽曲生成を高速かつ安定して実現します。
 
-### 🎨 概要イメージ
-
-![Page 1](./docs/manga_page_1.png)
-
----
-
 ## ✨ コア・コンセプト (Core Concepts)
 
 **"Designed for 'Techno-Futurism': 技術ドキュメントを、90s デジタル・レイヴの疾走感とともに音声化する特化型オーケストレーター"**
@@ -337,15 +331,6 @@ Generate from Recipe フォームでは次の項目を受け付けます。
 
 ---
 
-### 🔗 エコシステム連携 (Evolution)
-
-- **[AP Chain](https://github.com/shouni/ap-chain) 連携**: 構造化ドキュメントからテーマ曲を自動生成。
-- **[AP Voice](https://github.com/shouni/ap-voice) 連携**: ナレーション音声と BGM を合成し音声コンテンツ化。
-- **[AP Manga Web](https://github.com/shouni/ap-manga-web) 連携**: 作品ページやシーンごとのBGMを非同期生成。
-
----
-
 ### 📜 ライセンス (License)
 
-* デフォルトキャラクター: VOICEVOX:ずんだもん、VOICEVOX:四国めたん
 * このプロジェクトは [MIT License](https://opensource.org/licenses/MIT) の下で公開されています。
