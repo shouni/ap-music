@@ -13,7 +13,7 @@ import (
 
 // LyriaAdapter は domain 型と pkg/lyria 型の変換を担う境界アダプターです。
 type LyriaAdapter struct {
-	core *lyria.Adapter
+	core *lyria.Workflow
 }
 
 // LyriaAdapterOption configures the Lyria adapter boundary.
@@ -34,7 +34,7 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 	}
 	options = append(options, adapterOptions...)
 
-	core, err := lyria.NewAdapter(aiClient, lyriaPromptGenerator{inner: promptGen}, options...)
+	core, err := lyria.New(aiClient, lyriaPromptGenerator{inner: promptGen}, options...)
 	if err != nil {
 		return nil, err
 	}
