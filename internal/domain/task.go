@@ -11,8 +11,9 @@ type AIModels struct {
 	TextModel string `json:"text_model,omitempty"`
 	// AudioModel は音声生成に使用するモデル
 	AudioModel string `json:"audio_model,omitempty"`
-	// ComposeMode は使用するプロンプトテンプレートのキー (assets/prompts)
-	// 例: "default", "heroic", "techno"
+	// LyricsMode は作詞プロンプトテンプレートのキー (assets/prompts/lyrics/*.md)
+	LyricsMode string `json:"lyrics_mode,omitempty"`
+	// ComposeMode は作曲レシピプロンプトテンプレートのキー (assets/prompts/compose/*.md)
 	ComposeMode string `json:"compose_mode,omitempty"`
 	Seed        *int64 `json:"seed,omitempty"`
 }

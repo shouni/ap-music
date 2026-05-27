@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"ap-music/internal/domain"
+	"github.com/shouni/go-gemini-client/lyria"
 )
 
 type lyriaAudioPromptBuilder struct{}
+
+// NewDefaultLyriaAudioPromptBuilder returns the AP Comp default Lyria audio prompt builder.
+func NewDefaultLyriaAudioPromptBuilder() lyria.AudioPromptBuilder {
+	return lyriaAudioPromptBuilder{}
+}
 
 // lyriaSectionDirections は、同じセクションを曲全体生成と単体生成でどう指示するかを保持します。
 type lyriaSectionDirections struct {
@@ -16,7 +21,7 @@ type lyriaSectionDirections struct {
 }
 
 // BuildFullSong は、MusicRecipe 全体を 1 回の Lyria 呼び出しで生成するためのプロンプトを組み立てます。
-func (lyriaAudioPromptBuilder) BuildFullSong(recipe *domain.MusicRecipe) string {
+func (lyriaAudioPromptBuilder) BuildFullSong(recipe *lyria.MusicRecipe) string {
 	var pb strings.Builder
 	pb.WriteString("Task: Generate a full high-fidelity song.\n")
 	pb.WriteString(buildLyriaSongContext(recipe))
@@ -40,7 +45,7 @@ func (lyriaAudioPromptBuilder) BuildFullSong(recipe *domain.MusicRecipe) string 
 }
 
 // BuildSection は、MusicRecipe のうち指定された 1 セクションだけを生成するためのプロンプトを組み立てます。
-func (lyriaAudioPromptBuilder) BuildSection(recipe *domain.MusicRecipe, sec domain.MusicSection) string {
+func (lyriaAudioPromptBuilder) BuildSection(recipe *lyria.MusicRecipe, sec lyria.MusicSection) string {
 	var pb strings.Builder
 	pb.WriteString("Task: Generate only the current song section.\n")
 	pb.WriteString(fmt.Sprintf("Current Section: [%s]. Duration: %d seconds.\n", sec.Name, sec.Duration))
@@ -57,7 +62,7 @@ func (lyriaAudioPromptBuilder) BuildSection(recipe *domain.MusicRecipe, sec doma
 }
 
 // buildLyriaSongContext は、全体生成とセクション生成で共有する曲全体の文脈を組み立てます。
-func buildLyriaSongContext(recipe *domain.MusicRecipe) string {
+func buildLyriaSongContext(recipe *lyria.MusicRecipe) string {
 	var pb strings.Builder
 	pb.WriteString(fmt.Sprintf("Title: '%s'.\n", recipe.Title))
 	pb.WriteString(fmt.Sprintf("Style & Mood: %s\n", recipe.Mood))
@@ -73,7 +78,7 @@ func buildLyriaSongContext(recipe *domain.MusicRecipe) string {
 }
 
 // buildLyriaSectionDirections は、セクション名に応じたボーカル方針を返します。
-func buildLyriaSectionDirections(sec domain.MusicSection) lyriaSectionDirections {
+func buildLyriaSectionDirections(sec lyria.MusicSection) lyriaSectionDirections {
 	switch sec.Name {
 	case "Verse":
 		return lyriaSectionDirections{
