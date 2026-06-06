@@ -30,11 +30,10 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 		lyria.WithLyriaModel(cfg.LyriaModel),
 		lyria.WithRateInterval(cfg.RateInterval),
 		lyria.WithMaxConcurrency(cfg.MaxConcurrency),
-		lyria.WithAudioPromptBuilder(NewDefaultLyriaAudioPromptBuilder()),
 	}
 	options = append(options, adapterOptions...)
 
-	core, err := lyria.New(aiClient, lyriaPromptGenerator{inner: promptGen}, options...)
+	core, err := lyria.New(aiClient, lyriaPromptGenerator{inner: promptGen}, NewDefaultLyriaAudioPromptBuilder(), options...)
 	if err != nil {
 		return nil, err
 	}
