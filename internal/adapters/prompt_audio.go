@@ -9,7 +9,7 @@ import (
 
 type lyriaAudioPromptBuilder struct{}
 
-// NewDefaultLyriaAudioPromptBuilder returns the AP Comp default Lyria audio prompt builder.
+// NewDefaultLyriaAudioPromptBuilder returns the public showcase audio prompt builder.
 func NewDefaultLyriaAudioPromptBuilder() lyria.AudioPromptBuilder {
 	return lyriaAudioPromptBuilder{}
 }
@@ -23,11 +23,11 @@ type lyriaSectionDirections struct {
 // BuildFullSong は、MusicRecipe 全体を 1 回の Lyria 呼び出しで生成するためのプロンプトを組み立てます。
 func (lyriaAudioPromptBuilder) BuildFullSong(recipe *lyria.MusicRecipe) string {
 	var pb strings.Builder
-	pb.WriteString("Task: Generate a full high-fidelity song.\n")
+	pb.WriteString("Task: Generate a full song from the provided music recipe.\n")
 	pb.WriteString(buildLyriaSongContext(recipe))
 
 	if len(recipe.Sections) > 0 {
-		pb.WriteString("Detailed Song Structure & Multi-Stage Vocal Directions:\n")
+		pb.WriteString("Song Structure:\n")
 		for _, sec := range recipe.Sections {
 			directions := buildLyriaSectionDirections(sec)
 			pb.WriteString(fmt.Sprintf("- [%s] (%d sec): %s %s\n", sec.Name, sec.Duration, directions.fullSong, sec.Prompt))
@@ -35,11 +35,11 @@ func (lyriaAudioPromptBuilder) BuildFullSong(recipe *lyria.MusicRecipe) string {
 		pb.WriteString("\n")
 	}
 
-	pb.WriteString("[Final Executive Constraints]\n")
-	pb.WriteString("- Total Duration: Exactly 180 seconds. Do not end early.\n")
-	pb.WriteString("- Seamless Flow: Ensure each long section evolves naturally into the next without any energy drops.\n")
-	pb.WriteString("- Zero Silence: Maintain a continuous, high-fidelity sonic wall. No gaps or unintentional pauses.\n")
-	pb.WriteString("- Vocal Purity: Clear, passionate Japanese vocals throughout. Absolute priority on lyrical clarity.")
+	pb.WriteString("[Generation Guidelines]\n")
+	pb.WriteString("- Follow the provided title, mood, tempo, instruments, lyrics, and section structure.\n")
+	pb.WriteString("- Keep transitions natural between sections.\n")
+	pb.WriteString("- Preserve the intended musical direction from each section prompt.\n")
+	pb.WriteString("- Avoid unintended long pauses or abrupt endings.")
 
 	return pb.String()
 }
@@ -51,10 +51,9 @@ func (lyriaAudioPromptBuilder) BuildSection(recipe *lyria.MusicRecipe, sec lyria
 	pb.WriteString(fmt.Sprintf("Current Section: [%s]. Duration: %d seconds.\n", sec.Name, sec.Duration))
 	pb.WriteString(buildLyriaSongContext(recipe))
 	pb.WriteString(buildLyriaSectionDirections(sec).section)
-	pb.WriteString("Clear Japanese vocals with passionate enunciation. No silence.")
 
 	pb.WriteString(fmt.Sprintf(
-		"\n[Section Audio Generation Constraints]\n- Music Detail: %s",
+		"\n[Section Generation Guidelines]\n- Music Detail: %s",
 		sec.Prompt,
 	))
 
@@ -69,7 +68,7 @@ func buildLyriaSongContext(recipe *lyria.MusicRecipe) string {
 	pb.WriteString(fmt.Sprintf("Tempo: %d BPM. Instruments: %s.\n\n", recipe.Tempo, strings.Join(recipe.Instruments, ", ")))
 
 	if recipe.Lyrics != nil && recipe.Lyrics.Lyrics != "" {
-		pb.WriteString("Lyrics (Perform with clear Japanese vocals and passionate enunciation):\n")
+		pb.WriteString("Lyrics:\n")
 		pb.WriteString(recipe.Lyrics.Lyrics)
 		pb.WriteString("\n\n")
 	}
@@ -79,26 +78,8 @@ func buildLyriaSongContext(recipe *lyria.MusicRecipe) string {
 
 // buildLyriaSectionDirections は、セクション名に応じたボーカル方針を返します。
 func buildLyriaSectionDirections(sec lyria.MusicSection) lyriaSectionDirections {
-	switch sec.Name {
-	case "Verse":
-		return lyriaSectionDirections{
-			fullSong: "Vocal Strategy: Focus on singing the [Verse] section. Start narratively and build tension for the next phase.",
-			section:  "Vocal Direction: Focus on singing the [Verse] section. Build tension for the next phase. ",
-		}
-	case "Chorus":
-		return lyriaSectionDirections{
-			fullSong: "Vocal Strategy: Max energy! Perform the [Chorus] and Hook with high-octane passion. Keep the heat throughout this long climax.",
-			section:  "Vocal Direction: Max energy! Perform the [Chorus] and Hook with high-octane passion. ",
-		}
-	case "Outro":
-		return lyriaSectionDirections{
-			fullSong: "Vocal Strategy: Emotional digital fade-out for the [Outro]. Let the Japanese vocals dissolve into a cybernetic echo.",
-			section:  "Vocal Direction: Emotional digital fade-out for the [Outro]. Leave a cybernetic echo. ",
-		}
-	default:
-		return lyriaSectionDirections{
-			fullSong: fmt.Sprintf("Vocal Strategy: Adapt your energy to sustain this %d-second section with consistent Japanese vocal quality.", sec.Duration),
-			section:  fmt.Sprintf("Vocal Direction: Perform the [%s] section with clear Japanese vocals and appropriate energy for the track. ", sec.Name),
-		}
+	return lyriaSectionDirections{
+		fullSong: fmt.Sprintf("Section Direction: Use this section as the [%s] part of the full arrangement.", sec.Name),
+		section:  fmt.Sprintf("Section Direction: Generate the [%s] section according to the recipe context. ", sec.Name),
 	}
 }

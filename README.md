@@ -6,94 +6,88 @@
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/shouni/ap-music)](https://github.com/shouni/ap-music/tags)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Report Card](https://goreportcard.com/badge/github.com/shouni/ap-music)](https://goreportcard.com/report/github.com/shouni/ap-music)
-[![Status](https://img.shields.io/badge/Status-Beta-blue)](#)
+[![Status](https://img.shields.io/badge/Status-PoC%20%2F%20Technical%20Demo-blue)](#)
 
-## 🚀 概要 (About) - 音楽生成のWebオーケストレーター
+## 🚀 概要 (About)
 
-**AP Music** は、音楽生成コア機能（`Lyria 3 Pro` + `Music Recipe`）を **Cloud Run** および **Google Cloud Tasks** で Web アプリケーション化し、非同期にオーケストレーションするためのプロジェクトです。
+**AP Music** は、AI音楽生成オーケストレーターの公開ショーケース版です。
 
-本プロジェクトの最大の特徴は、**Lyria 3 Pro による WAV 直接出力**と、**独自開発のバイナリ結合ロジック**を組み合わせた高品質な音声生成パイプラインです。複数の楽曲パーツを並列生成し、ロスレスで統合することで、複雑な構成の楽曲生成を高速かつ安定して実現します。
+本リポジトリでは、アーキテクチャ、非同期ワークフロー、Cloud Run / Cloud Tasks / GCS による実装、生成体験を公開しています。位置づけは商用プロダクトではなく、**PoC / Technical Demonstration** です。
 
-## ✨ コア・コンセプト (Core Concepts)
+本番向けのチューニング、プロンプト資産、生成品質制御ロジック、運用設定は非公開版で管理しています。この公開版では、AI音楽生成システムをどのようにWebアプリケーション化し、非同期ジョブとして安全に扱うかを示すことに焦点を置いています。
 
-**"Designed for 'Techno-Futurism': 技術ドキュメントを、90s デジタル・レイヴの疾走感とともに音声化する特化型オーケストレーター"**
+---
 
-本プロジェクトは、大規模な楽曲生成パイプラインにおいて「音楽的クオリティ」と「システム的堅牢性」を両立させるため、以下の4つの柱を基盤としています。
+## ✨ このリポジトリで見せていること
 
-### 🧬 3-Factor Music Consistency
-Lyria 3 Pro のポテンシャルを極限まで引き出し、生成される楽曲の「質感」と「構成」を厳密に制御（Control）します。
-* **Seed Determinism**: 楽曲の乱数シードを厳密に管理。同一の `MusicRecipe` に対し、再現可能な生成結果を保証。
-* **Stylistic Prompting**: 90年代のデジタルサウンド（Supersaw, 16-bit Arpeggio等）を言語的に定義し、AIに音楽的文脈を強制注入。
-* **Vocal Articulation**: セクションごとの熱量指定と「passionate enunciation」の強制注入により、グローバルモデルから「熱き日本語の魂」を呼び起こす。
+AP Music は、ユーザー入力から楽曲設計図を作成し、音声生成、保存、再生、履歴管理までを非同期に扱うWebアプリケーションです。
 
-### 🛡 Production-Ready Concurrency Control
-APIの物理的制約を超え、決して「止まらない、壊れない」パイプラインを標準装備しています。
-* **Rate Limiting**: `golang.org/x/time/rate` によって Lyria API 呼び出し頻度を制御。API クォータを遵守し、`RESOURCE_EXHAUSTED` (429) エラーを未然に封殺。
-* **Resilient Retry**: 一時的なネットワーク障害やタイムアウトに対し、Exponential Backoff（指数バックオフ）による戦略的再試行を適用し、ジョブの完走を死守。
+公開版では、主に以下を確認できます。
 
-### ⚡ Smart Request & Stream Management
-オーバーヘッドを極限まで削ぎ落とし、生成コストとスループットを最適化します。
-* **Singleflight Sync**: `golang.org/x/sync/singleflight` を実装。並列処理中の重複リクエストを単一の実行に集約し、APIリソースの浪費を排除。
-* **Lossless Binary Merging**: 分割生成された WAV セクションを、デコードなしでバイナリレベルで直接結合。世代損失（音質劣化）をゼロに抑えた長尺楽曲構成を実現。
+- Go による Web / Worker 実装
+- Cloud Run を前提にしたサーバーレス構成
+- Cloud Tasks による長時間処理の非同期化
+- GCS への WAV / Recipe JSON 保存
+- Google OAuth、セッション、CSRF、Cloud Tasks OIDC による保護
+- 生成ジョブの投入、履歴表示、音声再生、削除までのユーザー体験
+- Hexagonal Architecture に近い責務分離
+- AI API 連携をアプリケーション境界へ閉じ込める設計
 
-### 🌍 Cloud-Native Orchestration
-Google Cloud のマネージドパワーをフル活用した、モダンなサーバーレス・アーキテクチャ。
-* **Autoscaling Run**: Cloud Run による需要に応じたオンデマンドな計算リソースの展開。
-* **Async Orchestration**: Cloud Tasks による非同期キューイング。数分間に及ぶ生成処理をバックグラウンドへ完全に隠蔽し、シームレスなUXを提供。
-* **Authenticated Control Plane**: Google OAuth セッションで Web UI を保護し、フォーム送信や履歴削除など副作用のある操作には CSRF 検証を適用。Cloud Tasks からの Worker 呼び出しは OIDC トークンで検証。
-* **Artifact Recovery UX**: GCS に保存された `Recipe JSON` と `WAV` を履歴画面から再参照し、署名付き URL 経由で安全に再生。不要な履歴は CSRF 保護付きの削除操作で GCS から整理可能。
+---
+
+## 🧭 公開ショーケースとしての境界
+
+このリポジトリは、実装力と設計思想を見せるための公開版です。以下は意図的に公開対象から外しています。
+
+- 本番向けに調整したプロンプト資産
+- 生成品質を改善するための独自チューニング
+- モデルごとの細かな制御ロジック
+- 運用環境の具体設定
+- 非公開版で使用している検証・改善フロー
+
+そのため、公開版のプロンプトや音声生成指示は、動作と設計を理解するためのサンプルとして抽象化しています。
 
 ---
 
 ## 🎨 ワークフロー (Workflows)
 
-| 画面 (Command) | 役割 | 主な入力 / 出力 |
+| 画面 / Command | 役割 | 主な入力 / 出力 |
 | --- | --- | --- |
-| **Compose** (`compose`) | URL / 文章 / 画像から楽曲設計図（Music Recipe）を生成し、そのまま音声化 | URL・Text・Image / Recipe JSON・**WAV (Lossless)** |
-| **Generate from Recipe** (`generate_from_recipe`) | 入力済み `MusicRecipe` から Phase 4/5 のみ実行 | MusicRecipe JSON / **WAV (Lossless)**・Recipe JSON |
-| **Publish** | 成果物の保存と署名付き URL の発行 | WAV / Signed URL |
-| **Playback** | 履歴一覧・詳細画面から GCS 上の WAV を署名付き URL 経由で再生 | Job ID / Individual Playback・Playlist Playback |
-| **History** | GCS 上の生成履歴を一覧・詳細表示し、音声プレビューと削除操作を提供 | Job ID / Audio Preview・Recipe JSON |
-| **Notify** | Slack への実行完了通知 | Job Result / Slack Message |
-
-### 💻 実行フロー (Workflow)
-
-1. **Request**: ユーザーが Web フォームから入力を送信。
-   - `/web/compose`: URL / Text / Image から `MusicRecipe` 生成を含む通常フロー。
-   - `/web/generate-from-recipe`: 入力済み `MusicRecipe` JSON から Generate / Publish のみ実行。
-2. **Enqueue**: `tasks.Enqueuer` がジョブを Cloud Tasks に非同期投入。
-3. **Worker**: Worker Handler が `Task.command` 付きタスクを受信し `MusicPipeline` を起動。
-4. **Pipeline**:
-   - `compose`:
-     - **Phase 1: Collect**: `go-web-reader` で入力コンテキスト収集。
-     - **Phase 2: Lyrics**: 作詞AIがキーワード抽出と歌詞案を生成。
-     - **Phase 3: Compose**: 作曲AIが歌詞案を解釈して `MusicRecipe` を生成。
-   - `generate_from_recipe`:
-     - Web Handler / Task Factory がフォーム入力の JSON を `MusicRecipe` 構造体へデコード・検証し、Cloud Tasks payload には `Task.Recipe` として格納。
-   - **Phase 4: Generate**: `Lyria 3` で WAV 生成。
-   - **Phase 5: Publish/Notify**: GCS に `WAV` と `Recipe JSON` を保存し、Signed URL を発行して Slack 通知。途中で失敗した場合もエラー内容を Slack に通知。
-5. **Playback**: `/web/history` の個別再生・一括再生、または `/web/history/{jobID}` の詳細プレイヤーから `/web/audio/{jobID}` を呼び出し、GCS の WAV 署名付き URL へリダイレクトして再生。
-6. **History**: 認証済みユーザーは `/web/history` から生成済みジョブを一覧し、詳細画面で音声再生・レシピ確認・JSONコピー・履歴削除が可能。
+| **Compose** (`compose`) | URL / 文章 / 画像から楽曲設計図を作成し、音声生成まで実行 | URL・Text・Image / Recipe JSON・WAV |
+| **Generate from Recipe** (`generate_from_recipe`) | 入力済み `MusicRecipe` から音声生成と保存だけを実行 | MusicRecipe JSON / WAV・Recipe JSON |
+| **Publish** | 生成成果物をGCSへ保存し、参照URLを発行 | WAV・Recipe JSON / Signed URL |
+| **Playback** | 履歴画面からGCS上の音声を署名付きURL経由で再生 | Job ID / Audio Playback |
+| **History** | 生成履歴を一覧・詳細表示し、再生・JSON確認・削除を提供 | Job ID / Audio Preview・Recipe JSON |
+| **Notify** | ジョブ完了やエラーをSlackへ通知 | Job Result / Slack Message |
 
 ---
+
+## 💻 実行フロー (Workflow)
+
+1. ユーザーが Google OAuth でログインします。
+2. Webフォームから `compose` または `generate_from_recipe` を送信します。
+3. Web Handler が入力値と CSRF トークンを検証します。
+4. ジョブを Cloud Tasks に投入し、Web側は即座に queued レスポンスを返します。
+5. Cloud Tasks が OIDC トークン付きで Worker Handler を呼び出します。
+6. Worker が `Task.command` に応じて生成パイプラインを実行します。
+7. 生成された WAV と Recipe JSON を GCS に保存します。
+8. Slack へ完了またはエラーを通知します。
+9. ユーザーは履歴画面から再生、詳細確認、削除を行えます。
+
+---
+
 ## 🏗 アーキテクチャ設計 (Architecture)
 
 本プロジェクトは、**Hexagonal Architecture (Ports and Adapters)** と **Serverless Orchestration (Cloud Run + Cloud Tasks)** を組み合わせた構成です。
 
-1. **Domain 層 (The Core)**
-   - `MusicRecipe`, `Task`, `TaskCommand`, `PublishResult` など、外部技術に依存しないドメインモデルとポートを定義。`Task` は `command` と、必要に応じて検証済みの `Recipe` 構造体を保持。
-2. **Pipeline 層 (Orchestrator)**
-   - `Task.command` に応じて通常生成（Collect → Lyrics → Compose → Generate → Publish）または Recipe 直接生成（Generate → Publish）を統制し、共通の通知・エラーハンドリングを担う。
-3. **Server 層 (Entry Points)**
-   - Auth Handler: Google OAuth ログイン、セッション管理、CSRF 検証、Cloud Tasks OIDC 検証。
-   - Web Handler: 認証済みユーザーからのリクエスト受付、`/web/compose` と `/web/generate-from-recipe` での CSRF 保護付きタスク投入、履歴・再生・削除操作。
-   - Worker Handler: Cloud Tasks から受けたジョブを OIDC 検証後に実行。
-4. **Adapters 層 (Infrastructure)**
-   - Lyria API / GCS / Slack / Cloud Tasks など外部サービスとの接続実装。
-5. **Builder 層 (Dependency Injection)**
-   - Web 実行系と Worker 実行系を用途別に組み立てる DI コンテナ。
-6. **Repository 層 (Data Access)**
-   - GCS 上の成果物一覧・レシピ取得・削除を担当し、履歴画面と詳細画面へ永続化済みデータを供給。履歴一覧は JSON メタデータを並行取得し、10 分 TTL のキャッシュで再表示を高速化。
+| 層 | 役割 |
+| --- | --- |
+| **Domain** | `MusicRecipe`, `Task`, `TaskCommand`, `PublishResult` など、外部技術に依存しないモデルとポートを定義 |
+| **Pipeline** | `Task.command` に応じて通常生成またはRecipe直接生成を統制し、Publish / Notify までを扱う |
+| **Server** | Auth、Web UI、Cloud Tasks Worker などHTTPエントリーポイントを提供 |
+| **Adapters** | AI API、GCS、Slack、Cloud Tasks、Reader など外部サービス接続を実装 |
+| **Builder** | Web実行系とWorker実行系の依存関係を組み立てる |
+| **Repository** | GCS上の履歴一覧、Recipe取得、成果物削除、キャッシュを担当 |
 
 ---
 
@@ -104,18 +98,18 @@ ap-music/
 ├── main.go                 # エントリーポイント
 ├── Dockerfile              # Cloud Run 向けコンテナ定義
 ├── assets/                 # embed.FS で配布する静的資産
-│   ├── prompts/            # 作詞・作曲用プロンプトテンプレート
+│   ├── prompts/            # 公開版向けに抽象化したプロンプトテンプレート
 │   └── templates/          # Web UI テンプレート
 ├── docs/                   # README / ドキュメント用の補助資料
 └── internal/
-    ├── adapters/           # Gemini / Lyria / GCS / Slack など外部サービス接続
-    ├── app/                # DI コンテナと共有リソース定義
-    ├── builder/            # Config から依存関係を構築
+    ├── adapters/           # AI API / GCS / Slack / Cloud Tasks など外部サービス接続
+    ├── app/                # DIコンテナと共有リソース定義
+    ├── builder/            # Configから依存関係を構築
     ├── config/             # 環境変数ロードと設定検証
-    ├── domain/             # ドメインモデルと Port 定義
-    ├── pipeline/           # command 別の生成フローと Publish -> Notify のユースケース統制
-    ├── repository/         # GCS 上の履歴一覧・レシピ取得・削除
-    └── server/             # HTTP サーバー、ルーティング、ハンドラー
+    ├── domain/             # ドメインモデルとPort定義
+    ├── pipeline/           # command別の生成フローとPublish / Notifyの統制
+    ├── repository/         # GCS上の履歴一覧・レシピ取得・削除
+    └── server/             # HTTPサーバー、ルーティング、ハンドラー
 ```
 
 ---
@@ -130,9 +124,7 @@ sequenceDiagram
     participant Queue as Cloud Tasks
     participant Worker as Worker Handler
     participant Pipeline as Music Pipeline
-    participant Collector as Reader Adapter
-    participant MusicGenerator as Lyria Adapter
-    participant Auth as Google OAuth
+    participant Reader as Reader Adapter
     participant Gemini as Gemini API
     participant Lyria as Lyria API
     participant GCS as Cloud Storage
@@ -140,83 +132,38 @@ sequenceDiagram
 
     User->>Browser: Google ログイン
     Browser->>Web: GET /auth/login
-    Web->>Auth: OAuth redirect
-    Auth-->>Web: callback
-    Web-->>Browser: session cookie
+    Web-->>Browser: authenticated session
 
-    User->>Browser: 通常Composeフォーム入力
-    Browser->>Web: POST /web/compose (csrf_token)
-    Web->>Web: BuildCompose(form) -> Task{command: compose}
-    Web->>Queue: Enqueue(Task)
-    Web-->>Browser: 202 Accepted / queued(job_id)
-
-    User->>Browser: MusicRecipe JSON 入力
-    Browser->>Web: POST /web/generate-from-recipe (csrf_token)
-    Web->>Web: Decode + Validate MusicRecipe
-    Web->>Web: BuildGenerateFromRecipe(form) -> Task{command: generate_from_recipe, recipe}
+    User->>Browser: Compose / Recipe フォーム送信
+    Browser->>Web: POST /web/compose or /web/generate-from-recipe
+    Web->>Web: 入力値検証 + CSRF 検証
     Web->>Queue: Enqueue(Task)
     Web-->>Browser: 202 Accepted / queued(job_id)
 
     Queue->>Worker: POST /tasks/generate (OIDC 検証付き)
-    Worker->>Pipeline: Execute(ctx, task)
+    Worker->>Pipeline: Execute(task)
 
     alt command == compose
-        Pipeline->>Collector: Collect(task)
-        Collector-->>Pipeline: contextText
-        Pipeline->>MusicGenerator: Run(task, contextText)
-        MusicGenerator->>Gemini: lyrics prompt
-        Gemini-->>MusicGenerator: LyricsDraft
-        MusicGenerator->>Gemini: compose prompt
-        Gemini-->>MusicGenerator: MusicRecipe
-        MusicGenerator->>Lyria: generate audio
-        Lyria-->>MusicGenerator: WAV bytes
-        MusicGenerator-->>Pipeline: recipe + wav
+        Pipeline->>Reader: 入力コンテキスト収集
+        Reader-->>Pipeline: contextText
+        Pipeline->>Gemini: Lyrics / MusicRecipe 生成
+        Gemini-->>Pipeline: MusicRecipe
+        Pipeline->>Lyria: 音声生成
+        Lyria-->>Pipeline: WAV bytes
     else command == generate_from_recipe
-        Pipeline->>Pipeline: Validate task.Recipe
-        Pipeline->>MusicGenerator: GenerateAudio(task.Recipe)
-        MusicGenerator->>Lyria: generate audio
-        Lyria-->>MusicGenerator: WAV bytes
-        MusicGenerator-->>Pipeline: recipe + wav
+        Pipeline->>Pipeline: MusicRecipe 検証
+        Pipeline->>Lyria: 音声生成
+        Lyria-->>Pipeline: WAV bytes
     end
 
-    Pipeline->>GCS: 成果物保存 (WAV/Recipe JSON)
-    alt 生成・保存に成功
-        GCS-->>Pipeline: 公開 URL / Signed URL
-        Pipeline->>Slack: 完了通知 (History Detail / WAV / Recipe JSON)
-    else 生成・保存に失敗
-        Pipeline->>Slack: エラー通知 (source/category/seed/error)
-        Pipeline-->>Worker: error
-    end
+    Pipeline->>GCS: WAV / Recipe JSON 保存
+    GCS-->>Pipeline: Signed URL / object refs
+    Pipeline->>Slack: 完了またはエラー通知
 
-    User->>Browser: 履歴表示
-    Browser->>Web: GET /web/history
-    Web->>GCS: Recipe JSON 一覧取得 + メタデータ並行取得
-    GCS-->>Web: MusicHistory[]
-    Web-->>Browser: 履歴一覧 + audio src="/web/audio/{jobID}"
-
-    User->>Browser: 一覧で個別再生 / 一括再生
-    Browser->>Web: GET /web/audio/{jobID}
-    Web->>Web: JobID 検証 + WAV Signed URL 生成 (1h)
-    Web-->>Browser: 302 Redirect to Signed URL
-    Browser->>GCS: GET Signed URL
-    GCS-->>Browser: WAV stream
-    Browser->>Browser: 再生 / 一時停止 / 次曲へ自動遷移
-
-    User->>Browser: 詳細表示
-    Browser->>Web: GET /web/history/{jobID}
-    Web->>GCS: Recipe JSON 取得
-    GCS-->>Web: MusicRecipe
-    Web-->>Browser: 詳細画面 + audio controls
-    Browser->>Web: GET /web/audio/{jobID}
-    Web->>Web: JobID 検証 + WAV Signed URL 生成 (1h)
-    Web-->>Browser: 302 Redirect to Signed URL
-    Browser->>GCS: GET Signed URL
-    GCS-->>Browser: WAV stream
-
-    User->>Browser: 履歴削除
-    Browser->>Web: DELETE /web/history/{jobID} (X-CSRF-Token)
-    Web->>GCS: Recipe JSON / WAV 削除
-    Web-->>Browser: 204 No Content
+    User->>Browser: 履歴表示 / 再生
+    Browser->>Web: GET /web/history or /web/audio/{jobID}
+    Web->>GCS: メタデータ取得またはSigned URL生成
+    Web-->>Browser: 履歴画面または音声URLへリダイレクト
 ```
 
 ---
@@ -225,84 +172,84 @@ sequenceDiagram
 
 | 要素 | 技術 / ライブラリ | 役割 |
 | --- | --- | --- |
-| **言語** | **Go (Golang)** | Web サーバーおよびワーカー実装 |
-| **Web** | **Cloud Run** | Web UI/API と Worker の実行基盤 |
-| **非同期実行** | **Google Cloud Tasks** | 楽曲生成ジョブの非同期キューイング |
-| **コンテキスト収集** | **go-web-reader** | URL コンテンツの収集と入力コンテキストの組み立て |
-| **音楽生成** | **Lyria 3 API** | Recipe ベースの音楽生成 |
-| **結果保存** | **go-remote-io / GCS** | WAV / Recipe JSON 保存、署名付き URL 発行 |
-| **履歴管理** | **GCS Repository / ttlcache / errgroup** | 保存済み Recipe JSON の一覧・詳細取得、10 分 TTL キャッシュ、Recipe JSON / WAV の削除 |
-| **通知** | **Slack Webhook** | 実行完了通知 |
-| **HTTP ルーティング** | **chi** | Web / Auth / Worker ルートの構成 |
-| **認証・保護** | **gcp-kit auth** | Google OAuth、セッション、CSRF、Cloud Tasks OIDC 検証 |
+| **言語** | **Go** | Webサーバーおよびワーカー実装 |
+| **実行基盤** | **Cloud Run** | Web UI/API と Worker のホスティング |
+| **非同期実行** | **Google Cloud Tasks** | 楽曲生成ジョブのキューイング |
+| **保存先** | **Google Cloud Storage** | WAV / Recipe JSON の保存、署名付きURL発行 |
+| **テキスト生成** | **Gemini API** | 歌詞案とMusicRecipe生成 |
+| **音声生成** | **Lyria API** | Recipeベースの音声生成 |
+| **通知** | **Slack Webhook** | 完了・エラー通知 |
+| **HTTPルーティング** | **chi** | Web / Auth / Worker ルート構成 |
+| **認証・保護** | **Google OAuth / Session / CSRF / OIDC** | ユーザー認証と副作用のある操作の保護 |
 | **UI** | **Bootstrap / Bootstrap Icons** | フォーム、履歴、詳細、音声プレビュー表示 |
 
 ---
 
 ## 🚀 使い方 (Usage)
 
-### 1. Web 経由の基本フロー（Compose）
+### 1. Web経由の基本フロー（Compose）
 
 1. Google OAuth でログインします。
-2. `/` のフォームで入力ソースを 1 つ以上指定します。
+2. `/` のフォームで入力ソースを1つ以上指定します。
 3. 必要なら `compose_mode`、`lyrics_model`、`compose_model`、`seed` を指定します。
-4. 送信後、CSRF トークンが検証され、ジョブは Cloud Tasks に投入されます。レスポンスは HTML または JSON (`{"status":"queued","job_id":"..."}`) で返ります。
-5. Worker が生成処理を実行し、GCS 上の `WAV` と `Recipe JSON` の Signed URL を Slack に通知します。
-6. `/web/history` から過去の生成ジョブを一覧し、一覧上で個別再生または一括再生できます。音声は `/web/audio/{jobID}` から GCS の WAV 署名付き URL へリダイレクトされ、ブラウザの `<audio>` で再生されます。
-7. `/web/history/{jobID}` の詳細画面では、固定表示の音声プレビューで再生しながら、楽曲構成、歌詞、入力用 JSON を確認できます。
-8. 不要な履歴は一覧または詳細画面の削除ボタンから削除できます。削除リクエストは `DELETE /web/history/{jobID}` に `X-CSRF-Token` を付けて送信され、GCS 上の `Recipe JSON` と `WAV` を削除します。
+4. 送信後、CSRFトークンが検証され、ジョブはCloud Tasksに投入されます。
+5. Workerが生成処理を実行し、GCS上に `WAV` と `Recipe JSON` を保存します。
+6. `/web/history` から過去の生成ジョブを一覧し、再生・詳細確認・削除ができます。
 
-### 2. MusicRecipe JSON から Generate / Publish だけ実行
+### 2. MusicRecipe JSONからGenerate / Publishだけ実行
 
 1. Google OAuth でログインします。
-2. `/web/generate-from-recipe` を開き、`MusicRecipe` JSON を入力します。
-3. 必要なら `compose_model`（Lyria model）と `seed` を指定します。`compose_model` が空欄の場合は Recipe 内の `audio_model`、または既定の `LYRIA_MODEL` が使われます。`seed` が空欄の場合は Recipe 内の `seed` を使い、Recipe にも `seed` がない場合はランダムに採番します。
-4. 送信時に JSON は `MusicRecipe` 構造体へデコードされ、生成に必要な最低限の内容が検証されます。
-5. Cloud Tasks payload には生の JSON 文字列ではなく `Task{command: "generate_from_recipe", recipe: ...}` が投入されます。
-6. Worker は Collect / Lyrics / Compose をスキップし、`Lyria 3` による WAV 生成、GCS への保存、Slack 通知のみ実行します。
+2. `/web/generate-from-recipe` を開き、`MusicRecipe` JSONを入力します。
+3. 必要なら `compose_model` と `seed` を指定します。
+4. 送信時にJSONは `MusicRecipe` 構造体へデコードされ、最低限の内容が検証されます。
+5. WorkerはCollect / Lyrics / Composeをスキップし、音声生成、GCS保存、Slack通知のみ実行します。
 
-### 3. 入力と生成オプション
+---
 
-Compose フォームでは次の項目を受け付けます。
+## 入力と生成オプション
+
+Composeフォームでは次の項目を受け付けます。
 
 | 項目 | 必須 | 説明 |
 | --- | :---: | --- |
-| `url` | 任意 | 参照元 URL。本文は `go-web-reader` で収集されます |
+| `url` | 任意 | 参照元URL。本文はReader Adapterで収集されます |
 | `text` | 任意 | コンセプト文や歌詞ドラフト |
-| `image` | 任意 | 参照画像 URL。入力コンテキストに URL として追加されます |
-| `compose_mode` | 任意 | `assets/prompts/compose_*.md` から動的に読まれるプロンプトモード |
+| `image` | 任意 | 参照画像URL。入力コンテキストにURLとして追加されます |
+| `compose_mode` | 任意 | `assets/prompts/compose_*.md` から読み込むプロンプトモード |
 | `lyrics_model` | 任意 | 作詞・レシピ生成に使うテキストモデル |
 | `compose_model` | 任意 | 音声生成モデル名 |
-| `seed` | 任意 | 再現性のためのシード値。空ならランダム |
+| `seed` | 任意 | 再現性確認用のシード値。空ならランダム |
 
-`url` / `text` / `image` のうち少なくとも 1 つは必要です。
+`url` / `text` / `image` のうち少なくとも1つは必要です。
 
-Generate from Recipe フォームでは次の項目を受け付けます。
+Generate from Recipeフォームでは次の項目を受け付けます。
 
 | 項目 | 必須 | 説明 |
 | --- | :---: | --- |
 | `recipe_json` | 必須 | `MusicRecipe` JSON。送信前に構造体へデコード・検証されます |
-| `compose_model` | 任意 | このジョブで上書きする Lyria 音声生成モデル名 |
-| `seed` | 任意 | このジョブで上書きするシード値。空なら Recipe の値を使い、Recipe にもなければランダム採番 |
+| `compose_model` | 任意 | このジョブで上書きする音声生成モデル名 |
+| `seed` | 任意 | このジョブで上書きするシード値 |
 
-### 4. 主要な環境変数
+---
+
+## 主要な環境変数
 
 | 環境変数 | 必須 | 説明 |
 | --- | :---: | --- |
-| `PORT` | 任意 | HTTP サーバーの待受ポート。既定値: `8080`（Cloud Run環境では自動注入） |
-| `SERVICE_URL` | 必須 | アプリの公開 URL。本番では HTTPS 必須 |
-| `GCP_PROJECT_ID` | 必須 | GCP プロジェクト ID |
+| `PORT` | 任意 | HTTPサーバーの待受ポート。既定値: `8080` |
+| `SERVICE_URL` | 必須 | アプリの公開URL。本番ではHTTPS必須 |
+| `GCP_PROJECT_ID` | 必須 | GCPプロジェクトID |
 | `GCP_LOCATION_ID` | 必須 | 使用リージョン |
-| `CLOUD_TASKS_QUEUE_ID` | 必須 | Cloud Tasks キュー名 |
+| `CLOUD_TASKS_QUEUE_ID` | 必須 | Cloud Tasksキュー名 |
 | `SERVICE_ACCOUNT_EMAIL` | 必須 | タスク実行に使うサービスアカウント |
-| `TASK_AUDIENCE_URL` | 任意 | Cloud Tasks の OIDC Audience。未指定時は `SERVICE_URL` |
-| `GCS_MUSIC_BUCKET` | 必須 | 生成 WAV と Recipe JSON の保存先バケット |
-| `GEMINI_API_KEY` | 必須 | Gemini / Lyria 呼び出しに使う API キー |
-| `GEMINI_MODEL` | 任意 | 作詞・作曲フェーズの既定モデル。既定値: `gemini-3-flash-preview` |
-| `LYRIA_MODEL` | 任意 | 音声生成フェーズの既定モデル。既定値: `lyria-3-pro-preview` |
-| `MAX_CONCURRENCY` | 任意 | Lyria 音声生成の最大並列数。既定値: `5` |
-| `RATE_INTERVAL_SEC` | 任意 | Lyria API 呼び出し間隔（秒）。既定値: `10` |
-| `SLACK_WEBHOOK_URL` | 任意 | 完了・エラー通知先 Webhook URL |
+| `TASK_AUDIENCE_URL` | 任意 | Cloud TasksのOIDC Audience。未指定時は `SERVICE_URL` |
+| `GCS_MUSIC_BUCKET` | 必須 | 生成WAVとRecipe JSONの保存先バケット |
+| `GEMINI_API_KEY` | 必須 | AI API呼び出しに使うAPIキー |
+| `GEMINI_MODEL` | 任意 | 作詞・作曲フェーズの既定モデル |
+| `LYRIA_MODEL` | 任意 | 音声生成フェーズの既定モデル |
+| `MAX_CONCURRENCY` | 任意 | 音声生成の最大並列数 |
+| `RATE_INTERVAL_SEC` | 任意 | 音声生成API呼び出し間隔（秒） |
+| `SLACK_WEBHOOK_URL` | 任意 | 完了・エラー通知先Webhook URL |
 | `GOOGLE_CLIENT_ID` | 必須 | Google OAuth Client ID |
 | `GOOGLE_CLIENT_SECRET` | 必須 | Google OAuth Client Secret |
 | `SESSION_SECRET` | 必須 | セッション署名キー |
@@ -312,25 +259,27 @@ Generate from Recipe フォームでは次の項目を受け付けます。
 
 `ALLOWED_EMAILS` と `ALLOWED_DOMAINS` は両方空にはできません。
 
-### 5. HTTP エンドポイント
+---
+
+## HTTPエンドポイント
 
 | メソッド | パス | 用途 |
 | --- | --- | --- |
 | `GET` | `/healthz` | ヘルスチェック |
-| `GET` | `/auth/login` | Google OAuth ログイン開始 |
-| `GET` | `/auth/callback` | OAuth コールバック |
+| `GET` | `/auth/login` | Google OAuthログイン開始 |
+| `GET` | `/auth/callback` | OAuthコールバック |
 | `GET` | `/` | 認証済みユーザー向けの楽曲生成フォーム |
-| `GET` | `/web/generate-from-recipe` | MusicRecipe JSON から Generate / Publish を実行するフォーム |
+| `GET` | `/web/generate-from-recipe` | MusicRecipe JSONからGenerate / Publishを実行するフォーム |
 | `GET` | `/web/history` | 生成履歴一覧 |
-| `GET` | `/web/history/{jobID}` | 楽曲詳細、音声プレビュー、Recipe JSON 表示 |
-| `GET` | `/web/audio/{jobID}` | Job ID を検証し、GCS の WAV 署名付き URL へ 302 リダイレクト。履歴一覧の個別再生・一括再生、詳細画面の音声プレビューで使用 |
-| `POST` | `/web/compose` | 通常Composeフォーム送信と `compose` ジョブ投入。`csrf_token` または `X-CSRF-Token` 必須 |
-| `POST` | `/web/generate-from-recipe` | MusicRecipe JSON のデコード・検証と `generate_from_recipe` ジョブ投入。`csrf_token` または `X-CSRF-Token` 必須 |
-| `DELETE` | `/web/history/{jobID}` | 生成履歴と関連ファイルの削除。`X-CSRF-Token` 必須 |
-| `POST` | `/tasks/generate` | Cloud Tasks から呼ばれるワーカー。`Task.command` に応じて実行経路を選択 |
+| `GET` | `/web/history/{jobID}` | 楽曲詳細、音声プレビュー、Recipe JSON表示 |
+| `GET` | `/web/audio/{jobID}` | Job IDを検証し、GCSのWAV署名付きURLへリダイレクト |
+| `POST` | `/web/compose` | Composeフォーム送信とジョブ投入 |
+| `POST` | `/web/generate-from-recipe` | MusicRecipe JSONの検証とジョブ投入 |
+| `DELETE` | `/web/history/{jobID}` | 生成履歴と関連ファイルの削除 |
+| `POST` | `/tasks/generate` | Cloud Tasksから呼ばれるWorkerエンドポイント |
 
 ---
 
-### 📜 ライセンス (License)
+## 📜 ライセンス (License)
 
-* このプロジェクトは [MIT License](https://opensource.org/licenses/MIT) の下で公開されています。
+このプロジェクトは [MIT License](https://opensource.org/licenses/MIT) の下で公開されています。
