@@ -29,7 +29,7 @@ func (lyriaAudioPromptBuilder) BuildFullSong(recipe *lyria.MusicRecipe) string {
 	if len(recipe.Sections) > 0 {
 		pb.WriteString("Song Structure:\n")
 		for _, sec := range recipe.Sections {
-			directions := buildLyriaSectionDirections(sec)
+			directions := buildLyriaSectionDirections(sec.Name)
 			pb.WriteString(fmt.Sprintf("- [%s] (%d sec): %s %s\n", sec.Name, sec.Duration, directions.fullSong, sec.Prompt))
 		}
 		pb.WriteString("\n")
@@ -39,7 +39,8 @@ func (lyriaAudioPromptBuilder) BuildFullSong(recipe *lyria.MusicRecipe) string {
 	pb.WriteString("- Follow the provided title, mood, tempo, instruments, lyrics, and section structure.\n")
 	pb.WriteString("- Keep transitions natural between sections.\n")
 	pb.WriteString("- Preserve the intended musical direction from each section prompt.\n")
-	pb.WriteString("- Avoid unintended long pauses or abrupt endings.")
+	pb.WriteString("- Avoid unintended long pauses, abrupt endings, or silent gaps between sections.\n")
+	pb.WriteString("- Ensure clear vocal performance and proper enunciation throughout the track.")
 
 	return pb.String()
 }
@@ -50,7 +51,7 @@ func (lyriaAudioPromptBuilder) BuildSection(recipe *lyria.MusicRecipe, sec lyria
 	pb.WriteString("Task: Generate only the current song section.\n")
 	pb.WriteString(fmt.Sprintf("Current Section: [%s]. Duration: %d seconds.\n", sec.Name, sec.Duration))
 	pb.WriteString(buildLyriaSongContext(recipe))
-	pb.WriteString(buildLyriaSectionDirections(sec).section)
+	pb.WriteString(buildLyriaSectionDirections(sec.Name).section)
 
 	pb.WriteString(fmt.Sprintf(
 		"\n[Section Generation Guidelines]\n- Music Detail: %s",
@@ -76,10 +77,10 @@ func buildLyriaSongContext(recipe *lyria.MusicRecipe) string {
 	return pb.String()
 }
 
-// buildLyriaSectionDirections は、セクション名に応じたボーカル方針を返します。
-func buildLyriaSectionDirections(sec lyria.MusicSection) lyriaSectionDirections {
+// buildLyriaSectionDirections は、セクション名に応じた汎用的な生成方針を返します。
+func buildLyriaSectionDirections(sectionName string) lyriaSectionDirections {
 	return lyriaSectionDirections{
-		fullSong: fmt.Sprintf("Section Direction: Use this section as the [%s] part of the full arrangement.", sec.Name),
-		section:  fmt.Sprintf("Section Direction: Generate the [%s] section according to the recipe context. ", sec.Name),
+		fullSong: fmt.Sprintf("Section Direction: Use this section as the [%s] part of the full arrangement.", sectionName),
+		section:  fmt.Sprintf("Section Direction: Generate the [%s] section according to the recipe context. ", sectionName),
 	}
 }
