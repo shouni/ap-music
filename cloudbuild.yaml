@@ -6,6 +6,8 @@ substitutions:
   _SERVICE_NAME: 'ap-music'
   _TAG: '${_ENV_PREFIX}-${SHORT_SHA}'
   _CACHE_TAG: '${_ENV_PREFIX}-latest'
+  _GEMINI_MODELS: 'gemini-3.5-flash'
+  _LYRIA_MODELS: 'lyria-3-pro-preview'
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
@@ -50,11 +52,7 @@ steps:
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--update-env-vars'
-      - 'GCP_PROJECT_ID=${PROJECT_ID},
-        GCP_LOCATION_ID=${_REGION},
-        GEMINI_MODEL=gemini-3.5-flash,
-        LYRIA_MODEL=lyria-3-pro-preview,
-        IMAGE_MODEL=gemini-3.1-pro-image'
+      - '^|^GCP_PROJECT_ID=${PROJECT_ID}|GCP_LOCATION_ID=${_REGION}|GEMINI_MODELS=${_GEMINI_MODELS}|LYRIA_MODELS=${_LYRIA_MODELS}'
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push Cache Image'
