@@ -9,7 +9,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/shouni/go-http-kit/httpkit"
 	"github.com/shouni/go-remote-io/remoteio"
 	"github.com/shouni/go-web-reader/pkg/reader"
 
@@ -26,14 +25,21 @@ type ContentReader interface {
 	Open(ctx context.Context, uri string) (io.ReadCloser, error)
 }
 
+type imageRequester interface {
+	Do(*http.Request) (*http.Response, error)
+	FetchBytes(ctx context.Context, url string) ([]byte, error)
+	IsSafeURL(urlStr string) (bool, error)
+}
+
 // ReaderAdapter は入力情報を収集します。
 type ReaderAdapter struct {
 	contentReader ContentReader
-	requester     httpkit.Requester
+	requester     imageRequester
 }
 
-func NewReaderAdapter(storage remoteio.IOFactory, requester httpkit.Requester) (*ReaderAdapter, error) {
+func NewReaderAdapter(storage remoteio.IOFactory, requester imageRequester) (*ReaderAdapter, error) {
 	contentReader, err := reader.New(
+		reader.WithHTTPClient(requester),
 		reader.WithGCSFactory(func(ctx context.Context) (remoteio.IOFactory, error) {
 			return storage, nil
 		}),
@@ -76,7 +82,7 @@ func (r *ReaderAdapter) Collect(ctx context.Context, task domain.Task) (*domain.
 
 	imageURL := strings.TrimSpace(task.ImageURL)
 	if imageURL != "" {
-		imgData, err := r.requester.FetchBytes(ctx, imageURL)
+		imgData, err := r.readImageContent(ctx, imageURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch image from %s: %w", imageURL, err)
 		}
@@ -139,4 +145,36 @@ func (r *ReaderAdapter) readURLContent(ctx context.Context, url string) (string,
 	}
 
 	return string(content), nil
+}
+
+// readImageContent は画像URLから画像データを取得します。
+// GCS/S3などのリモートストレージURIはcontentReaderで読み込み、HTTP(S) URLはrequesterで取得します。
+func (r *ReaderAdapter) readImageContent(ctx context.Context, url string) ([]byte, error) {
+	if remoteio.IsRemoteURI(url) {
+		rc, err := r.contentReader.Open(ctx, url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read image from storage: %w", err)
+		}
+		defer func() {
+			if closeErr := rc.Close(); closeErr != nil {
+				slog.WarnContext(ctx, "画像ストリームのクローズに失敗しました", "error", closeErr)
+			}
+		}()
+
+		imgData, err := io.ReadAll(rc)
+		if err != nil {
+			return nil, fmt.Errorf("画像の読み込みに失敗しました: %w", err)
+		}
+		return imgData, nil
+	}
+
+	ok, err := r.requester.IsSafeURL(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate image URL safety: %w", err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("unsafe image URL: %s", url)
+	}
+
+	return r.requester.FetchBytes(ctx, url)
 }
