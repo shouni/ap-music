@@ -73,7 +73,7 @@ func TestListHistoryLoadsRecipeMetadata(t *testing.T) {
 	reader := &fakeHistoryReader{
 		paths: []string{
 			"gs://music/20260501123456-abcd1234.json",
-			"gs://music/ignore.wav",
+			"gs://music/ignore.mp3",
 		},
 		files: map[string]string{
 			"gs://music/20260501123456-abcd1234.json": `{

@@ -68,14 +68,14 @@ func (p MusicPipeline) executeCompose(ctx context.Context, task domain.Task, not
 
 	// Step B: コア生成プロセス（AIによる作詞・作曲・音声生成を一括実行）
 	// 生成の順序や中間データの扱いは MusicGenerator が隠蔽する
-	recipe, wav, err := p.MusicGenerator.Run(ctx, task, contextText)
+	recipe, audio, err := p.MusicGenerator.Run(ctx, task, contextText)
 	if err != nil {
 		return fmt.Errorf("music generation failed: %w", err)
 	}
 	notifReq.Title = recipeTitle(recipe)
 
 	// Step C: 成果物の永続化
-	result, err := p.Publisher.Publish(ctx, task, recipe, wav)
+	result, err := p.Publisher.Publish(ctx, task, recipe, audio)
 	if err != nil {
 		return fmt.Errorf("publish phase failed: %w", err)
 	}
@@ -100,12 +100,12 @@ func (p MusicPipeline) executeGenerateFromRecipe(ctx context.Context, task domai
 	applyTaskOverridesToRecipe(task, recipe)
 	notifReq.Seed = recipe.AIModels.Seed
 
-	wav, err := p.AudioGenerator.GenerateAudio(ctx, recipe, nil)
+	audio, err := p.AudioGenerator.GenerateAudio(ctx, recipe, nil)
 	if err != nil {
 		return fmt.Errorf("audio generation failed: %w", err)
 	}
 
-	result, err := p.Publisher.Publish(ctx, task, recipe, wav)
+	result, err := p.Publisher.Publish(ctx, task, recipe, audio)
 	if err != nil {
 		return fmt.Errorf("publish phase failed: %w", err)
 	}
