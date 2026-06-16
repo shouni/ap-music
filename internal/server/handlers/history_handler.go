@@ -95,7 +95,7 @@ func (h *Handler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ファイル名の組み立て
-	fileName := fmt.Sprintf("%s.wav", jobID)
+	fileName := fmt.Sprintf("%s%s", jobID, domain.AudioFileExtension)
 	gcsURL := h.cfg.GetGCSObjectURL(fileName)
 
 	// 署名付きURLの生成（直接GCSから配信させてサーバー負荷を軽減）

@@ -20,6 +20,7 @@ import (
 	"ap-music/internal/domain"
 )
 
+// MusicRepository はGCS上の生成履歴、レシピ、音声成果物を管理します。
 type MusicRepository struct {
 	cfg          *config.Config
 	reader       remoteio.InputReader
@@ -37,6 +38,7 @@ func NewHistoryCache() *ttlcache.Cache[string, domain.MusicHistory] {
 	)
 }
 
+// NewGCSMusicRepository はGCS互換の reader/writer を使う履歴リポジトリを構築します。
 func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter, historyCache *ttlcache.Cache[string, domain.MusicHistory]) *MusicRepository {
 	if historyCache == nil {
 		historyCache = NewHistoryCache()
@@ -228,14 +230,17 @@ func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error
 		errs = append(errs, fmt.Errorf("failed to delete recipe JSON (%s): %w", jsonURI, err))
 	}
 
-	audioPath := fmt.Sprintf("%s.wav", safeJobID)
-	audioURI := r.cfg.GetGCSObjectURL(audioPath)
-	if err := r.writer.Delete(ctx, audioURI); err != nil {
-		slog.WarnContext(ctx, "skipped or failed to delete audio file",
-			"jobID", safeJobID,
-			"uri", audioURI,
-			"error", err,
-		)
+	audioExtensions := []string{domain.AudioFileExtension, domain.LegacyAudioFileExtension}
+	for _, ext := range audioExtensions {
+		audioPath := fmt.Sprintf("%s%s", safeJobID, ext)
+		audioURI := r.cfg.GetGCSObjectURL(audioPath)
+		if err := r.writer.Delete(ctx, audioURI); err != nil {
+			slog.WarnContext(ctx, "skipped or failed to delete audio file",
+				"jobID", safeJobID,
+				"uri", audioURI,
+				"error", err,
+			)
+		}
 	}
 
 	if err := errors.Join(errs...); err != nil {

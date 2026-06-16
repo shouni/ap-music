@@ -13,7 +13,7 @@ func TestSlackContentIncludesCommand(t *testing.T) {
 	adapter := &SlackAdapter{serviceURL: "https://example.com"}
 	content := adapter.buildSlackContent(&domain.PublishResult{
 		JobID:      "job-1",
-		StorageURI: "gs://bucket/job-1.wav",
+		StorageURI: "gs://bucket/job-1.mp3",
 	}, domain.NotificationRequest{
 		Command: string(domain.TaskCommandGenerateFromRecipe),
 	})

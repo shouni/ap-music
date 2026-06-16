@@ -25,12 +25,12 @@ type recordingAudioGenerator struct {
 
 func (g *recordingAudioGenerator) GenerateAudio(_ context.Context, recipe *domain.MusicRecipe, _ []domain.ImagePayload) ([]byte, error) {
 	g.recipe = recipe
-	return []byte("wav"), nil
+	return []byte("mp3"), nil
 }
 
 func (g *recordingAudioGenerator) GenerateFullAudio(_ context.Context, recipe *domain.MusicRecipe, _ []domain.ImagePayload) ([]byte, error) {
 	g.recipe = recipe
-	return []byte("wav"), nil
+	return []byte("mp3"), nil
 }
 
 type recordingPublisher struct {
@@ -43,7 +43,7 @@ func (p *recordingPublisher) Publish(_ context.Context, task domain.Task, recipe
 	p.task = task
 	p.recipe = recipe
 	p.audio = audioData
-	return &domain.PublishResult{JobID: task.JobID, StorageURI: "gs://bucket/job.wav"}, nil
+	return &domain.PublishResult{JobID: task.JobID, StorageURI: "gs://bucket/job.mp3"}, nil
 }
 
 type recordingNotifier struct {
@@ -115,8 +115,8 @@ func TestMusicPipelineGenerateFromRecipeRunsPhase4And5Only(t *testing.T) {
 	if publisher.recipe != audio.recipe {
 		t.Fatal("publisher did not receive generated recipe")
 	}
-	if string(publisher.audio) != "wav" {
-		t.Fatalf("expected wav payload, got %q", string(publisher.audio))
+	if string(publisher.audio) != "mp3" {
+		t.Fatalf("expected mp3 payload, got %q", string(publisher.audio))
 	}
 	if !notifier.notified {
 		t.Fatal("expected success notification")

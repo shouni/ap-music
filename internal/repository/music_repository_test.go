@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"io"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -73,7 +74,7 @@ func TestListHistoryLoadsRecipeMetadata(t *testing.T) {
 	reader := &fakeHistoryReader{
 		paths: []string{
 			"gs://music/20260501123456-abcd1234.json",
-			"gs://music/ignore.wav",
+			"gs://music/ignore.mp3",
 		},
 		files: map[string]string{
 			"gs://music/20260501123456-abcd1234.json": `{
@@ -240,5 +241,27 @@ func TestDeleteHistoryInvalidatesCachedMetadataWithSanitizedJobID(t *testing.T) 
 	}
 	if got := histories[0].Title; got != "削除後タイトル" {
 		t.Fatalf("Title after sanitized cache invalidation = %q, want 削除後タイトル", got)
+	}
+}
+
+func TestDeleteHistoryDeletesCurrentAndLegacyAudioFiles(t *testing.T) {
+	t.Parallel()
+
+	writer := &fakeHistoryWriter{}
+	repo := NewGCSMusicRepository(&config.Config{GCSBucket: "music"}, &fakeHistoryReader{}, writer, NewHistoryCache())
+
+	if err := repo.DeleteHistory(context.Background(), "20260501123456-abcd1234"); err != nil {
+		t.Fatalf("DeleteHistory() error = %v", err)
+	}
+
+	wantDeleted := []string{
+		"gs://music/20260501123456-abcd1234.json",
+		"gs://music/20260501123456-abcd1234.mp3",
+		"gs://music/20260501123456-abcd1234.wav",
+	}
+	for _, want := range wantDeleted {
+		if !slices.Contains(writer.deleted, want) {
+			t.Fatalf("deleted paths = %#v, missing %q", writer.deleted, want)
+		}
 	}
 }

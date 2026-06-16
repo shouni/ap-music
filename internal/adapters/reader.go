@@ -37,6 +37,7 @@ type ReaderAdapter struct {
 	requester     imageRequester
 }
 
+// NewReaderAdapter はURL、GCS、画像URLを扱う入力収集アダプターを構築します。
 func NewReaderAdapter(storage remoteio.IOFactory, requester imageRequester) (*ReaderAdapter, error) {
 	contentReader, err := reader.New(
 		reader.WithHTTPClient(requester),

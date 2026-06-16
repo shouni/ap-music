@@ -51,8 +51,8 @@ func (w *stubWriter) Write(ctx context.Context, uri string, contentReader io.Rea
 
 	if strings.HasSuffix(uri, ".json") {
 		w.contentTypes[uri] = recipeJSONContentType
-	} else if strings.HasSuffix(uri, ".wav") {
-		w.contentTypes[uri] = "audio/wav"
+	} else if strings.HasSuffix(uri, domain.AudioFileExtension) {
+		w.contentTypes[uri] = domain.AudioContentType
 	}
 
 	return nil
@@ -83,7 +83,7 @@ func TestPublisherPublishCleansUpOnRecipeWriteFailure(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{GCSBucket: "bucket"}
-	audioURI := "gs://bucket/job-1.wav"
+	audioURI := "gs://bucket/job-1.mp3"
 	recipeURI := "gs://bucket/job-1.json"
 
 	writer := &stubWriter{failOn: map[string]error{
@@ -94,7 +94,7 @@ func TestPublisherPublishCleansUpOnRecipeWriteFailure(t *testing.T) {
 	publisher, err := NewPublisherAdapter(cfg, writer, signer)
 	require.NoError(t, err)
 
-	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-1"}, &domain.MusicRecipe{Title: "x"}, []byte("wav"))
+	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-1"}, &domain.MusicRecipe{Title: "x"}, []byte("mp3"))
 	assert.Error(t, err)
 
 	expectedDeletes := []string{recipeURI, audioURI}
@@ -105,7 +105,7 @@ func TestPublisherPublishCleansUpOnSignedURLFailure(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{GCSBucket: "bucket"}
-	audioURI := "gs://bucket/job-2.wav"
+	audioURI := "gs://bucket/job-2.mp3"
 	recipeURI := "gs://bucket/job-2.json"
 
 	writer := &stubWriter{}
@@ -116,7 +116,7 @@ func TestPublisherPublishCleansUpOnSignedURLFailure(t *testing.T) {
 	publisher, err := NewPublisherAdapter(cfg, writer, signer)
 	require.NoError(t, err)
 
-	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-2"}, &domain.MusicRecipe{Title: "x"}, []byte("wav"))
+	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-2"}, &domain.MusicRecipe{Title: "x"}, []byte("mp3"))
 	assert.Error(t, err)
 
 	expectedDeletes := []string{recipeURI, audioURI}
@@ -139,7 +139,7 @@ func TestPublisherPublishWritesRecipeJSONAsUTF8(t *testing.T) {
 		Title: "朝焼けのレシピ",
 		Theme: "日本語ボーカル",
 	}
-	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-utf8"}, recipe, []byte("wav"))
+	_, err = publisher.Publish(context.Background(), domain.Task{JobID: "job-utf8"}, recipe, []byte("mp3"))
 	require.NoError(t, err)
 
 	recipeData := writer.dataByURI[recipeURI]
