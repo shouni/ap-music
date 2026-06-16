@@ -15,6 +15,7 @@
 *.a
 /bin/
 /.gocache/
+/.tmp/
 
 # Environment files
 # Ignore all .env files but keep templates

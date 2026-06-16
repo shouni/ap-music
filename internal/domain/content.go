@@ -1,5 +1,10 @@
 package domain
 
+const (
+	AudioFileExtension = ".mp3"
+	AudioContentType   = "audio/mpeg"
+)
+
 // ImagePayload は、画像の構造体です
 type ImagePayload struct {
 	Data     []byte

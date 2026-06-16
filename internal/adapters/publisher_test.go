@@ -51,8 +51,8 @@ func (w *stubWriter) Write(ctx context.Context, uri string, contentReader io.Rea
 
 	if strings.HasSuffix(uri, ".json") {
 		w.contentTypes[uri] = recipeJSONContentType
-	} else if strings.HasSuffix(uri, ".mp3") {
-		w.contentTypes[uri] = audioContentType
+	} else if strings.HasSuffix(uri, domain.AudioFileExtension) {
+		w.contentTypes[uri] = domain.AudioContentType
 	}
 
 	return nil

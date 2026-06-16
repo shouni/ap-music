@@ -16,8 +16,6 @@ import (
 
 const (
 	recipeJSONContentType = "application/json; charset=utf-8"
-	audioContentType      = "audio/mpeg"
-	audioFileExtension    = ".mp3"
 	defaultCacheControl   = "public, max-age=1800"
 )
 
@@ -60,13 +58,13 @@ func (a *PublisherAdapter) Publish(ctx context.Context, task domain.Task, recipe
 		return nil, fmt.Errorf("output file is empty")
 	}
 
-	storageURI := remoteio.BuildGCSURI(a.Bucket, fmt.Sprintf("%s%s", task.JobID, audioFileExtension))
+	storageURI := remoteio.BuildGCSURI(a.Bucket, fmt.Sprintf("%s%s", task.JobID, domain.AudioFileExtension))
 	recipeStorageURI := remoteio.BuildGCSURI(a.Bucket, fmt.Sprintf("%s.json", task.JobID))
 
 	// 1. 音声データの書き込み（Cache-Control を適用）
 	contentReader := bytes.NewReader(audioData)
 	if err := a.writer.Write(ctx, storageURI, contentReader,
-		remoteio.WithContentType(audioContentType),
+		remoteio.WithContentType(domain.AudioContentType),
 		remoteio.WithInline(),
 		remoteio.WithCacheControl(defaultCacheControl),
 	); err != nil {
