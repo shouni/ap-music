@@ -19,6 +19,7 @@ import (
 
 const titleSuffix = " - AP Music"
 
+// Handler はWeb画面、ジョブ投入、履歴操作のHTTPハンドラーをまとめます。
 type Handler struct {
 	cfg           *config.Config
 	templateCache map[string]*template.Template

@@ -1,8 +1,10 @@
 package domain
 
 const (
+	// AudioFileExtension は公開成果物として保存する音声ファイルの拡張子です。
 	AudioFileExtension = ".mp3"
-	AudioContentType   = "audio/mpeg"
+	// AudioContentType は公開成果物として保存する音声ファイルの MIME タイプです。
+	AudioContentType = "audio/mpeg"
 )
 
 // ImagePayload は、画像の構造体です

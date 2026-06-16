@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// AIModels は生成ジョブで使用するAIモデルとプロンプトモードを表します。
 type AIModels struct {
 	// TextModel は歌詞生成およびレシピ構築（LLM）に使用するモデル
 	TextModel string `json:"text_model,omitempty"`
@@ -15,13 +16,17 @@ type AIModels struct {
 	LyricsMode string `json:"lyrics_mode,omitempty"`
 	// ComposeMode は作曲レシピプロンプトテンプレートのキー (assets/prompts/compose/*.md)
 	ComposeMode string `json:"compose_mode,omitempty"`
-	Seed        *int64 `json:"seed,omitempty"`
+	// Seed は音声生成の再現性を高めるための任意のシード値です。
+	Seed *int64 `json:"seed,omitempty"`
 }
 
+// TaskCommand は生成ジョブの実行モードを表します。
 type TaskCommand string
 
 const (
-	TaskCommandCompose            TaskCommand = "compose"
+	// TaskCommandCompose は入力収集、歌詞・レシピ生成、音声生成までを実行します。
+	TaskCommandCompose TaskCommand = "compose"
+	// TaskCommandGenerateFromRecipe は既存の MusicRecipe から音声生成と保存だけを実行します。
 	TaskCommandGenerateFromRecipe TaskCommand = "generate_from_recipe"
 )
 

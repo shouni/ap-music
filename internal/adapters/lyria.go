@@ -41,6 +41,7 @@ func NewLyriaAdapter(cfg *config.Config, aiClient gemini.Generator, promptGen do
 	return &LyriaAdapter{core: core}, nil
 }
 
+// Run は入力コンテンツから楽曲レシピと音声データを生成します。
 func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, input *domain.CollectedContent) (*domain.MusicRecipe, []byte, error) {
 	recipe, audio, err := a.core.Run(ctx, toLyriaAIModels(task.AIModels), toLyriaCollectedContent(input))
 	if err != nil {
@@ -49,6 +50,7 @@ func (a *LyriaAdapter) Run(ctx context.Context, task domain.Task, input *domain.
 	return toDomainMusicRecipe(recipe), audio, nil
 }
 
+// GenerateLyrics は収集済みコンテンツから歌詞ドラフトを生成します。
 func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, ai domain.AIModels, input *domain.CollectedContent) (*domain.LyricsDraft, error) {
 	lyrics, err := a.core.GenerateLyrics(ctx, toLyriaAIModels(ai), toLyriaCollectedContent(input))
 	if err != nil {
@@ -57,6 +59,7 @@ func (a *LyriaAdapter) GenerateLyrics(ctx context.Context, ai domain.AIModels, i
 	return toDomainLyricsDraft(lyrics), nil
 }
 
+// Compose は歌詞ドラフトから Lyria 向けの MusicRecipe を生成します。
 func (a *LyriaAdapter) Compose(ctx context.Context, ai domain.AIModels, lyrics *domain.LyricsDraft) (*domain.MusicRecipe, error) {
 	recipe, err := a.core.Compose(ctx, toLyriaAIModels(ai), toLyriaLyricsDraft(lyrics))
 	if err != nil {
@@ -65,10 +68,12 @@ func (a *LyriaAdapter) Compose(ctx context.Context, ai domain.AIModels, lyrics *
 	return toDomainMusicRecipe(recipe), nil
 }
 
+// GenerateAudio は MusicRecipe から音声データを生成します。
 func (a *LyriaAdapter) GenerateAudio(ctx context.Context, recipe *domain.MusicRecipe, images []domain.ImagePayload) ([]byte, error) {
 	return a.core.GenerateAudio(ctx, toLyriaMusicRecipe(recipe), toLyriaImagePayloads(images))
 }
 
+// GenerateFullAudio は MusicRecipe 全体を1回の音声生成リクエストとして実行します。
 func (a *LyriaAdapter) GenerateFullAudio(ctx context.Context, recipe *domain.MusicRecipe, images []domain.ImagePayload) ([]byte, error) {
 	return a.core.GenerateFullAudio(ctx, toLyriaMusicRecipe(recipe), toLyriaImagePayloads(images))
 }

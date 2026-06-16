@@ -20,6 +20,7 @@ import (
 	"ap-music/internal/domain"
 )
 
+// MusicRepository はGCS上の生成履歴、レシピ、音声成果物を管理します。
 type MusicRepository struct {
 	cfg          *config.Config
 	reader       remoteio.InputReader
@@ -37,6 +38,7 @@ func NewHistoryCache() *ttlcache.Cache[string, domain.MusicHistory] {
 	)
 }
 
+// NewGCSMusicRepository はGCS互換の reader/writer を使う履歴リポジトリを構築します。
 func NewGCSMusicRepository(cfg *config.Config, reader remoteio.InputReader, writer remoteio.OutputWriter, historyCache *ttlcache.Cache[string, domain.MusicHistory]) *MusicRepository {
 	if historyCache == nil {
 		historyCache = NewHistoryCache()
