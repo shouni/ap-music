@@ -230,14 +230,17 @@ func (r *MusicRepository) DeleteHistory(ctx context.Context, jobID string) error
 		errs = append(errs, fmt.Errorf("failed to delete recipe JSON (%s): %w", jsonURI, err))
 	}
 
-	audioPath := fmt.Sprintf("%s%s", safeJobID, domain.AudioFileExtension)
-	audioURI := r.cfg.GetGCSObjectURL(audioPath)
-	if err := r.writer.Delete(ctx, audioURI); err != nil {
-		slog.WarnContext(ctx, "skipped or failed to delete audio file",
-			"jobID", safeJobID,
-			"uri", audioURI,
-			"error", err,
-		)
+	audioExtensions := []string{domain.AudioFileExtension, domain.LegacyAudioFileExtension}
+	for _, ext := range audioExtensions {
+		audioPath := fmt.Sprintf("%s%s", safeJobID, ext)
+		audioURI := r.cfg.GetGCSObjectURL(audioPath)
+		if err := r.writer.Delete(ctx, audioURI); err != nil {
+			slog.WarnContext(ctx, "skipped or failed to delete audio file",
+				"jobID", safeJobID,
+				"uri", audioURI,
+				"error", err,
+			)
+		}
 	}
 
 	if err := errors.Join(errs...); err != nil {
