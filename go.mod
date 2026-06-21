@@ -7,9 +7,9 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jellydator/ttlcache/v3 v3.4.0
 	github.com/shouni/gcp-kit v1.1.4
-	github.com/shouni/go-gemini-client v1.5.3
+	github.com/shouni/go-gemini-client v1.6.6
 	github.com/shouni/go-http-kit v1.4.2
-	github.com/shouni/go-notifier v1.2.3
+	github.com/shouni/go-notifier v1.2.6
 	github.com/shouni/go-prompt-kit v1.0.4
 	github.com/shouni/go-remote-io v1.5.3
 	github.com/shouni/go-utils v1.0.20
@@ -76,9 +76,9 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/shouni/audio v1.0.19 // indirect
+	github.com/shouni/audio v1.0.20 // indirect
 	github.com/shouni/go-web-exact/v2 v2.3.1 // indirect
-	github.com/slack-go/slack v0.23.0 // indirect
+	github.com/slack-go/slack v0.26.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.42.0 // indirect
@@ -96,7 +96,7 @@ require (
 	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/api v0.283.0 // indirect
-	google.golang.org/genai v1.60.0 // indirect
+	google.golang.org/genai v1.61.0 // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260523011958-0a33c5d7ca68 // indirect
