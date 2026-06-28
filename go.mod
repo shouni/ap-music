@@ -5,15 +5,15 @@ go 1.26
 require (
 	github.com/go-chi/chi/v5 v5.3.0
 	github.com/google/uuid v1.6.0
-	github.com/jellydator/ttlcache/v3 v3.4.0
+	github.com/jellydator/ttlcache/v3 v3.4.1
 	github.com/shouni/gcp-kit v1.1.4
-	github.com/shouni/go-gemini-client v1.6.6
-	github.com/shouni/go-http-kit v1.4.2
+	github.com/shouni/go-gemini-client v1.6.7
+	github.com/shouni/go-http-kit v1.4.4
 	github.com/shouni/go-notifier v1.2.6
 	github.com/shouni/go-prompt-kit v1.0.4
 	github.com/shouni/go-remote-io v1.5.3
 	github.com/shouni/go-utils v1.0.20
-	github.com/shouni/go-web-reader v1.0.7
+	github.com/shouni/go-web-reader v1.0.8
 	github.com/shouni/netarmor v1.0.3
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.21.0
